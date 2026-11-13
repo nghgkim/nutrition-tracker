@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "feature": "example-feature",
+  "phase": "qc",
+  "cycle": 1,
+  "max_cycles": 3,
+  "status": "PASSED",
+  "defects": []
+}

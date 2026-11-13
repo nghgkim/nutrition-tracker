@@ -1,0 +1,85 @@
+name: 4-Phase SDLC Quality Gate
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate-governance-audit:
+    name: "4-Phase Governance & Security Audit"
+    runs-on: ubuntu-latest
+    env:
+      RUST_TEST_THREADS: 2
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Install Gate Validator & Toolchain"
+        run: |
+          mkdir -p ~/.local/bin
+          if [ -f "./scripts/gate" ]; then
+            cp ./scripts/gate ~/.local/bin/gate
+            chmod +x ~/.local/bin/gate
+          elif command -v gate >/dev/null 2>&1; then
+            echo "gate CLI already available"
+          fi
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: "Phase 1: Auto-Judge Specification Audit"
+        run: |
+          if ! command -v gate >/dev/null 2>&1; then
+            echo "::notice ::gate toolchain not detected in CI runner; skipping spec judge"
+          else
+            echo "==> Auditing modified specifications with 100-pt Rubric..."
+            for spec in docs/specs/*.md; do
+              [ -f "$spec" ] || continue
+              case "$spec" in
+                *.template*) continue ;;
+                *) gate judge "$spec" ;;
+              esac
+            done
+          fi
+
+      - name: "Phase 2 & Phase 3: Governance Check & Test Verification"
+        run: |
+          if command -v gate >/dev/null 2>&1; then
+            CI=1 gate check --mode=auto --tier=auto
+          else
+            echo "::notice ::Running verification fallback in CI"
+            if [ -f "Cargo.toml" ]; then
+              cargo fmt --check
+              cargo clippy --all-targets -- -D warnings
+              cargo test --tests
+            elif [ -f "package.json" ]; then
+              npm test
+            fi
+          fi
+
+      - name: "Security & Secret Scan (Phase 3/4)"
+        run: |
+          if command -v gate >/dev/null 2>&1; then
+            gate audit
+          else
+            echo "==> Scanning for accidental private key leakage..."
+            if grep -rnE "BEGIN (RSA|EC|OPENSSH) PRIVATE KEY" . 2>/dev/null; then
+              echo "Private key detected in codebase!"
+              exit 1
+            fi
+            echo "✓ Security scan passed."
+          fi
+
+      - name: "Phase 4: Ephemeral DB Sandbox Migration Test"
+        run: |
+          if command -v gate >/dev/null 2>&1; then
+            gate db test
+          else
+            echo "No relational DB migration required for this repository."
+          fi

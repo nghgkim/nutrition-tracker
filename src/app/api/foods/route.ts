@@ -1,0 +1,41 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/session";
+
+export async function GET(req: Request) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const url = new URL(req.url);
+  const q = url.searchParams.get("q")?.trim();
+  const foods = await prisma.food.findMany({
+    where: {
+      OR: [{ userId: null }, { userId: user.id }],
+      ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
+    },
+    orderBy: { name: "asc" },
+  });
+  return NextResponse.json({ foods });
+}
+
+export async function POST(req: Request) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = await req.json();
+  const { name, calories, protein, carbs, fat, servingSize } = body;
+  if (!name || calories === undefined) {
+    return NextResponse.json({ error: "Name and calories required" }, { status: 400 });
+  }
+  const food = await prisma.food.create({
+    data: {
+      name,
+      calories: Number(calories),
+      protein: Number(protein ?? 0),
+      carbs: Number(carbs ?? 0),
+      fat: Number(fat ?? 0),
+      servingSize: servingSize ?? null,
+      isCustom: true,
+      userId: user.id,
+    },
+  });
+  return NextResponse.json({ food }, { status: 201 });
+}

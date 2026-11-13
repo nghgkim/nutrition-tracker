@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  password  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  foods     Food[]
+  foodLogs  FoodLog[]
+  goal      Goal?
+}
+
+model Food {
+  id          String    @id @default(cuid())
+  name        String
+  calories    Float
+  protein     Float     @default(0)
+  carbs       Float     @default(0)
+  fat         Float     @default(0)
+  servingSize String?
+  isCustom    Boolean   @default(false)
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodLogs    FoodLog[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([name])
+}
+
+model FoodLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodId    String
+  food      Food     @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  quantity  Float    @default(1)
+  mealType  String?
+  date      DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+model Goal {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dailyCalories Int      @default(2000)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

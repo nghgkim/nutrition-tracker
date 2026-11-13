@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nutrition-tracker-pg
+    environment:
+      POSTGRES_DB: nutrition_tracker
+      POSTGRES_USER: nutrition_tracker
+      POSTGRES_PASSWORD: nutrition_tracker_dev_pw
+    ports:
+      - "5440:5432"
+    volumes:
+      - nutrition-tracker-pgdata:/var/lib/postgresql/data
+
+volumes:
+  nutrition-tracker-pgdata:
