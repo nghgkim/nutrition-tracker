@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Salad, LogOut, LayoutDashboard, Utensils, History, LogIn, UserPlus } from "lucide-react";
 
 export default function Nav() {
   const pathname = usePathname();
@@ -23,35 +24,55 @@ export default function Nav() {
   }
 
   const links = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/foods", label: "Món ăn" },
-    { href: "/history", label: "Lịch sử" },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/foods", label: "Món ăn", icon: Utensils },
+    { href: "/history", label: "Lịch sử", icon: History },
   ];
 
   return (
-    <nav className="bg-white border-b shadow-sm">
-      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="font-bold text-green-600 text-lg">🥗 Nutrition Tracker</Link>
-        <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+        <Link href="/" className="flex items-center gap-2 font-semibold text-foreground tracking-tight">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Salad className="h-4 w-4" />
+          </span>
+          <span>Nutrition Tracker</span>
+        </Link>
+        <nav className="flex items-center gap-1">
           {user ? (
             <>
-              {links.map((l) => (
-                <Link key={l.href} href={l.href}
-                  className={`text-sm ${pathname === l.href ? "text-green-600 font-semibold" : "text-gray-600 hover:text-green-600"}`}>
-                  {l.label}
-                </Link>
-              ))}
-              <span className="text-sm text-gray-500">{user.name || user.email}</span>
-              <button onClick={logout} className="text-sm text-red-500 hover:text-red-700">Đăng xuất</button>
+              {links.map((l) => {
+                const Icon = l.icon;
+                const active = pathname === l.href;
+                return (
+                  <Link key={l.href} href={l.href}
+                    className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}>
+                    <Icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{l.label}</span>
+                  </Link>
+                );
+              })}
+              <span className="ml-2 hidden md:inline text-xs text-muted-foreground">{user.name || user.email}</span>
+              <button onClick={logout}
+                className="ml-1 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Đăng xuất</span>
+              </button>
             </>
           ) : (
             <>
-              <Link href="/login" className="text-sm text-gray-600 hover:text-green-600">Đăng nhập</Link>
-              <Link href="/register" className="text-sm bg-green-600 text-white px-3 py-1 rounded">Đăng ký</Link>
+              <Link href="/login" className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                <LogIn className="h-4 w-4" /> Đăng nhập
+              </Link>
+              <Link href="/register" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-[0.98]">
+                <UserPlus className="h-4 w-4" /> Đăng ký
+              </Link>
             </>
           )}
-        </div>
+        </nav>
       </div>
-    </nav>
+    </header>
   );
 }
