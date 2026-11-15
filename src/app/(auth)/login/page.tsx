@@ -27,7 +27,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] grid lg:grid-cols-2">
+    <div className="min-h-screen grid lg:grid-cols-2">
       {/* Brand panel */}
       <div className="hidden lg:flex relative flex-col justify-between overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 p-12 text-white">
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.3) 0, transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.2) 0, transparent 40%)" }} />

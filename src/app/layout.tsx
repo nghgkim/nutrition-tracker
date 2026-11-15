@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}>
         <Nav />
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">{children}</main>
+        {children}
       </body>
     </html>
   );

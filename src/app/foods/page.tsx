@@ -39,7 +39,7 @@ export default function FoodsPage() {
   async function deleteFood(id: string) { await fetch(`/api/foods/${id}`, { method: "DELETE" }); load(); }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Thư viện</p>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Món ăn</h1>

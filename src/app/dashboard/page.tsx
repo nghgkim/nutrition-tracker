@@ -128,7 +128,7 @@ export default function DashboardPage() {
 
   if (loading && logs.length === 0 && foods.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         <div className="h-8 w-48 skeleton" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 h-64 skeleton rounded-2xl" />
@@ -141,7 +141,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       {/* Toast */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">

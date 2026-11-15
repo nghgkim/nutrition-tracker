@@ -23,6 +23,8 @@ export default function Nav() {
     router.refresh();
   }
 
+  if (pathname === "/login" || pathname === "/register") return null;
+
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/foods", label: "Món ăn", icon: Utensils },
