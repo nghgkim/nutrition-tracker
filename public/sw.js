@@ -1,5 +1,5 @@
-const CACHE_NAME = "nutritrack-v1";
-const PRECACHE = ["/", "/dashboard", "/foods", "/history", "/weight", "/manifest.json"];
+const CACHE_NAME = "nutritrack-v2";
+const PRECACHE = ["/", "/dashboard", "/foods", "/history", "/profile", "/exercise", "/finance", "/family", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
@@ -12,7 +12,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
-  if (request.url.includes("/api/")) return; // never cache API
+  if (request.url.includes("/api/")) return;
   event.respondWith(
     caches.match(request).then((cached) => {
       const fetchPromise = fetch(request).then((response) => {
@@ -25,4 +25,21 @@ self.addEventListener("fetch", (event) => {
       return cached || fetchPromise;
     })
   );
+});
+
+// Web Push: receive push event and show notification even when tab is closed
+self.addEventListener("push", (event) => {
+  let data = { title: "Nutrition Tracker", body: "Nhắc nhở bữa ăn", icon: "/icon-192.png" };
+  if (event.data) { try { data = { ...data, ...event.data.json() }; } catch {} }
+  event.waitUntil(self.registration.showNotification(data.title, {
+    body: data.body,
+    icon: data.icon,
+    badge: "/icon-192.png",
+    tag: data.tag || "nutritrack-reminder",
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow("/dashboard"));
 });

@@ -23,6 +23,12 @@ model User {
   gender       String?  // male/female
   activity     String?  // sedentary/light/moderate/active/very_active
   targetWeight Float?   // kg desired
+  locale       String    @default("vi")
+  familyMembers FamilyMember[]
+  exercises    ExerciseLog[]
+  expenses     Expense[]
+  budget       Budget?
+  pushSubs     PushSubscription[]
 }
 
 model Food {
@@ -79,4 +85,68 @@ model Goal {
   dailyCalories Int      @default(2000)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Family {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  members   FamilyMember[]
+  createdAt DateTime @default(now())
+}
+
+model FamilyMember {
+  id        String   @id @default(cuid())
+  familyId  String
+  family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("member")
+  joinedAt  DateTime @default(now())
+
+  @@unique([familyId, userId])
+}
+
+model ExerciseLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  duration  Int
+  calories  Int
+  date      DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  String
+  amount    Float
+  date      DateTime @db.Date
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+model Budget {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Float    @default(2000000)
+  updatedAt DateTime @updatedAt
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
 }

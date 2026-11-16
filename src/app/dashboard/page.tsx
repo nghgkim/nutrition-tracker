@@ -52,6 +52,7 @@ export default function DashboardPage() {
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [foods, setFoods] = useState<Food[]>([]);
   const [goal, setGoal] = useState<Goal | null>(null);
+  const [burned, setBurned] = useState(0);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ foodId: "", quantity: "1", mealType: "breakfast" });
   const [foodSearch, setFoodSearch] = useState("");
@@ -68,8 +69,8 @@ export default function DashboardPage() {
     if (!d) return;
     setLoading(true);
     try {
-      const [logsRes, foodsRes, goalRes] = await Promise.all([
-        fetch(`/api/logs?date=${d}`), fetch("/api/foods"), fetch("/api/goal"),
+      const [logsRes, foodsRes, goalRes, exRes] = await Promise.all([
+        fetch(`/api/logs?date=${d}`), fetch("/api/foods"), fetch("/api/goal"), fetch("/api/exercise"),
       ]);
       if (logsRes.status === 401 || foodsRes.status === 401 || goalRes.status === 401) {
         router.push("/login");
@@ -81,6 +82,9 @@ export default function DashboardPage() {
       setLogs(logsData.logs || []);
       setFoods(foodsData.foods || []);
       setGoal(goalData.goal);
+      const exData = await exRes.json();
+      const dayBurn = (exData.logs || []).filter((l: { date: string }) => l.date.slice(0,10) === d).reduce((sum: number, l: { calories: number }) => sum + l.calories, 0);
+      setBurned(dayBurn);
       } catch (e) {
       console.error(e);
     } finally {
@@ -196,6 +200,14 @@ export default function DashboardPage() {
                 <span className="flex items-center gap-1.5"><Target className="h-3.5 w-3.5" /> Mục tiêu calo</span>
                 <span className="font-medium text-foreground">{goalCal.toLocaleString()} kcal · Sửa ở Hồ sơ →</span>
               </Link>
+              <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">🔥 Đã đốt (tập luyện)</span>
+                <span className="font-medium text-rose-500">-{burned} kcal</span>
+              </div>
+              <div className="mt-1 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Calo ròng (nạp − đốt)</span>
+                <span className="font-semibold text-foreground">{Math.round(totalCalories - burned)} kcal</span>
+              </div>
             </div>
           </div>
         </div>

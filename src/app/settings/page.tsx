@@ -18,10 +18,22 @@ const DEFAULT: NotifPrefs = {
   goalAlert: true,
 };
 
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  return new Uint8Array([...raw].map((c) => c.charCodeAt(0)));
+}
+
 export default function SettingsPage() {
   const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT);
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [saved, setSaved] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [locale, setLocale] = useState<"vi" | "en">("vi");
+  const [msg, setMsg] = useState("");
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
@@ -29,6 +41,8 @@ export default function SettingsPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored) setPrefs(JSON.parse(stored));
     if ("Notification" in window) setPermission(Notification.permission);
+    fetch("/api/push").then(r => r.json()).then(d => setPushSubscribed(d.subscribed)).catch(() => {});
+    fetch("/api/locale").then(r => r.json()).then(d => setLocale(d.locale)).catch(() => {});
   }, []);
 
   async function requestPermission() {
@@ -40,6 +54,27 @@ export default function SettingsPage() {
       save({ ...prefs, enabled: true });
     }
   }
+
+  async function togglePush() {
+    if (!("serviceWorker" in navigator) || !VAPID_PUBLIC_KEY) { setMsg("Push chưa được cấu hình (VAPID key)"); return; }
+    if (pushSubscribed) {
+      await fetch("/api/push", { method: "DELETE" });
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      await sub?.unsubscribe();
+      setPushSubscribed(false);
+    } else {
+      const perm = await Notification.requestPermission();
+      setPermission(perm);
+      if (perm !== "granted") return;
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource });
+      const json = sub.toJSON();
+      await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: json.endpoint, p256dh: json.keys?.p256dh, auth: json.keys?.auth }) });
+      setPushSubscribed(true);
+    }
+  }
+  async function changeLocale(l: "vi" | "en") { setLocale(l); await fetch("/api/locale", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale: l }) }); }
 
   function save(p: NotifPrefs) {
     localStorage.setItem("nt-notif", JSON.stringify(p));
@@ -152,6 +187,35 @@ export default function SettingsPage() {
             <div className="text-sm font-semibold text-foreground">Cài đặt như ứng dụng</div>
             <div className="text-xs text-muted-foreground">Mở menu trình duyệt → &ldquo;Thêm vào màn hình chính&rdquo; (Add to Home Screen) để dùng như app.</div>
           </div>
+        </div>
+      </div>
+
+      {/* Push notification that fire even when tab is closed */}
+      <div className="rounded-2xl border border-border/60 bg-card p-6 elevated">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${pushSubscribed ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground"}`}><Bell className="h-5 w-5" /></span>
+            <div>
+              <div className="text-sm font-semibold text-foreground">Thông báo đẩy (Web Push)</div>
+              <div className="text-xs text-muted-foreground">Nhận nhắc bữa ăn ngay cả khi đã đóng tab.</div>
+            </div>
+          </div>
+          <button onClick={togglePush} disabled={!VAPID_PUBLIC_KEY} className={`rounded-lg px-4 py-2 text-sm font-medium shadow-sm active:scale-[0.98] disabled:opacity-50 ${pushSubscribed ? "bg-muted text-foreground" : "bg-primary text-primary-foreground"}`}>
+            {pushSubscribed ? "Tắt" : "Bật thông báo"}
+          </button>
+        </div>
+        {msg && <p className="mt-2 text-sm text-primary">{msg}</p>}
+      </div>
+
+      {/* i18n */}
+      <div className="rounded-2xl border border-border/60 bg-card p-6 elevated">
+        <div className="text-sm font-semibold text-foreground">Ngôn ngữ / Language</div>
+        <div className="mt-3 flex gap-2">
+          {(["vi", "en"] as const).map(l => (
+            <button key={l} onClick={() => changeLocale(l)} className={`rounded-lg border px-4 py-2 text-sm transition-colors ${locale === l ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}>
+              {l === "vi" ? "🇻🇳 Tiếng Việt" : "🇬🇧 English"}
+            </button>
+          ))}
         </div>
       </div>
     </div>
