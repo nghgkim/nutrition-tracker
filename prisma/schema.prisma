@@ -17,7 +17,12 @@ model User {
   foods     Food[]
   foodLogs   FoodLog[]
   weightLogs WeightLog[]
-  goal       Goal?
+  goal         Goal?
+  height       Float?   // cm
+  age          Int?
+  gender       String?  // male/female
+  activity     String?  // sedentary/light/moderate/active/very_active
+  targetWeight Float?   // kg desired
 }
 
 model Food {
