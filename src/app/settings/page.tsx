@@ -69,7 +69,17 @@ export default function SettingsPage() {
       const perm = await Notification.requestPermission();
       setPermission(perm);
       if (perm !== "granted") return;
+      // Force refresh Service Worker so the push-event listener (v2) is active
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.update()));
+      navigator.serviceWorker.register("/sw.js");
       const reg = await navigator.serviceWorker.ready;
+      await navigator.serviceWorker.controller ? null : new Promise<void>(resolve => {
+        navigator.serviceWorker.addEventListener("controllerchange", () => resolve(), { once: true });
+        setTimeout(resolve, 1500); // fallback
+      });
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) await existing.unsubscribe();
       const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource });
       const json = sub.toJSON();
       await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: json.endpoint, p256dh: json.keys?.p256dh, auth: json.keys?.auth }) });
@@ -79,7 +89,12 @@ export default function SettingsPage() {
   async function sendTestPush() {
     const res = await fetch("/api/push/test", { method: "POST" });
     const d = await res.json();
-    setMsg(res.ok ? `Đã gửi ${d.sent} thông báo thử` : (d.error || "Lỗi gửi"));
+    if (res.ok) {
+      const domain = d.details?.[0]?.endpoint?.match(/https:\/\/([^/]+)/)?.[1] || "push service";
+      setMsg(`Đã gửi ${d.sent} thông báo tới ${domain}. Nếu chưa hiện: kiểm tra quyền Notification của site trong thanh địa chỉ (biểu tượng khóa), và đảm bảo đang dùng đúng browser đã bật thông báo.`);
+    } else {
+      setMsg(d.error || "Lỗi gửi");
+    }
   }
   async function toggleShare(key: "exercise" | "finance" | "weight") {
     const next = { ...sharing, [key]: !sharing[key] };

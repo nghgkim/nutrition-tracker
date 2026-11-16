@@ -20,6 +20,11 @@ export async function POST() {
       JSON.stringify({ title: "🥗 Nutrition Tracker", body: "Thông báo thử nghiệm đã hoạt động!", tag: "test" })
     )
   ));
+  const details = results.map((r, i) => ({
+    endpoint: subs[i].endpoint.slice(0, 50) + "...",
+    status: r.status === "fulfilled" ? (r.value as { statusCode?: number }).statusCode : "FAILED: " + String((r as PromiseRejectedResult).reason).slice(0, 150),
+  }));
   const failed = results.filter(r => r.status === "rejected");
-  return NextResponse.json({ ok: failed.length === 0, sent: subs.length, failed: failed.length });
+  console.log("[PUSH TEST] results:", JSON.stringify(details));
+  return NextResponse.json({ ok: failed.length === 0, sent: subs.length, failed: failed.length, details });
 }
