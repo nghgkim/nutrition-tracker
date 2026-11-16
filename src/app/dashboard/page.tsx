@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Target, Flame, Beef, Wheat, Droplet, Calendar, UtensilsCrossed, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Plus, Trash2, Target, Flame, Beef, Wheat, Droplet, Calendar, UtensilsCrossed, ChevronLeft, ChevronRight, Sparkles, Download } from "lucide-react";
+import WeeklyChart from "@/components/WeeklyChart";
 
 interface Food { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; }
 interface FoodLog { id: string; quantity: number; mealType: string | null; date: string; food: Food; }
@@ -170,6 +171,9 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* Weekly chart */}
+      <WeeklyChart />
 
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
