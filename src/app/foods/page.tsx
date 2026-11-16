@@ -2,27 +2,40 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Trash2, Apple, Flame, Wheat, Droplet } from "lucide-react";
+import { removeDiacritics } from "@/lib/normalize";
 
 interface Food { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; isCustom: boolean; userId: string | null; }
 
 export default function FoodsPage() {
   const router = useRouter();
-  const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", calories: "", protein: "", carbs: "", fat: "", servingSize: "" });
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
 
-  async function load() {
+  const [allFoods, setAllFoods] = useState<Food[]>([]);
+  const [debouncedQ, setDebouncedQ] = useState("");
+
+  async function loadAll() {
     setLoading(true);
-    const res = await fetch(`/api/foods${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+    const res = await fetch("/api/foods");
     if (res.status === 401) { router.push("/login"); return; }
     const data = await res.json();
-    setFoods(data.foods || []);
+    setAllFoods(data.foods || []);
     setLoading(false);
   }
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { load(); }, [q]);
+  useEffect(() => { loadAll(); }, []);
+
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(q), 200);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  // Client-side filter with accent normalization
+  const foods = debouncedQ.trim()
+    ? allFoods.filter((f) => removeDiacritics(f.name).includes(removeDiacritics(debouncedQ)))
+    : allFoods;
 
   async function addFood(e: React.FormEvent) {
     e.preventDefault();
@@ -34,9 +47,9 @@ export default function FoodsPage() {
     });
     setForm({ name: "", calories: "", protein: "", carbs: "", fat: "", servingSize: "" });
     setAdding(false);
-    load();
+    loadAll();
   }
-  async function deleteFood(id: string) { await fetch(`/api/foods/${id}`, { method: "DELETE" }); load(); }
+  async function deleteFood(id: string) { await fetch(`/api/foods/${id}`, { method: "DELETE" }); loadAll(); }
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">

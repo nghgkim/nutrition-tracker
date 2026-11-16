@@ -634,6 +634,23 @@ const foods = [
   { name: "Nước mía", calories: 220, protein: 0, carbs: 55, fat: 0, servingSize: "1 ly", source: "FoodAKL" },
   { name: "Bia hơi", calories: 130, protein: 1, carbs: 10, fat: 0, servingSize: "1 ly", source: "FoodAKL" },
   { name: "Rượu đế", calories: 100, protein: 0, carbs: 0, fat: 0, servingSize: "1 ly", source: "FoodAKL" },
+  // === Món bổ sung (Wikipedia/Nutrihome/VietCalorie) ===
+  { name: "Bánh ép Huế", calories: 190, protein: 7, carbs: 24, fat: 7, servingSize: "100g", source: "VietCalorie" },
+  { name: "Bánh ép (trứng)", calories: 150, protein: 6, carbs: 18, fat: 6, servingSize: "1 cái", source: "BibiHealthyBread" },
+  { name: "Bánh ép (thịt)", calories: 200, protein: 8, carbs: 20, fat: 10, servingSize: "1 cái", source: "BibiHealthyBread" },
+  { name: "Bánh ép đầy đủ", calories: 280, protein: 10, carbs: 28, fat: 14, servingSize: "1 cái", source: "BibiHealthyBread" },
+  { name: "Bánh lọc", calories: 180, protein: 6, carbs: 28, fat: 5, servingSize: "1 cái", source: "FoodAKL" },
+  { name: "Bánh ít trần", calories: 160, protein: 4, carbs: 28, fat: 4, servingSize: "1 cái", source: "FoodAKL" },
+  { name: "Bánh ít ram", calories: 220, protein: 6, carbs: 32, fat: 8, servingSize: "1 cái", source: "FoodAKL" },
+  { name: "Bánh bèo chén", calories: 120, protein: 4, carbs: 18, fat: 3, servingSize: "1 chén", source: "FoodAKL" },
+  { name: "Bánh ướt", calories: 150, protein: 4, carbs: 30, fat: 1, servingSize: "1 đĩa", source: "FoodAKL" },
+  { name: "Bánh hỏi", calories: 160, protein: 4, carbs: 32, fat: 1.5, servingSize: "1 đĩa", source: "FoodAKL" },
+  { name: "Bánh canh tôm", calories: 380, protein: 17, carbs: 47, fat: 12, servingSize: "1 tô", source: "FoodAKL" },
+  { name: "Bánh canh giò heo", calories: 420, protein: 20, carbs: 48, fat: 16, servingSize: "1 tô", source: "FoodAKL" },
+  { name: "Bánh xèo miền Trung", calories: 400, protein: 14, carbs: 42, fat: 20, servingSize: "1 cái", source: "FoodAKL" },
+  { name: "Bánh xèo miền Nam", calories: 550, protein: 20, carbs: 52, fat: 28, servingSize: "1 cái", source: "FoodAKL" },
+  { name: "Bánh khọt Vũng Tàu", calories: 300, protein: 12, carbs: 35, fat: 13, servingSize: "1 đĩa", source: "FoodAKL" },
+  { name: "Bánh căn", calories: 250, protein: 8, carbs: 35, fat: 9, servingSize: "1 đĩa", source: "FoodAKL" },
 ];
 
 async function main() {
