@@ -60,7 +60,7 @@ export default function FoodsPage() {
   async function deleteFood(id: string) { await fetch(`/api/foods/${id}`, { method: "DELETE" }); loadAll(); }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-4">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Thư viện</p>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Món ăn</h1>
@@ -98,7 +98,7 @@ export default function FoodsPage() {
       )}
 
       <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
-        <div className="sticky top-14 z-10 flex items-center justify-between gap-2 border-b border-border/60 bg-card px-3 py-2">
+        <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-card px-5 py-2">
           <h2 className="text-sm font-semibold text-foreground">Món ăn <span className="text-muted-foreground font-normal text-xs">({filteredFoods.length})</span></h2>
           <div className="flex items-center gap-2">
             <div className="relative">
