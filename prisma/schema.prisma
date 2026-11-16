@@ -28,6 +28,7 @@ model Food {
   carbs       Float     @default(0)
   fat         Float     @default(0)
   servingSize String?
+  source      String?   // data source: 'VFCT2007', 'Wikipedia', 'Nutrihome', 'estimate'
   isCustom    Boolean   @default(false)
   userId      String?
   user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
