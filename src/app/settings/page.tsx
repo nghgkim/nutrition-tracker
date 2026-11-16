@@ -34,6 +34,7 @@ export default function SettingsPage() {
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [locale, setLocale] = useState<"vi" | "en">("vi");
   const [msg, setMsg] = useState("");
+  const [sharing, setSharing] = useState({ exercise: false, finance: false, weight: false });
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function SettingsPage() {
     if ("Notification" in window) setPermission(Notification.permission);
     fetch("/api/push").then(r => r.json()).then(d => setPushSubscribed(d.subscribed)).catch(() => {});
     fetch("/api/locale").then(r => r.json()).then(d => setLocale(d.locale)).catch(() => {});
+    fetch("/api/sharing").then(r => r.json()).then(d => setSharing(d.sharing || sharing)).catch(() => {});
   }, []);
 
   async function requestPermission() {
@@ -73,6 +75,16 @@ export default function SettingsPage() {
       await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: json.endpoint, p256dh: json.keys?.p256dh, auth: json.keys?.auth }) });
       setPushSubscribed(true);
     }
+  }
+  async function sendTestPush() {
+    const res = await fetch("/api/push/test", { method: "POST" });
+    const d = await res.json();
+    setMsg(res.ok ? `Đã gửi ${d.sent} thông báo thử` : (d.error || "Lỗi gửi"));
+  }
+  async function toggleShare(key: "exercise" | "finance" | "weight") {
+    const next = { ...sharing, [key]: !sharing[key] };
+    setSharing(next);
+    await fetch("/api/sharing", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
   }
   async function changeLocale(l: "vi" | "en") { setLocale(l); await fetch("/api/locale", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale: l }) }); }
 
@@ -204,7 +216,28 @@ export default function SettingsPage() {
             {pushSubscribed ? "Tắt" : "Bật thông báo"}
           </button>
         </div>
+        <div className="mt-3 flex gap-2">
+          {pushSubscribed && <button onClick={sendTestPush} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted">Gửi thông báo thử</button>}
+        </div>
         {msg && <p className="mt-2 text-sm text-primary">{msg}</p>}
+      </div>
+
+      {/* Family sharing */}
+      <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-3">
+        <div className="text-sm font-semibold text-foreground">Chia sẻ với gia đình</div>
+        <p className="text-xs text-muted-foreground">Mặc định là cá nhân. Bật để thành viên xem dữ liệu của bạn trong tab tương ứng.</p>
+        {([
+          { key: "exercise" as const, label: "🏃 Tập luyện" },
+          { key: "finance" as const, label: "💰 Chi tiêu" },
+          { key: "weight" as const, label: "⚖️ Cân nặng" },
+        ]).map((item) => (
+          <div key={item.key} className="flex items-center justify-between">
+            <span className="text-sm text-foreground">{item.label}</span>
+            <button onClick={() => toggleShare(item.key)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${sharing[item.key] ? "bg-primary" : "bg-muted"}`}>
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${sharing[item.key] ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+          </div>
+        ))}
       </div>
 
       {/* i18n */}

@@ -13,6 +13,8 @@ export default function FamilyPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
+  const [feed, setFeed] = useState<{ name: string | null; value: number }[]>([]);
+  const [feedFeature, setFeedFeature] = useState("calo");
 
   async function load() {
     const res = await fetch("/api/family");
@@ -28,6 +30,10 @@ export default function FamilyPage() {
   }
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (!family) return;
+    fetch(`/api/family/feed?feature=${feedFeature}`).then(r => r.json()).then(d => setFeed(d.members || [])).catch(() => {});
+  }, [feedFeature, family]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -86,6 +92,23 @@ export default function FamilyPage() {
                 </li>
               ))}
             </ul>
+          </div>
+          <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
+            <div className="px-5 py-3 border-b border-border/60 flex gap-2">
+              {([["calo","🔥 Calo"],["exercise","🏃 Tập luyện"],["finance","💰 Chi tiêu"],["weight","⚖️ Cân nặng"]] as const).map(([k,l]) => (
+                <button key={k} onClick={() => setFeedFeature(k)} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${feedFeature === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>{l}</button>
+              ))}
+            </div>
+            {feed.length === 0 ? (
+              <div className="flex flex-col items-center py-10 text-center"><Users className="h-8 w-8 text-muted-foreground" /><p className="mt-3 text-sm text-muted-foreground">Chưa có thành viên chia sẻ</p></div>
+            ) : (
+              <ul className="divide-y divide-border/60">
+                {feed.map(m => (<li key={m.name || ""} className="flex items-center justify-between px-5 py-3">
+                  <span className="text-sm font-medium">{m.name || "Thành viên"}</span>
+                  <span className="text-sm font-semibold text-primary">{feedFeature === "finance" ? new Intl.NumberFormat("vi-VN").format(m.value) + " ₫" : feedFeature === "weight" ? m.value + " kg" : m.value + " kcal"}</span>
+                </li>))}
+              </ul>
+            )}
           </div>
         </>
       )}

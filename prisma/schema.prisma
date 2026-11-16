@@ -24,6 +24,9 @@ model User {
   activity     String?  // sedentary/light/moderate/active/very_active
   targetWeight Float?   // kg desired
   locale       String    @default("vi")
+  shareExercise Boolean   @default(false)
+  shareFinance  Boolean   @default(false)
+  shareWeight   Boolean   @default(false)
   familyMembers FamilyMember[]
   exercises    ExerciseLog[]
   expenses     Expense[]
