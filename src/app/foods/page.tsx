@@ -15,6 +15,7 @@ export default function FoodsPage() {
 
   const [allFoods, setAllFoods] = useState<Food[]>([]);
   const [debouncedQ, setDebouncedQ] = useState("");
+  const [visibleCount, setVisibleCount] = useState(20);
 
   async function loadAll() {
     setLoading(true);
@@ -29,15 +30,18 @@ export default function FoodsPage() {
 
   // Debounce search input
   // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setVisibleCount(20); }, [debouncedQ]);
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q), 200);
     return () => clearTimeout(t);
   }, [q]);
 
   // Client-side filter with accent normalization
-  const foods = debouncedQ.trim()
+  const filteredFoods = debouncedQ.trim()
     ? allFoods.filter((f) => removeDiacritics(f.name).includes(removeDiacritics(debouncedQ)))
     : allFoods;
+  const foods = filteredFoods.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredFoods.length;
 
   async function addFood(e: React.FormEvent) {
     e.preventDefault();
@@ -85,7 +89,7 @@ export default function FoodsPage() {
 
       <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 px-5 py-4">
-          <h2 className="text-sm font-semibold text-foreground">Danh sách món ăn</h2>
+          <h2 className="text-sm font-semibold text-foreground">Danh sách món ăn <span className="text-muted-foreground font-normal">({filteredFoods.length})</span></h2>
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input placeholder="Tìm kiếm..." value={q} onChange={(e) => setQ(e.target.value)}
@@ -101,34 +105,43 @@ export default function FoodsPage() {
             <p className="mt-1 text-xs text-muted-foreground">Thử từ khoá khác hoặc thêm món mới ở biểu mẫu phía trên.</p>
           </div>
         ) : (
-          <ul className="divide-y divide-border/60">
-            {foods.map((f) => (
-              <li key={f.id} className="group flex items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-muted/40">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Apple className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium text-foreground truncate">
-                      {f.name}
-                      {f.isCustom && <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">của bạn</span>}
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                      <span className="inline-flex items-center gap-1"><Flame className="h-3 w-3 text-rose-500" />{f.calories} kcal</span>
-                      {f.servingSize && <span>· {f.servingSize}</span>}
-                      <span className="hidden sm:inline">· P {f.protein}g · C {f.carbs}g · F {f.fat}g</span>
+          <>
+            <ul className="divide-y divide-border/60">
+              {foods.map((f) => (
+                <li key={f.id} className="group flex items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-muted/40">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Apple className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-foreground truncate">
+                        {f.name}
+                        {f.isCustom && <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">của bạn</span>}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                        <span className="inline-flex items-center gap-1"><Flame className="h-3 w-3 text-rose-500" />{f.calories} kcal</span>
+                        {f.servingSize && <span>· {f.servingSize}</span>}
+                        <span className="hidden sm:inline">· P {f.protein}g · C {f.carbs}g · F {f.fat}g</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                {f.userId && (
-                  <button onClick={() => deleteFood(f.id)} aria-label="Xoá"
-                    className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
+                  {f.userId && (
+                    <button onClick={() => deleteFood(f.id)} aria-label="Xoá"
+                      className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {hasMore && (
+              <div className="px-5 py-3 border-t border-border/60 text-center">
+                <button onClick={() => setVisibleCount((c) => c + 20)} className="text-sm font-medium text-primary hover:underline">
+                  Xem thêm ({filteredFoods.length - visibleCount} món còn lại)
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
