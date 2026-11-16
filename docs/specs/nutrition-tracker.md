@@ -135,4 +135,4 @@ Entities: User, Food, FoodLog, Goal. (Defined in prisma/schema.prisma.)
 ## 6. Assumptions (UNVERIFIED where noted)
 - ASSUMPTION: single-user-per-account; no email verification (UNVERIFIED: acceptable for MVP).
 - ASSUMPTION: date stored as UTC date; client sends YYYY-MM-DD (UNVERIFIED: timezone handling deferred).
-- ASSUMPTION: seeded food list of ~20 common (Vietnamese) foods is sufficient for MVP.
+- ASSUMPTION: seeded food list of 200+ common (Vietnamese) foods covers most daily needs. Values are approximate (see README data sources).

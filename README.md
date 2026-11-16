@@ -36,6 +36,14 @@ npm run dev   # http://localhost:3000
 - `npm run seed` — seed 20 common foods
 - `npm run db:migrate` / `npm run db:deploy` — Prisma migrations
 
+## Data sources
+
+Calorie and macro values for seeded foods are approximate, sourced from:
+- Bảng thành phần thực phẩm Việt Nam (National Institute of Nutrition, Vietnam Ministry of Health)
+- USDA FoodData Central (fdc.nal.usda.gov)
+
+Values vary by preparation method. Users can create custom foods with their own values.
+
 ## Spec
 
 See `docs/specs/nutrition-tracker.md` (auto-approved, 93/100).
