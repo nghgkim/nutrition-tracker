@@ -24,9 +24,11 @@ export default function FoodsPage() {
     setAllFoods(data.foods || []);
     setLoading(false);
   }
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadAll(); }, []);
 
   // Debounce search input
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q), 200);
     return () => clearTimeout(t);

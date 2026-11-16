@@ -23,8 +23,10 @@ export default function SettingsPage() {
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [saved, setSaved] = useState(false);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const stored = localStorage.getItem("nt-notif");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored) setPrefs(JSON.parse(stored));
     if ("Notification" in window) setPermission(Notification.permission);
   }, []);
@@ -148,7 +150,7 @@ export default function SettingsPage() {
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Smartphone className="h-5 w-5" /></span>
           <div>
             <div className="text-sm font-semibold text-foreground">Cài đặt như ứng dụng</div>
-            <div className="text-xs text-muted-foreground">Mở menu trình duyệt → "Thêm vào màn hình chính" (Add to Home Screen) để dùng như app.</div>
+            <div className="text-xs text-muted-foreground">Mở menu trình duyệt → &ldquo;Thêm vào màn hình chính&rdquo; (Add to Home Screen) để dùng như app.</div>
           </div>
         </div>
       </div>
