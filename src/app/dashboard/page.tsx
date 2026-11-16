@@ -219,20 +219,22 @@ export default function DashboardPage() {
           <div className="rounded-2xl border border-border/60 bg-card p-5 elevated">
             <form onSubmit={addLog} className="flex flex-col sm:flex-row gap-2">
               <select value={form.foodId} onChange={(e) => setForm({ ...form, foodId: e.target.value })} required
-                className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring">
+                className="flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring">
                 <option value="">Chọn món ăn...</option>
                 {foods.map((f) => (<option key={f.id} value={f.id}>{f.name} — {f.calories} kcal</option>))}
               </select>
-              <input type="number" step="0.1" min="0.1" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} placeholder="Phần"
-                className="w-20 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
-              <select value={form.mealType} onChange={(e) => setForm({ ...form, mealType: e.target.value })}
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring">
-                {MEALS.map((m) => (<option key={m} value={m}>{MEAL_EMOJI[m]} {MEAL_LABEL[m]}</option>))}
-              </select>
-              <button type="submit" disabled={adding || !form.foodId}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none">
-                <Plus className="h-4 w-4" /> {adding ? "..." : "Thêm"}
-              </button>
+              <div className="flex gap-2">
+                <input type="number" step="0.1" min="0.1" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} placeholder="Phần"
+                  className="w-20 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+                <select value={form.mealType} onChange={(e) => setForm({ ...form, mealType: e.target.value })}
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring">
+                  {MEALS.map((m) => (<option key={m} value={m}>{MEAL_EMOJI[m]} {MEAL_LABEL[m]}</option>))}
+                </select>
+                <button type="submit" disabled={adding || !form.foodId}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap">
+                  <Plus className="h-4 w-4" /> {adding ? "..." : "Thêm"}
+                </button>
+              </div>
             </form>
             {foods.length === 0 && (
               <p className="mt-3 text-xs text-muted-foreground">
