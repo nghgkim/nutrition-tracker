@@ -104,7 +104,7 @@ export default function FoodsPage() {
       )}
 
       <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
-        <div className="sticky top-14 z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 bg-card px-5 py-4">
+        <div className="sticky top-14 z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/60 bg-card px-4 py-3">
           <h2 className="text-sm font-semibold text-foreground">Danh sách món ăn <span className="text-muted-foreground font-normal">({filteredFoods.length})</span></h2>
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

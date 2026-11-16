@@ -28,6 +28,11 @@
 - **Package & Environment Manager:** npm 10.8.2, dotenv
 - **Knowledge Base Doc Sources:** Local KB (gate kb); DDD Evans Ch.2 (ubiquitous language); Refactoring UI (empty states, p.203-205)
 
+### Visual Verification (required for UI changes)
+- Run `gate visual <feature>` to capture screenshots across viewports and states.
+- Compare against design tokens: spacing (4/8/12/16/24px), typography, elevation, contrast.
+- No screenshot evidence = QC REJECT.
+
 ### Scaffold Checklist (verified)
 - [x] `postcss.config.mjs` with `@tailwindcss/postcss` (CSS renders in dev)
 - [x] Auth middleware (`src/middleware.ts`) protects routes
