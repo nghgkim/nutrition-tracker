@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
-# E2E smoke test against the REAL dev host (dev-vm), not localhost.
-# Catches cross-origin / host-config regressions that localhost tests miss.
 set -euo pipefail
 
 BASE="http://dev-vm:3000"
 COOKIE="/tmp/nt_smoke_cookies.txt"
 rm -f "$COOKIE"
+EMAIL="smoke-$(date +%s)@test.com"
 
-echo "=== 1. register ==="
+echo "=== 1. register ($EMAIL) ==="
 curl -sf -c "$COOKIE" -X POST "$BASE/api/auth/register" \
   -H 'Content-Type: application/json' \
-  -d '{"email":"smoke@test.com","password":"password123","name":"Smoke"}' >/dev/null
+  -d "{\"email\":\"$EMAIL\",\"password\":\"password123\",\"name\":\"Smoke\"}" >/dev/null
 
 echo "=== 2. login ==="
 curl -sf -c "$COOKIE" -X POST "$BASE/api/auth/login" \
   -H 'Content-Type: application/json' \
-  -d '{"email":"smoke@test.com","password":"password123"}' >/dev/null
+  -d "{\"email\":\"$EMAIL\",\"password\":\"password123\"}" >/dev/null
 
 echo "=== 3. me (auth cookie) ==="
 curl -sf -b "$COOKIE" "$BASE/api/auth/me" | grep -q '"user"'
