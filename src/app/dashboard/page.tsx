@@ -2,7 +2,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Target, Flame, Beef, Wheat, Droplet, Calendar, UtensilsCrossed, ChevronLeft, ChevronRight, Sparkles, Download } from "lucide-react";
-import WeeklyChart from "@/components/WeeklyChart";
 
 interface Food { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; }
 interface FoodLog { id: string; quantity: number; mealType: string | null; date: string; food: Food; }
@@ -66,18 +65,26 @@ export default function DashboardPage() {
   async function load(d: string) {
     if (!d) return;
     setLoading(true);
-    const [logsRes, foodsRes, goalRes] = await Promise.all([
-      fetch(`/api/logs?date=${d}`), fetch("/api/foods"), fetch("/api/goal"),
-    ]);
-    if (logsRes.status === 401) { router.push("/login"); return; }
-    const logsData = await logsRes.json();
-    const foodsData = await foodsRes.json();
-    const goalData = await goalRes.json();
-    setLogs(logsData.logs || []);
-    setFoods(foodsData.foods || []);
-    setGoal(goalData.goal);
-    setGoalInput(String(goalData.goal?.dailyCalories ?? 2000));
-    setLoading(false);
+    try {
+      const [logsRes, foodsRes, goalRes] = await Promise.all([
+        fetch(`/api/logs?date=${d}`), fetch("/api/foods"), fetch("/api/goal"),
+      ]);
+      if (logsRes.status === 401 || foodsRes.status === 401 || goalRes.status === 401) {
+        router.push("/login");
+        return;
+      }
+      const logsData = logsRes.ok ? await logsRes.json() : { logs: [] };
+      const foodsData = foodsRes.ok ? await foodsRes.json() : { foods: [] };
+      const goalData = goalRes.ok ? await goalRes.json() : { goal: null };
+      setLogs(logsData.logs || []);
+      setFoods(foodsData.foods || []);
+      setGoal(goalData.goal);
+      setGoalInput(String(goalData.goal?.dailyCalories ?? 2000));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   }
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -127,19 +134,7 @@ export default function DashboardPage() {
   const goalCal = goal?.dailyCalories ?? 2000;
   const isToday = date !== "" && date === today;
 
-  if (loading && logs.length === 0 && foods.length === 0) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-        <div className="h-8 w-48 skeleton" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 h-64 skeleton rounded-2xl" />
-          <div className="lg:col-span-2 space-y-3">
-            {[1,2,3].map(i => <div key={i} className="h-20 skeleton rounded-2xl" />)}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Loading state handled inline; no full-page skeleton to avoid stuck UI
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
@@ -171,9 +166,6 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
-
-      {/* Weekly chart */}
-      <WeeklyChart />
 
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
