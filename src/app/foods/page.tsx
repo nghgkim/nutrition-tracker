@@ -66,16 +66,22 @@ export default function FoodsPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Món ăn</h1>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
-        <button onClick={() => setShowForm(!showForm)} className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-muted/40 transition-colors">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">Thêm món ăn mới</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Tạo món tuỳ chỉnh với thông tin dinh dưỡng.</p>
-          </div>
-          <span className="text-muted-foreground">{showForm ? "▲" : "▼"}</span>
+      <div className="flex justify-end">
+        <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]">
+          <Plus className="h-4 w-4" /> Thêm món ăn
         </button>
-        {showForm && (
-        <form onSubmit={addFood} className="px-5 pb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      </div>
+
+      {/* Modal dialog */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowForm(false)} />
+          <div className="relative w-full max-w-lg rounded-2xl border border-border/60 bg-card p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-foreground">Thêm món ăn mới</h2>
+              <button onClick={() => setShowForm(false)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors">✕</button>
+            </div>
+            <form onSubmit={addFood} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input placeholder="Tên món *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring lg:col-span-2" />
           <input type="number" placeholder="Calo *" value={form.calories} onChange={(e) => setForm({ ...form, calories: e.target.value })} required
@@ -89,12 +95,13 @@ export default function FoodsPage() {
           <input type="number" placeholder="Fat (g)" value={form.fat} onChange={(e) => setForm({ ...form, fat: e.target.value })}
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
           <button type="submit" disabled={adding}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50">
+            className="sm:col-span-2 inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50">
             <Plus className="h-4 w-4" /> {adding ? "Đang thêm..." : "Thêm món"}
           </button>
         </form>
-        )}
       </div>
+      </div>
+      )}
 
       <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
         <div className="sticky top-14 z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 bg-card px-5 py-4">
