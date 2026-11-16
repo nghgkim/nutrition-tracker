@@ -36,7 +36,7 @@ export async function GET(req: Request) {
     }
     // Only include members who opted in (calo is always shared as before)
     if (feature === "calo" || (feature === "exercise" && u.shareExercise) || (feature === "finance" && u.shareFinance) || (feature === "weight" && u.shareWeight)) {
-      result.push({ userId: u.id, name: u.name, email: u.email, value: Math.round(value) });
+      result.push({ userId: u.id, name: u.name, email: u.email, value: Math.round(value), memberId: m.id, role: m.role });
     }
   }
   return NextResponse.json({ members: result, feature });

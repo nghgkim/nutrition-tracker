@@ -23,7 +23,8 @@ model User {
   gender       String?  // male/female
   activity     String?  // sedentary/light/moderate/active/very_active
   targetWeight Float?   // kg desired
-  locale       String    @default("vi")
+  locale         String    @default("vi")
+  personalBudget Float     @default(2000000)
   shareExercise Boolean   @default(false)
   shareFinance  Boolean   @default(false)
   shareWeight   Boolean   @default(false)
@@ -32,6 +33,7 @@ model User {
   expenses     Expense[]
   budget       Budget?
   pushSubs     PushSubscription[]
+  exerciseGoal ExerciseGoal?
 }
 
 model Food {
@@ -91,8 +93,9 @@ model Goal {
 }
 
 model Family {
-  id        String   @id @default(cuid())
-  name      String
+  id              String   @id @default(cuid())
+  name            String
+  householdBudget Float    @default(10000000)
   ownerId   String
   members   FamilyMember[]
   createdAt DateTime @default(now())
@@ -127,9 +130,10 @@ model Expense {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category  String
-  amount    Float
-  date      DateTime @db.Date
+  category   String
+  amount     Float
+  fundSource String   @default("personal")
+  date       DateTime @db.Date
   note      String?
   createdAt DateTime @default(now())
 
@@ -152,4 +156,22 @@ model PushSubscription {
   p256dh    String
   auth      String
   createdAt DateTime @default(now())
+}
+
+model BudgetAlert {
+  id        String   @id @default(cuid())
+  budgetKey String
+  month     String
+  threshold Int
+  createdAt DateTime @default(now())
+
+  @@unique([budgetKey, month, threshold])
+}
+
+model ExerciseGoal {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calories  Int      @default(300)
+  updatedAt DateTime @updatedAt
 }

@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, Plus, Mail, Crown } from "lucide-react";
+import { Users, Plus, Mail, Crown, Trash2 } from "lucide-react";
 
-interface Member { userId: string; name: string | null; email: string; role: string; caloriesToday: number; }
+interface Member { userId: string; name: string | null; email: string; role: string; caloriesToday: number; memberId?: string; }
 
 export default function FamilyPage() {
   const router = useRouter();
@@ -13,14 +13,17 @@ export default function FamilyPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
-  const [feed, setFeed] = useState<{ name: string | null; value: number }[]>([]);
+  const [feed, setFeed] = useState<{ name: string | null; value: number; memberId?: string; role?: string }[]>([]);
   const [feedFeature, setFeedFeature] = useState("calo");
+  const [myRole, setMyRole] = useState("");
 
   async function load() {
     const res = await fetch("/api/family");
     if (res.status === 401) { router.push("/login"); return; }
     const d = await res.json();
     setFamily(d.family);
+    // role of current user found in d.members via email match is complex; fetch /api/budget/household gives role
+    fetch("/api/budget/household").then(r => r.json()).then(b => setMyRole(b.role || "")).catch(() => {});
     if (d.family) {
       const m = await fetch("/api/family/members");
       const md = await m.json();
@@ -35,6 +38,10 @@ export default function FamilyPage() {
     fetch(`/api/family/feed?feature=${feedFeature}`).then(r => r.json()).then(d => setFeed(d.members || [])).catch(() => {});
   }, [feedFeature, family]);
 
+  async function removeMember(memberId: string) {
+    await fetch(`/api/family/members/${memberId}`, { method: "DELETE" });
+    load();
+  }
   async function create(e: React.FormEvent) {
     e.preventDefault();
     if (!name) return;
@@ -88,7 +95,10 @@ export default function FamilyPage() {
                     <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">{m.role === "owner" ? <Crown className="h-4 w-4" /> : <Users className="h-4 w-4" />}</span>
                     <div><div className="text-sm font-medium">{m.name || m.email}</div><div className="text-xs text-muted-foreground">{m.role === "owner" ? "Chủ gia đình" : "Thành viên"}</div></div>
                   </div>
-                  <span className="text-sm font-medium text-primary">{m.caloriesToday} kcal hôm nay</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-primary">{m.caloriesToday} kcal hôm nay</span>
+                    {myRole === "owner" && m.role !== "owner" && <button onClick={() => m.memberId && removeMember(m.memberId)} title="Xóa khỏi gia đình" className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>}
+                  </div>
                 </li>
               ))}
             </ul>

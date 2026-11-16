@@ -17,7 +17,7 @@ export async function GET() {
       include: { food: true },
     });
     const calories = logs.reduce((s, l) => s + l.food.calories * l.quantity, 0);
-    return { userId: m.userId, name: m.user.name, email: m.user.email, role: m.role, caloriesToday: Math.round(calories) };
+    return { userId: m.userId, memberId: m.id, name: m.user.name, email: m.user.email, role: m.role, caloriesToday: Math.round(calories) };
   }));
   return NextResponse.json({ members: totals });
 }
