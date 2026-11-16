@@ -15,7 +15,8 @@ export default function FoodsPage() {
 
   const [allFoods, setAllFoods] = useState<Food[]>([]);
   const [debouncedQ, setDebouncedQ] = useState("");
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   async function loadAll() {
     setLoading(true);
@@ -30,7 +31,7 @@ export default function FoodsPage() {
 
   // Debounce search input
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setVisibleCount(20); }, [debouncedQ]);
+  useEffect(() => { setPage(1); }, [debouncedQ]);
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q), 200);
     return () => clearTimeout(t);
@@ -40,8 +41,8 @@ export default function FoodsPage() {
   const filteredFoods = debouncedQ.trim()
     ? allFoods.filter((f) => removeDiacritics(f.name).includes(removeDiacritics(debouncedQ)))
     : allFoods;
-  const foods = filteredFoods.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredFoods.length;
+  const totalPages = Math.max(1, Math.ceil(filteredFoods.length / pageSize));
+  const foods = filteredFoods.slice((page - 1) * pageSize, page * pageSize);
 
   async function addFood(e: React.FormEvent) {
     e.preventDefault();
@@ -134,10 +135,18 @@ export default function FoodsPage() {
                 </li>
               ))}
             </ul>
-            {hasMore && (
-              <div className="px-5 py-3 border-t border-border/60 text-center">
-                <button onClick={() => setVisibleCount((c) => c + 20)} className="text-sm font-medium text-primary hover:underline">
-                  Xem thêm ({filteredFoods.length - visibleCount} món còn lại)
+            {totalPages > 1 && (
+              <div className="px-5 py-3 border-t border-border/60 flex items-center justify-between">
+                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed">
+                  ← Trước
+                </button>
+                <span className="text-xs text-muted-foreground">
+                  Trang {page} / {totalPages}
+                </span>
+                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed">
+                  Sau →
                 </button>
               </div>
             )}
