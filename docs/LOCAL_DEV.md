@@ -1,40 +1,37 @@
-# Local Dev & Test Environment: [Project Name]
+# Local Development
 
-> Runbook to get a working local stack. Follow top-down; stop at the first
-> step that fails and fix it before continuing.
+## Prerequisites
+- Docker (for Postgres)
+- Node.js 20+
+- npm 10+
 
-## 1. Required Services
-
+## Setup
 ```bash
-docker compose up -d postgres redis   # adjust to this repo's compose file
-docker compose ps                     # both must be Up (healthy)
+docker compose up -d          # Postgres on :5440
+cp .env.example .env
+npm install
+npm run db:migrate
+npm run seed                  # 20 common foods
 ```
 
-## 2. Environment Variables
-
-Copy `.env.example` → `.env`. Minimum required keys:
-
-| Variable | Example | Notes |
-|---|---|---|
-| `DATABASE_URL` | `postgresql://user:pass@localhost:5432/app_test` | separate TEST database |
-| `REDIS_URL` | `redis://localhost:6379/0` | idempotency store |
-| ... | | |
-
-NEVER commit real secrets. CI uses its own vault/env.
-
-## 3. Seed Data
-
+## Run
 ```bash
-# Load minimal seed for integration tests:
-<repo-specific seed command, e.g. uv run python scripts/seed_test_db.py>
+npm run dev                   # http://localhost:3000
 ```
 
-## 4. Verify (must all pass before Gate 2/3 work)
+## Access hosts
+- `http://localhost:3000` (loopback)
+- `http://dev-vm:3000` (configured dev host — must work, see allowedDevOrigins in next.config.ts)
 
+## Smoke test (run after any change)
 ```bash
-<test command, e.g. uv run pytest -q>        # unit
-<integration command>                          # needs services from step 1
+bash scripts/smoke.sh
 ```
+The smoke test runs through `dev-vm:3000` (not localhost) to catch cross-origin / host config regressions. It exits non-zero on any failure.
 
-If integration tests fail with connection errors, the environment is broken —
-fix THIS file's steps first, never patch app config to dodge missing services.
+## Checks before handoff to QC
+- `npm run build` (exit 0)
+- `npm run typecheck` (exit 0)
+- `npm run lint` (0 errors)
+- `npm run test` (all green)
+- `bash scripts/smoke.sh` (all green)

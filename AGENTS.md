@@ -24,6 +24,7 @@
 - **Runtime Version:** Node.js v20.20.2
 - **Core Libraries:** React 19.3, Prisma 7.10.1 (driver adapter `@prisma/adapter-pg`), `pg` 8.23, `jose` (JWT), Next.js 16.4.6
 - **Database:** PostgreSQL 16 (Docker container `nutrition-tracker-pg`, port 5440)
+- **Dev hosts:** `localhost:3000` and `dev-vm:3000` (both must work; `allowedDevOrigins` in next.config.ts)
 - **Package & Environment Manager:** npm 10.8.2, dotenv
 - **Knowledge Base Doc Sources:** Local KB (gate kb); DDD Evans Ch.2 (ubiquitous language); Refactoring UI (empty states, p.203-205)
 
@@ -42,6 +43,7 @@
 | **Prisma generate** | `npx prisma generate` | Outputs to src/generated/prisma |
 | **DB seed** | `npm run seed` | Seeds 20 common foods |
 | **Security audit** | `gate audit` | Completed; only npm tooling moderate vulns |
+| **Dev-host smoke test** | `bash scripts/smoke.sh` | Runs E2E via `dev-vm:3000` (not localhost); catches cross-origin/host config regressions |
 
 ## 3. Directory Layout & Module Boundaries
 ```text

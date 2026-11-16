@@ -114,6 +114,8 @@ Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt,
 ### 3. Điều kiện chuyển tiếp (Gate Exit)
 - Toàn bộ unit tests nội bộ của DEV chạy pass (exit 0).
 - Linter & Typecheck của dự án thoát mã 0.
+- **Build Check:** `npm run build` / `cargo build` / `go build` thoát mã 0 (không chỉ dev mode). Nếu build fail = REJECT, không bàn giao QC.
+- **Lint Policy:** Lint phải đạt 0 error; warnings phải được giải thích rõ trong PR (allowlist) hoặc fix. Warnings im lặng không được phép.
 - Mã nguồn và migration script sẵn sàng trong working tree để bàn giao cho QC.
 
 ---
@@ -126,6 +128,9 @@ Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt,
 
 ### 2. Tiêu chí kiểm duyệt (Invariants Checklist)
 - [ ] **AC Traceability:** Mọi `AC-N` trong spec bắt buộc phải có test case kiểm thử tương ứng. Thiếu test cho bất kỳ AC nào = REJECT.
+- [ ] **Build & Lint Gate:** `npm run build` (hoặc tương đương) exit 0 và lint 0 error. Chạy lại ở QC, không tin tưởng DEV's word.
+- [ ] **Dev-Host Smoke Test:** Smoke test (E2E/curl) bắt buộc phải chạy qua **host thật user dùng** (ví dụ `dev-vm:3000`), không chỉ `localhost`. Verify: page load, JS bundle load (no cross-origin block), form submit, API round-trip, cookie auth. Nếu app chỉ chạy được trên localhost = REJECT.
+- [ ] **Visual Design Review:** QC bắt buộc phải chụp screenshot (Playwright) và đối chiếu với design tokens/mockup Phase 1: typography hierarchy, spacing rhythm (4/8/12/16px), elevation, empty state có CTA, loading skeleton khớp layout. Không chỉ kiểm tra whiteout (`white_ratio < 85%`) — còn phải kiểm tra **visual fidelity** so với spec/mockup.
 - [ ] **Visual Fidelity & Anti-Whiteout Invariant:** Kiểm tra nghiệm thu giao diện (Rendering & Screenshots) TUYỆT ĐỐI không dùng assertion rỗng tuếch (ví dụ `assert!(bytes.len() > 100)`). Bắt buộc phải kiểm tra độ sâu màu sắc (`unique_colors > 500`), tỷ lệ pixel trắng (`white_ratio < 85%`) và computed styles (`getComputedStyle`) để đảm bảo CSS/layout không bị vỡ hoặc sụp thành trang trắng lỗi.
 - [ ] **Subresource & Network Lifecycle Invariant:** Đối với browser/scraper/gateway: Test không chỉ kiểm tra HTTP 200 của document HTML gốc mà bắt buộc phải audit toàn bộ subresources (`Network.responseReceived`). Fail test ngay lập tức nếu có bất kỳ file CSS, JS, Font hoặc WebGL shader nào bị HTTP 403 Forbidden, 429 hoặc Cloudflare bot challenge.
 - [ ] **Interactive Challenge State Classifier:** Khi nghiệm thu navigation/scraping: Test bắt buộc phải assert trang KHÔNG bị kẹt ở trạng thái Bot Challenge (`document.title` chứa "Just a moment...", "Attention Required!", "Security Check" hoặc DOM chứa `#challenge-running`, `.cf-turnstile`, `iframe[src*="challenges.cloudflare.com"]`). Nếu sau settle timeout trang vẫn ở Challenge State = REJECT.
