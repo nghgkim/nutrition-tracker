@@ -12,11 +12,12 @@ export default function FoodsPage() {
   const [form, setForm] = useState({ name: "", calories: "", protein: "", carbs: "", fat: "", servingSize: "" });
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
   const [allFoods, setAllFoods] = useState<Food[]>([]);
   const [debouncedQ, setDebouncedQ] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const pageSize = 15;
 
   async function loadAll() {
     setLoading(true);
@@ -65,10 +66,16 @@ export default function FoodsPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Món ăn</h1>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-card p-6 elevated">
-        <h2 className="text-sm font-semibold text-foreground">Thêm món ăn mới</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">Tạo món tuỳ chỉnh với thông tin dinh dưỡng của bạn.</p>
-        <form onSubmit={addFood} className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
+        <button onClick={() => setShowForm(!showForm)} className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-muted/40 transition-colors">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Thêm món ăn mới</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Tạo món tuỳ chỉnh với thông tin dinh dưỡng.</p>
+          </div>
+          <span className="text-muted-foreground">{showForm ? "▲" : "▼"}</span>
+        </button>
+        {showForm && (
+        <form onSubmit={addFood} className="px-5 pb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <input placeholder="Tên món *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring lg:col-span-2" />
           <input type="number" placeholder="Calo *" value={form.calories} onChange={(e) => setForm({ ...form, calories: e.target.value })} required
@@ -86,10 +93,11 @@ export default function FoodsPage() {
             <Plus className="h-4 w-4" /> {adding ? "Đang thêm..." : "Thêm món"}
           </button>
         </form>
+        )}
       </div>
 
       <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 px-5 py-4">
+        <div className="sticky top-14 z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 bg-card px-5 py-4">
           <h2 className="text-sm font-semibold text-foreground">Danh sách món ăn <span className="text-muted-foreground font-normal">({filteredFoods.length})</span></h2>
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
