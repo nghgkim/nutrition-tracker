@@ -94,6 +94,13 @@ Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt,
 
 ### 2. Tiêu chí kiểm duyệt (Invariants Checklist)
 - [ ] **Clean Architecture Boundaries:** Controller/Route Handler chỉ làm nhiệm vụ parse HTTP, gọi UseCase và trả HTTP Status. Cấm tuyệt đối việc query DB hoặc viết nghiệp vụ phức tạp trong Controller.
+- [ ] **Scaffold Checklist (khi khởi tạo project mới):** Trước khi code tính năng đầu tiên, DEV phải verify:
+  * `postcss.config` (hoặc tương đương) tồn tại và Tailwind/CSS framework được xử lý (dev mode phải render styled UI).
+  * Route protection (middleware/guard) cho protected routes (nếu có auth).
+  * `allowedDevOrigins` (hoặc tương đương) bao gồm host thật user dùng (dev-vm, etc.).
+  * `.env.example` tồn tại với tất cả env vars cần thiết.
+  * Smoke test script (`scripts/smoke.sh`) chạy qua host thật, không chỉ localhost.
+  Nếu thiếu bất kỳ item nào = REJECT, không bàn giao QC.
 - [ ] **Clean Code Rules (Robert C. Martin):**
   - Hàm làm 1 việc duy nhất; độ dài hàm $\le 30$ dòng.
   - Cấm Flag Arguments (`foo(isValid: boolean)` $\rightarrow$ tách thành `fooValid()` và `fooInvalid()`).
@@ -128,6 +135,8 @@ Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt,
 
 ### 2. Tiêu chí kiểm duyệt (Invariants Checklist)
 - [ ] **AC Traceability:** Mọi `AC-N` trong spec bắt buộc phải có test case kiểm thử tương ứng. Thiếu test cho bất kỳ AC nào = REJECT.
+- [ ] **Data Source Verification:** Mọi dữ liệu seed/mock/sample phải có nguồn gốc rõ ràng (citation: URL, book, database). Cấm tuyệt đối việc generate dữ liệu giả (placeholder như "sản phẩm 1", "Combo 1", "item X") mà không có nguồn. Nếu không có nguồn → ghi UNVERIFIED hoặc xóa. REJECT nếu phát hiện data fabricating.
+- [ ] **Spec-Before-Code (ALL features):** Mọi tính năng (kể cả "nhỏ" như dark mode, PWA, notifications) phải có mini-spec trong `docs/specs/` trước khi code. Không có spec = không code. Circuit breaker: nếu DEV code mà không có spec → QC REJECT ngay.
 - [ ] **Build & Lint Gate:** `npm run build` (hoặc tương đương) exit 0 và lint 0 error. Chạy lại ở QC, không tin tưởng DEV's word.
 - [ ] **Dev-Host Smoke Test:** Smoke test (E2E/curl) bắt buộc phải chạy qua **host thật user dùng** (ví dụ `dev-vm:3000`), không chỉ `localhost`. Verify: page load, JS bundle load (no cross-origin block), form submit, API round-trip, cookie auth. Nếu app chỉ chạy được trên localhost = REJECT.
 - [ ] **Visual Design Review:** QC bắt buộc phải chụp screenshot (Playwright) và đối chiếu với design tokens/mockup Phase 1: typography hierarchy, spacing rhythm (4/8/12/16px), elevation, empty state có CTA, loading skeleton khớp layout. Không chỉ kiểm tra whiteout (`white_ratio < 85%`) — còn phải kiểm tra **visual fidelity** so với spec/mockup.

@@ -28,6 +28,14 @@
 - **Package & Environment Manager:** npm 10.8.2, dotenv
 - **Knowledge Base Doc Sources:** Local KB (gate kb); DDD Evans Ch.2 (ubiquitous language); Refactoring UI (empty states, p.203-205)
 
+### Scaffold Checklist (verified)
+- [x] `postcss.config.mjs` with `@tailwindcss/postcss` (CSS renders in dev)
+- [x] Auth middleware (`src/middleware.ts`) protects routes
+- [x] `allowedDevOrigins` includes `dev-vm`, `localhost`, `127.0.0.1`
+- [x] `.env.example` with DATABASE_URL + JWT_SECRET
+- [x] `scripts/smoke.sh` runs through `dev-vm:3000`
+- [x] Seed data sourced from Vietnamese Food Composition Table 2007 (FAO) — no fabricated data
+
 ## 2. Local Toolchain & Execution Commands
 
 | Purpose | Command | Notes |
