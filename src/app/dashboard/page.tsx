@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { removeDiacritics } from "@/lib/normalize";
 import { Plus, Trash2, Target, Flame, Beef, Wheat, Droplet, Calendar, UtensilsCrossed, ChevronLeft, ChevronRight, Sparkles, Download } from "lucide-react";
 
 interface Food { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; }
@@ -52,9 +54,9 @@ export default function DashboardPage() {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ foodId: "", quantity: "1", mealType: "breakfast" });
+  const [foodSearch, setFoodSearch] = useState("");
+  const [foodDropdownOpen, setFoodDropdownOpen] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [goalInput, setGoalInput] = useState("");
-  const [goalEditing, setGoalEditing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const showToast = useCallback((msg: string) => {
@@ -79,8 +81,7 @@ export default function DashboardPage() {
       setLogs(logsData.logs || []);
       setFoods(foodsData.foods || []);
       setGoal(goalData.goal);
-      setGoalInput(String(goalData.goal?.dailyCalories ?? 2000));
-    } catch (e) {
+      } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
@@ -91,6 +92,11 @@ export default function DashboardPage() {
   useEffect(() => { const t = todayStr(); setToday(t); if (!date) setDate(t); }, []);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (date) load(date); }, [date]);
+  useEffect(() => {
+    function handleClick(e: MouseEvent) { if (!(e.target as HTMLElement).closest('.relative')) setFoodDropdownOpen(false); }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   async function addLog(e: React.FormEvent) {
     e.preventDefault();
@@ -106,6 +112,7 @@ export default function DashboardPage() {
       const food = foods.find(f => f.id === form.foodId);
       showToast(`Đã thêm ${food?.name ?? "món ăn"}`);
       setForm({ foodId: "", quantity: "1", mealType: form.mealType });
+    setFoodSearch("");
       load(date);
     }
   }
@@ -116,16 +123,6 @@ export default function DashboardPage() {
     load(date);
   }
 
-  async function saveGoal() {
-    await fetch("/api/goal", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dailyCalories: Number(goalInput) }),
-    });
-    setGoalEditing(false);
-    showToast("Đã cập nhật mục tiêu");
-    load(date);
-  }
 
   const totalCalories = logs.reduce((s, l) => s + l.food.calories * l.quantity, 0);
   const totalProtein = logs.reduce((s, l) => s + l.food.protein * l.quantity, 0);
@@ -195,20 +192,10 @@ export default function DashboardPage() {
               })}
             </div>
             <div className="mt-5 w-full border-t border-border/60 pt-4">
-              {goalEditing ? (
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                  <input type="number" value={goalInput} onChange={(e) => setGoalInput(e.target.value)} autoFocus
-                    className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                  <button onClick={saveGoal} className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 active:scale-[0.98]">Lưu</button>
-                  <button onClick={() => setGoalEditing(false)} className="rounded-md px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted">Huỷ</button>
-                </div>
-              ) : (
-                <button onClick={() => setGoalEditing(true)} className="flex w-full items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors">
-                  <span className="flex items-center gap-1.5"><Target className="h-3.5 w-3.5" /> Mục tiêu calo</span>
-                  <span className="font-medium text-foreground">{goalCal.toLocaleString()} kcal · Sửa</span>
-                </button>
-              )}
+              <Link href="/profile" className="flex w-full items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <span className="flex items-center gap-1.5"><Target className="h-3.5 w-3.5" /> Mục tiêu calo</span>
+                <span className="font-medium text-foreground">{goalCal.toLocaleString()} kcal · Sửa ở Hồ sơ →</span>
+              </Link>
             </div>
           </div>
         </div>
@@ -218,11 +205,28 @@ export default function DashboardPage() {
           {/* Add form */}
           <div className="rounded-2xl border border-border/60 bg-card p-5 elevated">
             <form onSubmit={addLog} className="flex flex-col sm:flex-row gap-2">
-              <select value={form.foodId} onChange={(e) => setForm({ ...form, foodId: e.target.value })} required
-                className="flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring">
-                <option value="">Chọn món ăn...</option>
-                {foods.map((f) => (<option key={f.id} value={f.id}>{f.name} — {f.calories} kcal</option>))}
-              </select>
+              <div className="relative flex-1 min-w-0">
+                <input type="text" value={foodSearch} onChange={(e) => { setFoodSearch(e.target.value); setFoodDropdownOpen(true); if (!e.target.value) setForm({ ...form, foodId: "" }); }}
+                  onFocus={() => setFoodDropdownOpen(true)} placeholder="Tìm món ăn..." required={!form.foodId}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+                {form.foodId && !foodSearch && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{foods.find(f=>f.id===form.foodId)?.name}</span>
+                )}
+                {foodDropdownOpen && (
+                  <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto rounded-lg border border-border bg-card shadow-lg">
+                    {foods.filter(f => !foodSearch || removeDiacritics(f.name).includes(removeDiacritics(foodSearch))).slice(0, 50).map((f) => (
+                      <button key={f.id} type="button" onClick={() => { setForm({ ...form, foodId: f.id }); setFoodSearch(""); setFoodDropdownOpen(false); }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between">
+                        <span className="truncate">{f.name}</span>
+                        <span className="text-xs text-muted-foreground ml-2 shrink-0">{f.calories} kcal</span>
+                      </button>
+                    ))}
+                    {foods.filter(f => !foodSearch || removeDiacritics(f.name).includes(removeDiacritics(foodSearch))).length === 0 && (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">Không tìm thấy món</div>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="flex gap-2">
                 <input type="number" step="0.1" min="0.1" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} placeholder="Phần"
                   className="w-20 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
