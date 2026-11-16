@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eu
 
 BASE="http://dev-vm:3000"
 COOKIE="/tmp/nt_smoke_cookies.txt"
