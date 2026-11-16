@@ -38,11 +38,11 @@ npm run dev   # http://localhost:3000
 
 ## Data sources
 
-Calorie and macro values for seeded foods are approximate, sourced from:
-- Bảng thành phần thực phẩm Việt Nam (National Institute of Nutrition, Vietnam Ministry of Health)
-- USDA FoodData Central (fdc.nal.usda.gov)
+Seeded food data is from the official **Vietnamese Food Composition Table 2007** (Bảng thành phần thực phẩm Việt Nam), published by the National Institute of Nutrition (Viện Dinh dưỡng), Ministry of Health (Bộ Y tế), Medical Publishing House, Hanoi. 526 foods across 14 food groups with energy, protein, fat, carbohydrate, and fiber per 100g edible portion.
 
-Values vary by preparation method. Users can create custom foods with their own values.
+Source: FAO/INFOODS — https://www.fao.org/food-composition/tables-and-databases/detail/(viet-nam--2007)-vietnamese-food-composition-table/en
+
+Values are per 100g edible portion and may vary by preparation method. Users can create custom foods with their own values.
 
 ## Spec
 
