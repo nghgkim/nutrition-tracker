@@ -29,9 +29,10 @@
 - **Knowledge Base Doc Sources:** Local KB (gate kb); DDD Evans Ch.2 (ubiquitous language); Refactoring UI (empty states, p.203-205)
 
 ### Visual Verification (required for UI changes)
-- Run `gate visual <feature>` to capture screenshots across viewports and states.
+- Run `npm run verify:ui` (Python Playwright gate) — exit 0 required, produces `docs/evidence/nutrition-tracker/visual/report.json` + 4 screenshots.
+- Then USE `read` tool to LOOK at the screenshots. Do not trust exit code alone (it only checks CSS/whiteout, not spacing/overflow).
 - Compare against design tokens: spacing (4/8/12/16/24px), typography, elevation, contrast.
-- No screenshot evidence = QC REJECT.
+- No `visual/report.json` or no screenshot review = QC REJECT.
 
 ### Scaffold Checklist (verified)
 - [x] `postcss.config.mjs` with `@tailwindcss/postcss` (CSS renders in dev)

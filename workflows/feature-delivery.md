@@ -139,15 +139,14 @@ Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt,
 - [ ] **Spec-Before-Code (ALL features):** Mọi tính năng (kể cả "nhỏ" như dark mode, PWA, notifications) phải có mini-spec trong `docs/specs/` trước khi code. Không có spec = không code. Circuit breaker: nếu DEV code mà không có spec → QC REJECT ngay.
 - [ ] **Build & Lint Gate:** `npm run build` (hoặc tương đương) exit 0 và lint 0 error. Chạy lại ở QC, không tin tưởng DEV's word.
 - [ ] **Dev-Host Smoke Test:** Smoke test (E2E/curl) bắt buộc phải chạy qua **host thật user dùng** (ví dụ `dev-vm:3000`), không chỉ `localhost`. Verify: page load, JS bundle load (no cross-origin block), form submit, API round-trip, cookie auth. Nếu app chỉ chạy được trên localhost = REJECT.
-- [ ] **Visual Design Review:** QC bắt buộc phải chụp screenshot (Playwright) và đối chiếu với design tokens/mockup Phase 1: typography hierarchy, spacing rhythm (4/8/12/16px), elevation, empty state có CTA, loading skeleton khớp layout. Không chỉ kiểm tra whiteout (`white_ratio < 85%`) — còn phải kiểm tra **visual fidelity** so với spec/mockup.
-- [ ] **Visual Verification (Screenshot Gate):** QC bắt buộc phải:
-  1. Chạy `gate visual <feature>` (Playwright) để chụp screenshot 3 viewport (1440px, 1024px, 768px, 600px) × 5 states (Empty/Loading/Error/Success/Initial).
-  2. Đối chiếu screenshot với design tokens: spacing (4/8/12/16/24px), typography hierarchy, elevation (shadow + ring), color contrast (WCAG AA 4.5:1).
-  3. Kiểm tra: không overflow, không truncate text, không element bị che, không spacing thừa/thiếu.
-  4. Nếu phát hiện visual defect → ghi vào `qa-defects.json` với type "visual", trả DEV sửa.
-  Nếu không có screenshot evidence = REJECT (không chấp nhận "tôi đã kiểm tra bằng mắt").
-- [ ] **Visual Fidelity & Anti-Whiteout Invariant:** Kiểm tra nghiệm thu giao diện (Rendering & Screenshots) TUYỆT ĐỐI không dùng assertion rỗng tuếch (ví dụ `assert!(bytes.len() > 100)`). Bắt buộc phải kiểm tra độ sâu màu sắc (`unique_colors > 500`), tỷ lệ pixel trắng (`white_ratio < 85%`) và computed styles (`getComputedStyle`) để đảm bảo CSS/layout không bị vỡ hoặc sụp thành trang trắng lỗi.
-- [ ] **Subresource & Network Lifecycle Invariant:** Đối với browser/scraper/gateway: Test không chỉ kiểm tra HTTP 200 của document HTML gốc mà bắt buộc phải audit toàn bộ subresources (`Network.responseReceived`). Fail test ngay lập tức nếu có bất kỳ file CSS, JS, Font hoặc WebGL shader nào bị HTTP 403 Forbidden, 429 hoặc Cloudflare bot challenge.
+- [ ] **Visual Verification Gate (BẮT BUỘC chạy script, không phải bằng mắt):** Gộp toàn bộ kiểm tra visual/subresource vào 1 lệnh duy nhất:
+  ```bash
+  python3 scripts/verify-ui.py <base-url> <feature>   # exit 0 = PASS, exit 1 = REJECT
+  ```
+  Script này tự động: (a) chụp screenshot 4 viewport (1440/1024/768/600), (b) audit mọi subresource CSS (`Network.responseReceived`, fail nếu 403/429/500 — bắt được bug CSS 500 trong production), (c) assert `getComputedStyle(body).backgroundColor` ≠ transparent (anti-whiteout), (d) ghi `docs/evidence/<feature>/visual/report.json`.
+  **Sau khi chạy script, QC phải dùng tool `read` để NHÌN trực tiếp ảnh screenshot** và đối chiếu: spacing (4/8/12/16/24px), typography hierarchy, elevation, overflow, truncate, element bị che. Không được chỉ tin exit code.
+  Nếu thiếu `visual/report.json` hoặc ảnh screenshot = REJECT (không chấp nhận "tôi đã kiểm tra bằng mắt").
+  Phát hiện defect → ghi `qa-defects.json` type "visual", trả DEV sửa.
 - [ ] **Interactive Challenge State Classifier:** Khi nghiệm thu navigation/scraping: Test bắt buộc phải assert trang KHÔNG bị kẹt ở trạng thái Bot Challenge (`document.title` chứa "Just a moment...", "Attention Required!", "Security Check" hoặc DOM chứa `#challenge-running`, `.cf-turnstile`, `iframe[src*="challenges.cloudflare.com"]`). Nếu sau settle timeout trang vẫn ở Challenge State = REJECT.
 - [ ] **Cross-Browser & Client Capability Invariant:** Khi cung cấp tính năng phụ thuộc giao thức đặc thù (như Chrome DevTools `chrome-devtools://`): Frontend bắt buộc phải nhận diện engine trình duyệt (`detectClientBrowser`). Nếu người dùng truy cập từ Non-Chromium (như Zen Browser, Firefox, Safari), UI phải hiển thị chỉ dẫn tương thích rõ ràng, nghiêm cấm tạo liên kết chết không mở được.
 - [ ] **Canvas Coordinate & HiDPI Scale Invariant:** Với tính năng Interactive Remote Canvas/Screencast: Phải kiểm định công thức scale tọa độ (`(clientX - left) * naturalWidth / clientWidth`), bắt buộc có guard chống `NaN` khi ảnh chưa tải xong (`rect.width == 0`), đảm bảo click chính xác 100% trên cả màn hình Retina (devicePixelRatio $\ge 2$).
@@ -171,7 +170,15 @@ Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt,
   * QC ghi log chi tiết lỗi vào `docs/evidence/<feature>/qa-defects.json` (theo schema chuẩn máy đọc).
   * Trả quyền cho **DEV** sửa lỗi theo danh sách `defects` chưa resolve.
   * **Circuit Breaker:** Tối đa 3 vòng fix-and-retry. Nếu `cycle > 3` mà lỗi Critical/High vẫn tồn tại $\rightarrow$ Dừng lại, đánh dấu `BLOCKED_NEEDS_HUMAN` và yêu cầu can thiệp.
-- **Nếu PASS:** 100% test xanh, `gate audit` sạch, file `qa-defects.json` có `status: "PASSED"` $\rightarrow$ Ký duyệt bàn giao sang DevOps.
+- **Definition of Done (tất cả phải có evidence file, không chấp nhận lời nói):**
+  | Evidence | File bắt buộc | Lệnh tạo |
+  |---|---|---|
+  | Build | `docs/evidence/<f>/build.txt` | `gate evidence <f> -- npm run build` |
+  | Smoke (host thật) | `docs/evidence/<f>/smoke.txt` | `gate evidence <f> -- bash scripts/smoke.sh` |
+  | Visual | `docs/evidence/<f>/visual/report.json` + ảnh | `python3 scripts/verify-ui.py <url> <f>` |
+  | QC defects | `docs/evidence/<f>/qa-defects.json` status PASSED | QC ghi |
+  Thiếu bất kỳ evidence nào = KHÔNG ĐƯỢC PASS, dù code chạy được.
+- **Nếu PASS:** 100% test xanh, `gate audit` sạch, 4 evidence files ở trên đầy đủ, `qa-defects.json` có `status: "PASSED"` $\rightarrow$ Ký duyệt bàn giao sang DevOps.
 
 ---
 

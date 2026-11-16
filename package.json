@@ -11,7 +11,8 @@
     "seed": "tsx prisma/seed.ts",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify:ui": "python3 scripts/verify-ui.py http://192.168.1.115:3000 nutrition-tracker"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
