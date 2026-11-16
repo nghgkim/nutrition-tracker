@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Salad, LogOut, LayoutDashboard, Utensils, History, Scale, LogIn, UserPlus } from "lucide-react";
+import { Salad, LogOut, LayoutDashboard, Utensils, History, Scale, Settings, LogIn, UserPlus } from "lucide-react";
 
 export default function Nav() {
   const pathname = usePathname();
@@ -30,6 +30,7 @@ export default function Nav() {
     { href: "/foods", label: "Món ăn", icon: Utensils },
     { href: "/history", label: "Lịch sử", icon: History },
     { href: "/weight", label: "Cân nặng", icon: Scale },
+    { href: "/settings", label: "Cài đặt", icon: Settings },
   ];
 
   return (
