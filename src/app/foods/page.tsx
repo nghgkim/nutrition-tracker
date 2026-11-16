@@ -66,12 +66,6 @@ export default function FoodsPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Món ăn</h1>
       </div>
 
-      <div className="flex justify-end">
-        <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]">
-          <Plus className="h-4 w-4" /> Thêm món ăn
-        </button>
-      </div>
-
       {/* Modal dialog */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -104,12 +98,17 @@ export default function FoodsPage() {
       )}
 
       <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
-        <div className="sticky top-14 z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/60 bg-card px-4 py-3">
-          <h2 className="text-sm font-semibold text-foreground">Danh sách món ăn <span className="text-muted-foreground font-normal">({filteredFoods.length})</span></h2>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input placeholder="Tìm kiếm..." value={q} onChange={(e) => setQ(e.target.value)}
-              className="w-full sm:w-64 rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+        <div className="sticky top-14 z-10 flex items-center justify-between gap-2 border-b border-border/60 bg-card px-3 py-2">
+          <h2 className="text-sm font-semibold text-foreground">Món ăn <span className="text-muted-foreground font-normal text-xs">({filteredFoods.length})</span></h2>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input placeholder="Tìm..." value={q} onChange={(e) => setQ(e.target.value)}
+                className="w-40 sm:w-56 rounded-lg border border-border bg-background pl-9 pr-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring" />
+            </div>
+            <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]">
+              <Plus className="h-3.5 w-3.5" /> Thêm
+            </button>
           </div>
         </div>
         {loading ? (
