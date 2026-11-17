@@ -5,25 +5,25 @@
     {
       "viewport": "1440x900",
       "body_bg": "rgb(248, 250, 252)",
-      "stylesheets": 1,
+      "stylesheets": 2,
       "css_loaded": true
     },
     {
       "viewport": "1024x768",
       "body_bg": "rgb(248, 250, 252)",
-      "stylesheets": 1,
+      "stylesheets": 2,
       "css_loaded": true
     },
     {
       "viewport": "768x1024",
       "body_bg": "rgb(248, 250, 252)",
-      "stylesheets": 1,
+      "stylesheets": 2,
       "css_loaded": true
     },
     {
       "viewport": "600x900",
       "body_bg": "rgb(248, 250, 252)",
-      "stylesheets": 1,
+      "stylesheets": 2,
       "css_loaded": true
     }
   ],

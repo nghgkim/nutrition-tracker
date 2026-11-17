@@ -19,6 +19,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
+        {/* Critical inline CSS: paints correct background before external CSS loads (prevents white flash on tab switch) */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          html,body{margin:0;background:#f8fafc;color:#0f172a}
+          html.dark,html.dark body{background:#09090b;color:#fafafa}
+          html,body{min-height:100%}
+        ` }} />
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {
@@ -30,9 +36,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 root.classList.add('dark');
                 root.style.colorScheme = 'dark';
                 root.style.background = '#09090b';
+                if (document.body) document.body.style.background = '#09090b';
               } else {
                 root.style.colorScheme = 'light';
                 root.style.background = '#f8fafc';
+                if (document.body) document.body.style.background = '#f8fafc';
               }
             } catch (e) {}
           })();
