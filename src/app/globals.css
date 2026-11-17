@@ -72,3 +72,27 @@ body {
   animation: shimmer 1.4s ease-in-out infinite;
   border-radius: 0.5rem;
 }
+
+/* Fix Chrome/Safari autofill painting a light box inside dark mode. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--foreground) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--card) inset !important;
+  box-shadow: 0 0 0px 1000px var(--card) inset !important;
+  transition: background-color 9999s ease-in-out 0s;
+  caret-color: var(--foreground);
+}
+
+/* No white flash tap highlight on touch devices in dark mode. */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Force dark form controls (select arrows, date picker, scrollbars). */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  color-scheme: dark;
+}
