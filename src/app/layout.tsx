@@ -24,6 +24,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           html,body{margin:0;background:#f8fafc;color:#0f172a}
           html.dark,html.dark body{background:#09090b;color:#fafafa}
           html,body{min-height:100%}
+          .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%}
+          html.dark .skeleton{background:linear-gradient(90deg,#1c1c1f 25%,#2a2a2e 50%,#1c1c1f 75%)!important}
         ` }} />
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {

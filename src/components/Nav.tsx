@@ -40,10 +40,11 @@ export default function Nav() {
   const primary = [
     { href: "/dashboard", label: t("dashboard"), icon: LayoutDashboard },
     { href: "/foods", label: t("foods"), icon: Utensils },
+    { href: "/what-to-eat", label: "Hôm nay ăn gì", icon: ChefHat },
   ];
   const secondary = [
-    { href: "/history", label: t("history"), icon: History },
     { href: "/what-to-eat", label: "Hôm nay ăn gì", icon: ChefHat },
+    { href: "/history", label: t("history"), icon: History },
     { href: "/profile", label: t("profile"), icon: User },
     { href: "/exercise", label: t("exercise"), icon: Dumbbell },
     { href: "/finance", label: t("finance"), icon: Wallet },
