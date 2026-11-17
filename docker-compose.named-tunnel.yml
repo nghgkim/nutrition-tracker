@@ -1,0 +1,7 @@
+# Override: thay quick tunnel bằng named tunnel (URL cố định).
+# Dùng: CF_TUNNEL_TOKEN=<token> docker compose -f docker-compose.prod.yml -f docker-compose.named-tunnel.yml up -d
+services:
+  tunnel:
+    command: tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN}
+    environment:
+      TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN}
