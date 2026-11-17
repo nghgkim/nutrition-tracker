@@ -221,3 +221,18 @@ model TrainingPlan {
   week      Json
   updatedAt DateTime @updatedAt
 }
+
+model Restaurant {
+  id         String   @id @default(cuid())
+  externalId String   @unique
+  name       String
+  address    String
+  rating     Float    @default(0)
+  photoUrl   String?
+  url        String
+  lat        Float?
+  lon        Float?
+  city       String   @default("TP.HCM")
+  source     String   @default("Foody")
+  scrapedAt  DateTime @default(now())
+}

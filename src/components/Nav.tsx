@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Salad, LogOut, LayoutDashboard, Utensils, ChevronDown, User, Settings, LogIn, UserPlus, History, Dumbbell, Wallet, Users } from "lucide-react";
+import { Salad, LogOut, LayoutDashboard, Utensils, ChevronDown, User, Settings, LogIn, UserPlus, History, Dumbbell, Wallet, Users, ChefHat } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 export default function Nav() {
@@ -43,6 +43,7 @@ export default function Nav() {
   ];
   const secondary = [
     { href: "/history", label: t("history"), icon: History },
+    { href: "/what-to-eat", label: "Hôm nay ăn gì", icon: ChefHat },
     { href: "/profile", label: t("profile"), icon: User },
     { href: "/exercise", label: t("exercise"), icon: Dumbbell },
     { href: "/finance", label: t("finance"), icon: Wallet },

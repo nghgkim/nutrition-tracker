@@ -1,0 +1,39 @@
+{
+  "base": "http://localhost:3001",
+  "feature": "whattoeat",
+  "checks": [
+    {
+      "viewport": "1440x900",
+      "body_bg": "rgb(248, 250, 252)",
+      "stylesheets": 1,
+      "css_loaded": true
+    },
+    {
+      "viewport": "1024x768",
+      "body_bg": "rgb(248, 250, 252)",
+      "stylesheets": 1,
+      "css_loaded": true
+    },
+    {
+      "viewport": "768x1024",
+      "body_bg": "rgb(248, 250, 252)",
+      "stylesheets": 1,
+      "css_loaded": true
+    },
+    {
+      "viewport": "600x900",
+      "body_bg": "rgb(248, 250, 252)",
+      "stylesheets": 1,
+      "css_loaded": true
+    }
+  ],
+  "screenshots": [
+    "docs/evidence/whattoeat/visual/login-1440x900.png",
+    "docs/evidence/whattoeat/visual/login-1024x768.png",
+    "docs/evidence/whattoeat/visual/login-768x1024.png",
+    "docs/evidence/whattoeat/visual/login-600x900.png"
+  ],
+  "failed_css": [],
+  "page_errors": [],
+  "passed": true
+}
