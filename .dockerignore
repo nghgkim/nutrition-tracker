@@ -1,0 +1,8 @@
+node_modules
+.next
+.git
+docs/evidence/*/visual/*.png
+test-results
+playwright-report
+.env
+*.log
