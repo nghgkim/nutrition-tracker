@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Plus, Mail, Crown, Trash2 } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface Member { userId: string; name: string | null; email: string; role: string; caloriesToday: number; memberId?: string; }
 
 export default function FamilyPage() {
+  const t = useT();
   const router = useRouter();
   const [family, setFamily] = useState<{ name: string } | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -16,10 +18,12 @@ export default function FamilyPage() {
   const [feed, setFeed] = useState<{ name: string | null; value: number; memberId?: string; role?: string }[]>([]);
   const [feedFeature, setFeedFeature] = useState("calo");
   const [myRole, setMyRole] = useState("");
+  const [notMember, setNotMember] = useState(false);
 
   async function load() {
     const res = await fetch("/api/family");
     if (res.status === 401) { router.push("/login"); return; }
+    if (res.status === 403) { setNotMember(true); setLoading(false); return; }
     const d = await res.json();
     setFamily(d.family);
     // role of current user found in d.members via email match is complex; fetch /api/budget/household gives role
@@ -62,8 +66,18 @@ export default function FamilyPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4">
-      <div><p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Cộng đồng</p><h1 className="text-2xl font-semibold tracking-tight">Gia đình</h1></div>
-      {!family ? (
+      <div><p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t("community")}</p><h1 className="text-2xl font-semibold tracking-tight">{t("family")}</h1></div>
+      {notMember ? (
+        <div className="rounded-2xl border border-border/60 bg-card p-8 elevated text-center">
+          <Users className="h-10 w-10 text-muted-foreground mx-auto" />
+          <h2 className="mt-3 text-lg font-semibold">Bạn chưa thuộc gia đình nào</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Tạo gia đình hoặc chờ lời mời từ thành viên khác.</p>
+          <form onSubmit={create} className="mt-5 flex gap-2 justify-center">
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên gia đình" className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" required />
+            <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"><Plus className="h-4 w-4" /> Tạo</button>
+          </form>
+        </div>
+      ) : !family ? (
         <div className="rounded-2xl border border-border/60 bg-card p-8 elevated text-center">
           <Users className="h-10 w-10 text-muted-foreground mx-auto" />
           <h2 className="mt-3 text-lg font-semibold">Tạo gia đình của bạn</h2>
@@ -110,7 +124,8 @@ export default function FamilyPage() {
               ))}
             </div>
             {feed.length === 0 ? (
-              <div className="flex flex-col items-center py-10 text-center"><Users className="h-8 w-8 text-muted-foreground" /><p className="mt-3 text-sm text-muted-foreground">Chưa có thành viên chia sẻ</p></div>
+              <div className="flex flex-col items-center py-10 text-center"><Users className="h-8 w-8 text-muted-foreground" /><p className="mt-3 text-sm text-muted-foreground">Chưa có thành viên chia sẻ</p>
+              <button onClick={() => document.querySelector<HTMLInputElement>('input[type="email"]')?.focus()} className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">Mời thành viên</button></div>
             ) : (
               <ul className="divide-y divide-border/60">
                 {feed.map(m => (<li key={m.name || ""} className="flex items-center justify-between px-5 py-3">

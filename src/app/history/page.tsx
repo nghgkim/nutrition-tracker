@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { History as HistoryIcon, Flame } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface FoodLog { id: string; quantity: number; date: string; food: { name: string; calories: number }; }
 
 export default function HistoryPage() {
+  const t = useT();
   const router = useRouter();
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +28,7 @@ export default function HistoryPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Nhật ký</p>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Lịch sử</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("history")}</h1>
       </div>
       {dates.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 px-6 py-12 text-center">

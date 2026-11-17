@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Bell, BellOff, Clock, Check, Smartphone } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface NotifPrefs {
   enabled: boolean;
@@ -28,6 +29,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 export default function SettingsPage() {
+  const t = useT();
   const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT);
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [saved, setSaved] = useState(false);
@@ -84,6 +86,8 @@ export default function SettingsPage() {
       const json = sub.toJSON();
       await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: json.endpoint, p256dh: json.keys?.p256dh, auth: json.keys?.auth }) });
       setPushSubscribed(true);
+      // Auto send a confirmation push
+      fetch("/api/push/test", { method: "POST" }).catch(() => {});
     }
   }
   async function sendTestPush() {
@@ -101,14 +105,17 @@ export default function SettingsPage() {
     setSharing(next);
     await fetch("/api/sharing", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
   }
-  async function changeLocale(l: "vi" | "en") { setLocale(l); await fetch("/api/locale", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale: l }) }); }
+  async function changeLocale(l: "vi" | "en") { setLocale(l); await fetch("/api/locale", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale: l }) }); window.dispatchEvent(new Event("localechange")); }
 
   function save(p: NotifPrefs) {
     localStorage.setItem("nt-notif", JSON.stringify(p));
     setPrefs(p);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-    scheduleNotifications(p);
+    // Persist meal times to server-side scheduler
+    ([["breakfast", p.breakfast], ["lunch", p.lunch], ["dinner", p.dinner]] as const).forEach(([mealType, time]) => {
+      fetch("/api/reminders", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mealType, time, enabled: p.enabled }) }).catch(() => {});
+    });
   }
 
   function scheduleNotifications(p: NotifPrefs) {
@@ -147,7 +154,7 @@ export default function SettingsPage() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Cài đặt</p>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Thông báo</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("settings")}</h1>
       </div>
 
       {/* Permission card */}

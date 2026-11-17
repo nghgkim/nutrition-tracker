@@ -3,10 +3,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Trash2, Apple, Flame, Wheat, Droplet } from "lucide-react";
 import { removeDiacritics } from "@/lib/normalize";
+import { useT } from "@/lib/i18n";
 
 interface Food { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; isCustom: boolean; userId: string | null; }
 
 export default function FoodsPage() {
+  const t = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", calories: "", protein: "", carbs: "", fat: "", servingSize: "" });
@@ -62,8 +64,8 @@ export default function FoodsPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-4">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Thư viện</p>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Món ăn</h1>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t("library")}</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("foods")}</h1>
       </div>
 
       {/* Modal dialog */}

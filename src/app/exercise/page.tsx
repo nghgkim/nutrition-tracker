@@ -2,11 +2,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Dumbbell, Plus, Trash2, Flame, Clock, Target, Zap } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface ExerciseLog { id: string; type: string; duration: number; calories: number; date: string; }
 const TYPES = ["Chạy bộ", "Đi bộ", "Tập gym", "Bơi", "Đạp xe", "Yoga", "Cầu lông", "Khác"];
 
 export default function ExercisePage() {
+  const t = useT();
   const router = useRouter();
   const [logs, setLogs] = useState<ExerciseLog[]>([]);
   const [goal, setGoal] = useState(300);
@@ -46,7 +48,7 @@ export default function ExercisePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4">
-      <div><p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Hoạt động</p><h1 className="text-2xl font-semibold tracking-tight">Tập luyện</h1></div>
+      <div><p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t("activity")}</p><h1 className="text-2xl font-semibold tracking-tight">{t("exercise")}</h1></div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Goal ring */}

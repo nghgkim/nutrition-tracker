@@ -3,12 +3,14 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Salad, LogOut, LayoutDashboard, Utensils, ChevronDown, User, Settings, LogIn, UserPlus, History, Dumbbell, Wallet, Users } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 export default function Nav() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<{ email: string; name: string | null } | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  const t = useT();
   const moreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,16 +38,16 @@ export default function Nav() {
   if (pathname === "/login" || pathname === "/register") return null;
 
   const primary = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/foods", label: "Món ăn", icon: Utensils },
+    { href: "/dashboard", label: t("dashboard"), icon: LayoutDashboard },
+    { href: "/foods", label: t("foods"), icon: Utensils },
   ];
   const secondary = [
-    { href: "/history", label: "Lịch sử", icon: History },
-    { href: "/profile", label: "Hồ sơ & Cân nặng", icon: User },
-    { href: "/exercise", label: "Tập luyện", icon: Dumbbell },
-    { href: "/finance", label: "Tài chính", icon: Wallet },
-    { href: "/family", label: "Gia đình", icon: Users },
-    { href: "/settings", label: "Cài đặt", icon: Settings },
+    { href: "/history", label: t("history"), icon: History },
+    { href: "/profile", label: t("profile"), icon: User },
+    { href: "/exercise", label: t("exercise"), icon: Dumbbell },
+    { href: "/finance", label: t("finance"), icon: Wallet },
+    { href: "/family", label: t("family"), icon: Users },
+    { href: "/settings", label: t("settings"), icon: Settings },
   ];
 
   return (
@@ -76,7 +78,7 @@ export default function Nav() {
               <div className="relative" ref={moreRef}>
                 <button onClick={() => setMoreOpen(!moreOpen)}
                   className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                  <span className="hidden sm:inline">Thêm</span>
+                  <span className="hidden sm:inline">{t("more")}</span>
                   <ChevronDown className={`h-4 w-4 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
                 </button>
                 {moreOpen && (
@@ -97,7 +99,7 @@ export default function Nav() {
                     <div className="border-t border-border/60 mt-1 pt-1">
                       <span className="block px-3 py-1 text-xs text-muted-foreground truncate">{user.name || user.email}</span>
                       <button onClick={logout} className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
-                        <LogOut className="h-4 w-4" /> Đăng xuất
+                        <LogOut className="h-4 w-4" /> {t("logout")}
                       </button>
                     </div>
                   </div>
@@ -107,10 +109,10 @@ export default function Nav() {
           ) : (
             <>
               <Link href="/login" className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                <LogIn className="h-4 w-4" /> <span className="hidden sm:inline">Đăng nhập</span>
+                <LogIn className="h-4 w-4" /> <span className="hidden sm:inline">{t("login")}</span>
               </Link>
               <Link href="/register" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-[0.98]">
-                <UserPlus className="h-4 w-4" /> <span className="hidden sm:inline">Đăng ký</span>
+                <UserPlus className="h-4 w-4" /> <span className="hidden sm:inline">{t("register")}</span>
               </Link>
             </>
           )}

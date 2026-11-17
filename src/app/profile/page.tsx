@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calculator, Target, Flame, Scale, Activity, User, Save, Plus, Trash2 } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 const ACTIVITY_FACTORS: Record<string, number> = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, very_active: 1.9 };
 const ACTIVITY_LABELS: Record<string, string> = { sedentary: "Ít vận động", light: "Nhẹ (1-3 buổi/tuần)", moderate: "Trung bình (3-5 buổi/tuần)", active: "Nhiều (6-7 buổi/tuần)", very_active: "Rất nhiều" };
@@ -21,6 +22,7 @@ function bmiCategory(bmi: number): { label: string; color: string } {
 interface WeightLog { id: string; weight: number; date: string; note: string | null; }
 
 export default function ProfilePage() {
+  const t = useT();
   const router = useRouter();
   const [profile, setProfile] = useState({ height: "", age: "", gender: "male", activity: "moderate", targetWeight: "" });
   const [currentWeight, setCurrentWeight] = useState("");
@@ -90,7 +92,7 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Hồ sơ</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t("profile")}</p>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Cân nặng & Mục tiêu calo</h1>
       </div>
       <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-4">

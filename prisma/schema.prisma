@@ -34,6 +34,8 @@ model User {
   budget       Budget?
   pushSubs     PushSubscription[]
   exerciseGoal ExerciseGoal?
+  reminderConfigs ReminderConfig[]
+  reminderLogs   ReminderLog[]
 }
 
 model Food {
@@ -98,6 +100,7 @@ model Family {
   householdBudget Float    @default(10000000)
   ownerId   String
   members   FamilyMember[]
+  invitations FamilyInvitation[]
   createdAt DateTime @default(now())
 }
 
@@ -174,4 +177,36 @@ model ExerciseGoal {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   calories  Int      @default(300)
   updatedAt DateTime @updatedAt
+}
+
+model ReminderConfig {
+  id       String  @id @default(cuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealType String
+  time     String
+  enabled  Boolean @default(true)
+
+  @@unique([userId, mealType])
+}
+
+model ReminderLog {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealType String
+  date     DateTime @db.Date
+  sentAt   DateTime @default(now())
+
+  @@unique([userId, mealType, date])
+}
+
+model FamilyInvitation {
+  id        String   @id @default(cuid())
+  familyId  String
+  family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  email     String
+  token     String   @unique
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
 }

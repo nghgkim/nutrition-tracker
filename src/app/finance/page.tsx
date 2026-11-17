@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Wallet, Plus, Trash2, Users, AlertTriangle } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " ₫";
 const CATS = ["Ăn uống", "Tập gym", "Mua sắm", "Di lại", "Hóa đơn", "Giải trí", "Khác"];
@@ -15,6 +16,7 @@ interface Summary {
 }
 
 export default function FinancePage() {
+  const t = useT();
   const router = useRouter();
   const [data, setData] = useState<Summary | null>(null);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -53,12 +55,12 @@ export default function FinancePage() {
 
   const pPct = Math.min(100, (data.personal.spent / (data.personal.budget || 1)) * 100);
   const hPct = Math.min(100, (data.household.spent / (data.household.budget || 1)) * 100);
-  const catMax = Math.max(...data.categories.map(c => c.amount), 1);
+  const catTotal = data.categories.reduce((s, c) => s + c.amount, 0) || 1;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4">
       <div className="flex items-center justify-between">
-        <div><p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Quản lý</p><h1 className="text-2xl font-semibold tracking-tight">Tài chính</h1></div>
+        <div><p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t("manage")}</p><h1 className="text-2xl font-semibold tracking-tight">{t("finance")}</h1></div>
         <input type="month" value={month} onChange={e => setMonth(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
       </div>
 
@@ -95,7 +97,7 @@ export default function FinancePage() {
           {data.categories.map(c => (
             <div key={c.name} className="space-y-1">
               <div className="flex justify-between text-xs"><span className="text-foreground">{c.name}</span><span className="text-muted-foreground">{fmt(c.amount)}</span></div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full bg-primary/70" style={{ width: `${(c.amount / catMax) * 100}%` }} /></div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full bg-primary/70" style={{ width: `${(c.amount / catTotal) * 100}%` }} /></div>
             </div>
           ))}
         </div>

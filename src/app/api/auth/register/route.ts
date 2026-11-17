@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     });
     await prisma.goal.create({ data: { userId: user.id } });
     const token = await signToken({ userId: user.id, email: user.email });
-    const res = NextResponse.json({ user: { id: user.id, email: user.email, name: user.name } });
+    const res = NextResponse.json({ user: { id: user.id, email: user.email, name: user.name } }, { status: 201 });
     res.cookies.set(AUTH_COOKIE, token, {
       httpOnly: true,
       sameSite: "lax",

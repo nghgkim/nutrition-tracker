@@ -6,12 +6,13 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const membership = await prisma.familyMember.findFirst({ where: { userId: user.id }, include: { family: true } });
-  if (!membership) return NextResponse.json({ family: null, members: [] });
+  if (!membership) return NextResponse.json({ error: "Not in a family" }, { status: 403 });
   const members = await prisma.familyMember.findMany({
     where: { familyId: membership.familyId },
     include: { user: { select: { id: true, name: true, email: true } } },
   });
-  return NextResponse.json({ family: membership.family, members });
+  const invitations = await prisma.familyInvitation.findMany({ where: { familyId: membership.familyId, status: "pending" } });
+  return NextResponse.json({ family: membership.family, members, invitations });
 }
 
 export async function POST(req: Request) {

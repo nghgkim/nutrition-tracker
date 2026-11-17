@@ -2,8 +2,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import WeeklyChart from "@/components/WeeklyChart";
 import { removeDiacritics } from "@/lib/normalize";
 import { Plus, Trash2, Target, Flame, Beef, Wheat, Droplet, Calendar, UtensilsCrossed, ChevronLeft, ChevronRight, Sparkles, Download } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface Food { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; }
 interface FoodLog { id: string; quantity: number; mealType: string | null; date: string; food: Food; }
@@ -46,6 +48,7 @@ function CalorieRing({ consumed, goal }: { consumed: number; goal: number }) {
 }
 
 export default function DashboardPage() {
+  const t = useT();
   const router = useRouter();
   const [date, setDate] = useState("");
   const [today, setToday] = useState("");
@@ -151,7 +154,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Tổng quan</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t("overview")}</p>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
         </div>
         <div className="inline-flex items-center rounded-lg border border-border bg-card shadow-sm">
@@ -169,6 +172,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Main grid */}
+      <WeeklyChart />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: calorie ring + macros */}
         <div className="lg:col-span-1 space-y-4">
