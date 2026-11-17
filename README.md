@@ -38,11 +38,12 @@ npm run dev   # http://localhost:3000
 
 ## Data sources
 
-Seeded food data is from the official **Vietnamese Food Composition Table 2007** (Bảng thành phần thực phẩm Việt Nam), published by the National Institute of Nutrition (Viện Dinh dưỡng), Ministry of Health (Bộ Y tế), Medical Publishing House, Hanoi. 526 foods across 14 food groups with energy, protein, fat, carbohydrate, and fiber per 100g edible portion.
+Seeded food data (1,590 items) from **Bảng thành phần thực phẩm Việt Nam 2026**, updated per **Thông tư 30/2026/TT-BYT** (effective 10/07/2026):
+- https://dulieuphapluat.vn/cong-cu/gia-tri-dinh-duong-thuc-pham.html (849 nguyên liệu)
+- https://dulieuphapluat.vn/cong-cu/gia-tri-dinh-duong-mon-an.html (741 món ăn chế biến)
 
-Source: FAO/INFOODS — https://www.fao.org/food-composition/tables-and-databases/detail/(viet-nam--2007)-vietnamese-food-composition-table/en
+Values are per 100g edible portion. Source field: `NIN2026` / `NIN2026-dish`. Regenerate with `python3 scripts/scrape-nin2026.py`.
 
-Values are per 100g edible portion and may vary by preparation method. Users can create custom foods with their own values.
 
 ## Spec
 
