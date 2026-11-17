@@ -43,8 +43,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
-html { color-scheme: light; }
-html.dark { color-scheme: dark; }
+html { color-scheme: light; background: #f8fafc; }
+html.dark { color-scheme: dark; background: #09090b; }
+html.dark body,
+html.dark body.bg-background {
+  background: #09090b !important;
+  color: #fafafa !important;
+}
 
 body {
   background: var(--background);
@@ -71,6 +76,12 @@ body {
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
   border-radius: 0.5rem;
+}
+/* Dark skeleton: locked via html.dark so it never flashes light during SPA nav */
+html.dark .skeleton,
+html.dark .skeleton * {
+  background: linear-gradient(90deg, #1c1c1f 25%, #2a2a2e 50%, #1c1c1f 75%) !important;
+  background-size: 200% 100% !important;
 }
 
 /* Fix Chrome/Safari autofill painting a light box inside dark mode. */
