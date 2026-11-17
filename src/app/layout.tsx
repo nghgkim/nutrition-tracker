@@ -25,7 +25,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               var stored = localStorage.getItem('nt-theme');
               var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
               var isDark = stored ? stored === 'dark' : prefersDark;
-              if (isDark) document.documentElement.classList.add('dark');
+              var root = document.documentElement;
+              if (isDark) {
+                root.classList.add('dark');
+                root.style.colorScheme = 'dark';
+                root.style.background = '#09090b';
+              } else {
+                root.style.colorScheme = 'light';
+                root.style.background = '#f8fafc';
+              }
             } catch (e) {}
           })();
         `}} />

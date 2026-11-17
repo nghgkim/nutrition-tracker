@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { removeDiacritics } from "@/lib/normalize";
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const url = new URL(req.url);
   const q = url.searchParams.get("q")?.trim();
-  const foods = await prisma.food.findMany({
-    where: {
-      OR: [{ userId: null }, { userId: user.id }],
-      ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
-    },
+  const all = await prisma.food.findMany({
+    where: { OR: [{ userId: null }, { userId: user.id }] },
     orderBy: { name: "asc" },
   });
+  const foods = q
+    ? all.filter((f) => removeDiacritics(f.name).includes(removeDiacritics(q)))
+    : all;
   return NextResponse.json({ foods });
 }
 

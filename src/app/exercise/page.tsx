@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Dumbbell, Plus, Trash2, Flame, Clock, Target, Zap } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import TrainingGuidance from "@/components/TrainingGuidance";
 
 interface ExerciseLog { id: string; type: string; duration: number; calories: number; date: string; }
 const TYPES = ["Chạy bộ", "Đi bộ", "Tập gym", "Bơi", "Đạp xe", "Yoga", "Cầu lông", "Khác"];
@@ -100,6 +101,8 @@ export default function ExercisePage() {
           <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} className="sm:col-span-4 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
         </form>
       </div>
+
+      <TrainingGuidance />
 
       <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
         <div className="px-5 py-3 border-b border-border/60"><h2 className="text-sm font-semibold">Lịch sử</h2></div>

@@ -36,6 +36,7 @@ model User {
   exerciseGoal ExerciseGoal?
   reminderConfigs ReminderConfig[]
   reminderLogs   ReminderLog[]
+  trainingPlan   TrainingPlan?
 }
 
 model Food {
@@ -209,4 +210,12 @@ model FamilyInvitation {
   token     String   @unique
   status    String   @default("pending")
   createdAt DateTime @default(now())
+}
+
+model TrainingPlan {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  week      Json
+  updatedAt DateTime @updatedAt
 }
