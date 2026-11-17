@@ -46,6 +46,8 @@ model Food {
   protein     Float     @default(0)
   carbs       Float     @default(0)
   fat         Float     @default(0)
+  iron        Float     @default(0)
+  calcium     Float     @default(0)
   servingSize String?
   source      String?   // data source: 'VFCT2007', 'Wikipedia', 'Nutrihome', 'estimate'
   isCustom    Boolean   @default(false)

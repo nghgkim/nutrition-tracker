@@ -61,7 +61,12 @@ def parse_detail(html, url):
     protein = grab(r"chất đạm\s+([\d.,]+)\s*g")
     fat = grab(r"chất béo\s+([\d.,]+)\s*g")
     carb = grab(r"bột đường\s+([\d.,]+)\s*g")
+    def mineral(label):
+        m = re.search(r'<th scope="row">\s*'+label+r'\s*<span[^>]*>\([^)]+\)</span></th><td[^>]*><strong>([\d.,]+)</strong>', html)
+        return num(m.group(1)) if m else 0
+    iron = mineral("Sắt"); calcium = mineral("Canxi")
     return {"name": name, "calories": cal, "protein": protein, "carbs": carb, "fat": fat,
+            "iron": iron, "calcium": calcium,
             "servingSize":"100g", "source":"NIN2026", "url": url}
 
 def parse_dish_links(html):
@@ -109,7 +114,12 @@ def main():
                 foods.append(d)
     print(f"FOODS PARSED: {len(foods)}", flush=True)
 
-    # dishes
+    # dishes (skip if DISHES=0 for mineral refresh)
+    import os
+    if os.environ.get("DISHES","1") == "0":
+        print(f"FOODS PARSED: {len(foods)}", flush=True)
+        json.dump(foods, open("/tmp/nin2026-foods.json","w"), ensure_ascii=False, indent=1)
+        return
     dlinks = set()
     for cat in DISH_CATEGORIES:
         h = fetch(f"{BASE}/cong-cu/gia-tri-dinh-duong-mon-an/{cat}.html")

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calculator, Target, Flame, Scale, Activity, User, Save, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { classifyBMI } from "@/lib/bmi-asian";
 
 const ACTIVITY_FACTORS: Record<string, number> = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, very_active: 1.9 };
 const ACTIVITY_LABELS: Record<string, string> = { sedentary: "Ít vận động", light: "Nhẹ (1-3 buổi/tuần)", moderate: "Trung bình (3-5 buổi/tuần)", active: "Nhiều (6-7 buổi/tuần)", very_active: "Rất nhiều" };
@@ -12,12 +13,7 @@ function calcBMR(w: number, h: number, a: number, g: string): number {
   return 10 * w + 6.25 * h - 5 * a - 161;
 }
 function calcBMI(w: number, h: number): number { const hh = h / 100; return w / (hh * hh); }
-function bmiCategory(bmi: number): { label: string; color: string } {
-  if (bmi < 18.5) return { label: "Thiếu cân", color: "text-blue-500" };
-  if (bmi < 25) return { label: "Bình thường", color: "text-emerald-500" };
-  if (bmi < 30) return { label: "Thừa cân", color: "text-amber-500" };
-  return { label: "Béo phì", color: "text-rose-500" };
-}
+
 
 interface WeightLog { id: string; weight: number; date: string; note: string | null; }
 
@@ -29,10 +25,12 @@ export default function ProfilePage() {
   const [goal, setGoal] = useState<"lose" | "maintain" | "gain">("maintain");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [waistInput, setWaistInput] = useState("");
   const [saved, setSaved] = useState(false);
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
   const [wForm, setWForm] = useState({ weight: "", date: new Date().toISOString().slice(0, 10), note: "" });
   const [wAdding, setWAdding] = useState(false);
+  const [recommended, setRecommended] = useState<{ calories: number; source: string } | null>(null);
 
   useEffect(() => {
     Promise.all([fetch("/api/profile"), fetch("/api/weight")]).then(async ([pRes, wRes]) => {
@@ -44,6 +42,7 @@ export default function ProfilePage() {
       const logs = wData.logs || [];
       setWeightLogs(logs);
       if (logs.length > 0) setCurrentWeight(String(logs[logs.length - 1].weight));
+      fetch("/api/nutrition/recommended").then(r => r.json()).then(setRecommended).catch(() => {});
       setLoading(false);
     });
   }, []);
@@ -60,7 +59,7 @@ export default function ProfilePage() {
   const bmr = hasData ? calcBMR(w, h, a, profile.gender) : 0;
   const tdee = hasData ? bmr * (ACTIVITY_FACTORS[profile.activity] || 1.55) : 0;
   const bmi = hasData ? calcBMI(w, h) : 0;
-  const bmiInfo = hasData ? bmiCategory(bmi) : null;
+  const bmiInfo = hasData ? classifyBMI(bmi, profile.gender as "male"|"female", waistInput ? Number(waistInput) : null) : null;
   let targetCalories = tdee;
   if (goal === "lose") targetCalories = tdee - 500;
   if (goal === "gain") targetCalories = tdee + 500;
@@ -121,8 +120,8 @@ export default function ProfilePage() {
         <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-4">
           <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Calculator className="h-4 w-4 text-primary" /> Kết quả</h2>
           <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
-            <div><div className="text-xs text-muted-foreground">BMI</div><div className={`text-2xl font-bold tracking-tight ${bmiInfo!.color}`}>{bmi.toFixed(1)}</div></div>
-            <div className={`text-sm font-medium ${bmiInfo!.color}`}>{bmiInfo!.label}</div>
+            <div><div className="text-xs text-muted-foreground">BMI</div><div className={`text-2xl font-bold tracking-tight ${bmiInfo!.color}`}>{bmiInfo!.bmi}</div></div>
+            <div className={`text-sm font-medium ${bmiInfo!.color}`}>{bmiInfo!.category}</div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 rounded-xl bg-muted/50"><div className="text-xs text-muted-foreground">BMR</div><div className="text-xl font-bold tracking-tight">{Math.round(bmr)} <span className="text-sm font-normal text-muted-foreground">kcal</span></div></div>
@@ -140,6 +139,20 @@ export default function ProfilePage() {
           </button>
         </div>
       )}
+      {recommended && (
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 elevated space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold text-foreground">🎯 Nhu cầu calo khuyến nghị</div>
+            <div className="text-2xl font-bold text-primary">{recommended.calories} <span className="text-sm font-normal text-muted-foreground">kcal/ngày</span></div>
+          </div>
+          <p className="text-[10px] text-primary/70">Nguồn: {recommended.source}</p>
+          {targetCalories !== recommended.calories && (
+            <button onClick={async () => { await fetch("/api/goal", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dailyCalories: recommended.calories }) }); setSaved(true); setTimeout(() => setSaved(false), 2000); }}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]">Áp dụng khuyến nghị</button>
+          )}
+        </div>
+      )}
+
       <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-4">
         <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Scale className="h-4 w-4 text-primary" /> Theo dõi cân nặng</h2>
         <div className="grid grid-cols-3 gap-4">
