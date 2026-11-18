@@ -118,8 +118,11 @@ Vận hành theo phương pháp luận **Spec-Driven Development (SDD)**: Xây d
   - Sơ đồ 3 tầng: Transport -> Domain Core -> Persistence.
   - Cơ chế khóa: Optimistic (`version`), Pessimistic (`SELECT FOR UPDATE`), hoặc Atomic.
   - Bảng Failure Modes: Timeout mạng, Retry Jitter, Rate Limit (429/403), Zombie processes.
-  - *(Nếu có Frontend)*: Archetype UI & 5-State Interactive Mockup (`docs/mockups/<feature>.html`).
-* **Bước 1.5: Auto-Judge Rubric Gate:** Chạy `gate judge docs/specs/<feature>.sdd.md` đạt $\ge 90/100$ điểm (Rubric bắt buộc có Mental Model Mermaid và Rejected Alternatives).
+  - *(Nếu có Frontend / UI)*: **Thiết kế Mobile-First bắt buộc (Principle VIII):**
+    - Wireframe phân cấp Mobile (375px–390px) trước desktop. Bảng dữ liệu phải có phương án responsive (chuyển sang card hoặc horizontal swipe).
+    - Touch ergonomics: Nút bấm và trigger đạt $\ge 44 \times 44\text{px}$, CTA chính neo vào Thumb Zone (vùng ngón cái chạm tới ở đáy màn hình).
+    - Archetype UI & 5-State Interactive Mockup (`docs/mockups/<feature>.html`) hiển thị mặc định giao diện mobile.
+* **Bước 1.5: Auto-Judge Rubric Gate:** Chạy `gate judge docs/specs/<feature>.sdd.md` đạt $\ge 90/100$ điểm (Rubric bắt buộc có Mental Model Mermaid, Rejected Alternatives, và Mobile-First nếu có UI).
 
 ### 3. Điều kiện chuyển tiếp (Gate Exit)
 - **HITL Mode:** File SDD `docs/specs/<feature>.sdd.md` tồn tại, AC đánh số rõ ràng, con người gõ "Duyệt".
@@ -147,6 +150,8 @@ Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt,
 * **Bước 2.4: Refactor, Pedagogical Anchors & Clean Code Discipline:**
   - Tách bạch 3 lớp: Transport (Controller) $\rightarrow$ Domain Core (Entities/UseCases) $\rightarrow$ Persistence (DB Adapters).
   - Hàm $\le 30$ dòng, không dùng flag arguments, xử lý ngoại lệ tường minh.
+  - **Mobile-First CSS Invariant:** Style mặc định không prefix áp dụng cho Mobile (375px/390px); chỉ dùng breakpoint prefix (`sm:`, `md:`, `lg:`) để scale UP lên desktop. Cấm viết style desktop-first rồi đè ngược bằng `max-md:`.
+  - **Touch & Input Invariants:** Nút bấm $\ge 44\text{px}$ chiều cao, input text font-size $\ge 16\text{px}$ tránh iOS auto-zoom, bảng dữ liệu responsive (chuyển sang card hoặc có container cuộn riêng biệt).
   - **Pedagogical Code Anchors:** Chú thích giải thích cơ chế "dưới nắp capo" (Mental Model) tại các đoạn mã then chốt (React lifecycle, async event loop, locks) để kỹ sư bảo trì và học hỏi dễ dàng.
   - **Zero Suppression Invariant:** Tuyệt đối không dùng comment ẩn lỗi (`eslint-disable`, `# noqa`, `#[allow(...)]`). Sửa tận gốc nguyên nhân.
   - Composite Index theo quy ước ESR: *Equality $\rightarrow$ Sort $\rightarrow$ Range* (DDIA, p.109).
@@ -181,9 +186,14 @@ Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt,
   - Kiểm tra mọi dữ liệu seed/mock/fixtures phải có nguồn gốc rõ ràng (URL, DB snapshot). Cấm tuyệt đối dữ liệu bịa đặt ("User 1", "Item X").
 * **Bước 3.3: Adversarial Fuzzing & Chaos Stress:**
   - Test biên: input rỗng, null, payload ký tự lạ, concurrency collisions, IDOR/BOLA tenant isolation.
-* **Bước 3.4: Modular UI Verification Suite (Chạy `scripts/verify-ui.py`):**
+* **Bước 3.4: Modular UI Verification Suite (Chạy `scripts/verify-ui.py` theo thứ tự Mobile-First):**
+  - **Trình tự Viewport bắt buộc:** Mobile Compact (375x667) $\rightarrow$ Mobile Standard (390x844) $\rightarrow$ Tablet (768x1024) $\rightarrow$ Desktop (1440x900). Mobile chạy đầu tiên, phát hiện lỗi biên lập tức chặn lại!
   - **Module 1 (Subresources):** Bắt mọi HTTP 403, 429, 500 của CSS, JS, fonts, images.
-  - **Module 2 (Layout):** Kiểm tra 100vh Studio Shell (`scrollHeight <= innerHeight`), tràn nút, rò rỉ cuộn ngang.
+  - **Module 2 (Layout & Mobile Invariants):**
+    - Kiểm tra có thẻ `<meta name="viewport" content="width=device-width, initial-scale=1.0">`.
+    - **Zero Horizontal Leak trên Mobile:** `scrollWidth <= clientWidth` trên viewports 375px và 390px. Xuất hiện thanh cuộn ngang trang = REJECT ngay.
+    - **Touch Targets Audit:** Kiểm tra kích thước bounding box của mọi button, select, trigger $\ge 44 \times 44\text{px}$ (chiều cao tối thiểu $40\text{px}$).
+    - **Studio Shell:** Kiểm tra 100vh studio constraint (`scrollHeight <= innerHeight`).
   - **Module 3 (Visual):** Anti-whiteout, background $\neq$ transparent, có stylesheets hoạt động.
   - **Module 4 (5-State):** Kiểm tra không rơi vào màn hình đen rỗng (`#000`), có fallback card cho Loading, Empty, Error.
 * **Bước 3.5: Automated Security Scan:** Chạy `gate audit` đạt 0 finding ở mức Critical/High (secrets, dependency CVEs).

@@ -44,6 +44,15 @@
 - Every defect fix MUST include a **Five Whys** root-cause breakdown to convert isolated bugs into lasting conceptual mental models.
 - AI agents MUST act as Staff Mentors during delivery: explaining under-the-hood physics, surfacing gotchas, and seeking human alignment at key decision gates instead of executing silent black-box rewrites.
 
+### Principle VIII: Mobile-First Responsive Design & Touch Ergonomics
+- Every user-facing interface, component, and user journey MUST be designed, coded, and mechanically verified **Mobile-First** (375px/390px viewports) before scaling upward to tablet (768px) and desktop (1440px).
+- **Core Mobile Invariants:**
+  1. **Zero Horizontal Leak:** On mobile viewports (375px/390px), `scrollWidth <= clientWidth` is strictly enforced. Any horizontal page spill or horizontal scrollbar is a fatal QC violation.
+  2. **Touch Target Sizing:** Primary interactive elements (buttons, inputs, select triggers, navigation controls) MUST provide a minimum touch target bounding box of **44x44px** (Apple HIG & WCAG SC 2.5.5) or minimum 40px height with adequate spacing.
+  3. **Mobile Ergonomics (Thumb Zone):** Primary actions and navigation triggers must reside within the natural reach of the user's thumb (lower screen boundary).
+  4. **Progressive Enhancement:** Base CSS rules must represent the mobile experience. Media queries and breakpoint prefixes (`sm:`, `md:`, `lg:`) are permitted ONLY to scale upward. Desktop-down degradation (`max-md:`, `max-lg:`) is strictly forbidden.
+  5. **Viewport Declaration:** HTML documents MUST include `<meta name="viewport" content="width=device-width, initial-scale=1.0">`. Text inputs must maintain minimum 16px font size on mobile to prevent automated iOS viewport zooming.
+
 ---
 
 ## Governance & Compliance

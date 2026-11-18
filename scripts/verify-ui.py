@@ -61,10 +61,10 @@ except ImportError:
     audit_5state_ui = None
 
 VIEWPORTS = [
-    {"name": "1440x900", "width": 1440, "height": 900},
-    {"name": "1024x768", "width": 1024, "height": 768},
-    {"name": "768x1024", "width": 768, "height": 1024},
-    {"name": "600x900", "width": 600, "height": 900},
+    {"name": "375x667", "width": 375, "height": 667},    # Mobile Compact (iPhone SE) - Mobile First
+    {"name": "390x844", "width": 390, "height": 844},    # Mobile Standard (iPhone / Android)
+    {"name": "768x1024", "width": 768, "height": 1024},  # Tablet Portrait
+    {"name": "1440x900", "width": 1440, "height": 900},  # Desktop Wide
 ]
 
 try:

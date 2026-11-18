@@ -147,8 +147,24 @@ All 4xx and 5xx responses MUST adhere to RFC 7807 Problem Details:
 
 ---
 
-## 6. Frontend 5-State UI Conventions
+## 6. Frontend Mobile-First & 5-State UI Conventions
 
+### 6.1 Mobile-First Responsive Architecture (Strict Invariant)
+Every frontend screen, layout, and component MUST be authored **Mobile-First**:
+- **Base Classes = Mobile First**: Default CSS/Tailwind classes apply to the mobile viewport ($320\text{px} - 390\text{px}$) without prefixes (e.g. `flex flex-col gap-3 p-4 w-full`).
+- **Progressive Breakpoints**: Breakpoint prefixes (`sm:`, `md:`, `lg:`, `xl:`) are reserved strictly for scaling upward to tablets and desktops (e.g. `md:flex-row md:p-6`).
+- **FORBIDDEN (Desktop-First Degradation)**: Never author desktop styles as default and override downward with `max-md:` or desktop-first media queries.
+- **Data Tables on Mobile**: Desktop data tables must NEVER overflow horizontally offscreen. On mobile, tables MUST either:
+  1. Transform to responsive stacked cards (`flex flex-col md:table`), or
+  2. Be wrapped in an isolated horizontal scroll container with visual scroll gradient fades (`overflow-x-auto`).
+- **Touch Ergonomics & Thumb Zone**:
+  - Interactive elements (buttons, inputs, select triggers) MUST have a minimum touch target bounding box of **$44 \times 44\text{px}$** (Apple HIG & WCAG 2.5.5).
+  - Primary call-to-action buttons on mobile should anchor to the bottom "Thumb Zone" for single-handed usability.
+- **Viewport & Text Scale**:
+  - HTML must declare `<meta name="viewport" content="width=device-width, initial-scale=1.0">`.
+  - Form input font-size must be $\ge 16\text{px}$ on mobile (`text-base md:text-sm`) to prevent iOS Safari auto-zoom on focus.
+
+### 6.2 5-State UI Completeness
 Every frontend view, component, or screen MUST explicitly implement and test all 5 states:
 
 ```text
