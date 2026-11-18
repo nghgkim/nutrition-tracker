@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { readFileSync } from "node:fs";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
@@ -73,7 +74,17 @@ async function main() {
   for (const r of restaurants) {
     await prisma.restaurant.upsert({ where: { externalId: r.externalId }, update: { priceMin: r.priceMin, priceMax: r.priceMax, district: r.district, openHours: r.openHours }, create: r });
   }
-  console.log(`Seeded ${restaurants.length} restaurants with price/district`);
+  // Cuisines from Foody detail pages, keyed by the same externalId (source data, no fabrication).
+  const cuisineData: { externalId: string; cuisines: string[] }[] = JSON.parse(
+    readFileSync("/tmp/foody-cuisines.json", "utf-8")
+  );
+  for (const c of cuisineData) {
+    await prisma.restaurant.update({
+      where: { externalId: c.externalId },
+      data: { cuisines: JSON.stringify(c.cuisines) },
+    });
+  }
+  console.log(`Seeded ${restaurants.length} restaurants with price/district; ${cuisineData.length} with cuisines`);
 }
 
 main()

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { haversine } from "@/lib/geo";
+import { filterByPrice } from "@/lib/restaurant-filter";
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -13,8 +14,7 @@ export async function GET(req: Request) {
   const maxPrice = q.get("maxPrice") ? Number(q.get("maxPrice")) : null;
   let list = await prisma.restaurant.findMany();
   if (district) list = list.filter(r => r.district?.includes(district) || r.address.includes(district));
-  if (minPrice != null) list = list.filter(r => (r.priceMax ?? Infinity) >= minPrice);
-  if (maxPrice != null) list = list.filter(r => (r.priceMin ?? 0) <= maxPrice);
+  list = filterByPrice(list, minPrice, maxPrice);
   const withDist = list.map(r => ({
     ...r,
     distanceKm: (lat != null && lon != null && r.lat != null && r.lon != null)

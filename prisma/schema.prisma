@@ -241,6 +241,7 @@ model Restaurant {
   priceMax   Float?
   district   String?
   openHours  String?
+  cuisines   String?
 }
 
 model JournalEntry {

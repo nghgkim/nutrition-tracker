@@ -1,13 +1,14 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Utensils, RefreshCw, Star, MapPin, ExternalLink, AlertCircle, ChefHat, Navigation, CalendarRange, Plus, Check, ChevronDown } from "lucide-react";
+import { Utensils, RefreshCw, Star, ExternalLink, AlertCircle, ChefHat, Navigation, CalendarRange, Plus, Check, ChevronDown } from "lucide-react";
 import { createGenerationGuard } from "@/lib/request-guard";
 import { selectDayMeals, todayPlanIndex } from "@/lib/meal-plan";
+import { matchRestaurantsForDish } from "@/lib/dish-match";
 
 interface Dish { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; source: string; }
 interface Suggestion { dish: Dish; reason: string; }
-interface Restaurant { id: string; name: string; address: string; rating: number; photoUrl: string | null; url: string; distanceKm?: number|null; priceMin?: number|null; priceMax?: number|null; district?: string|null; openHours?: string|null; }
+interface Restaurant { id: string; name: string; address: string; rating: number; photoUrl: string | null; url: string; distanceKm?: number|null; priceMin?: number|null; priceMax?: number|null; district?: string|null; openHours?: string|null; cuisines?: string|null; }
 interface MealDay { day: number; label: string; meals: { name: string; calories: number; source: string }[]; total: number; }
 interface WteData { goal: number; eaten: number; remaining: number; suggestions: Suggestion[]; }
 
@@ -147,13 +148,22 @@ export default function WhatToEatPage() {
               <div className="flex flex-col items-center py-10 text-center"><AlertCircle className="h-8 w-8 text-amber-500"/><p className="mt-3 text-sm font-medium">Bạn đã vượt mục tiêu calo hôm nay</p></div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {data.suggestions.map((s,i)=>(
-                  <div key={i} className="rounded-xl border border-border/60 p-4 space-y-2">
-                    <div className="text-sm font-medium text-foreground">{s.dish.name}</div>
-                    <div className="text-lg font-bold text-primary">{s.dish.calories} <span className="text-sm font-normal text-muted-foreground">kcal</span></div>
-                    <div className="text-xs text-muted-foreground">{s.reason}</div>
-                  </div>
-                ))}
+                {data.suggestions.map((s,i) => {
+                  const place = matchRestaurantsForDish(s.dish.name, restaurants, 1)[0];
+                  return (
+                    <div key={i} className="rounded-xl border border-border/60 p-4 space-y-2">
+                      <div className="text-sm font-medium text-foreground">{s.dish.name}</div>
+                      <div className="text-lg font-bold text-primary">{s.dish.calories} <span className="text-sm font-normal text-muted-foreground">kcal</span></div>
+                      <div className="text-xs text-muted-foreground">{s.reason}</div>
+                      {place && (
+                        <a href={place.url} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex max-w-full items-center gap-1 text-[11px] text-primary hover:underline">
+                          <span className="truncate">Quán Foody: {place.name}</span><ExternalLink className="h-3 w-3 shrink-0" />
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -204,20 +214,40 @@ export default function WhatToEatPage() {
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground">Nguồn: Foody (dữ liệu công khai, scrape 18/11/2026). Không lưu review hay dữ liệu cá nhân.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {visible.map(r=>(
-              <div key={r.id} className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
-                {r.photoUrl && <img src={r.photoUrl} alt={r.name} className="h-32 w-full object-cover" loading="lazy"/>}
-                <div className="p-4 space-y-2">
-                  <div className="text-sm font-semibold text-foreground line-clamp-2">{r.name}</div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground"><Star className="h-3.5 w-3.5 text-amber-500"/> {r.rating.toFixed(1)}{r.distanceKm!=null&&<> · <MapPin className="h-3 w-3"/>{r.distanceKm}km</>}</div>
-                  <div className="text-xs text-muted-foreground">{r.priceMin&&r.priceMax?`${fmt(r.priceMin)} – ${fmt(r.priceMax)}`:"Đang cập nhật"}{r.openHours&&` · ${r.openHours}`}</div>
-                  <div className="flex items-start gap-1 text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0"/><span className="line-clamp-2">{r.address}</span></div>
-                  <a href={r.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">Xem trên Foody <ExternalLink className="h-3 w-3"/></a>
-                </div>
-              </div>
-            ))}
-            {restaurants.length===0&&<p className="text-sm text-muted-foreground col-span-full text-center py-8">Không tìm thấy quán phù hợp bộ lọc.</p>}
+          <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card elevated">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-border/60 bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <th className="px-4 py-3 font-semibold">Tên quán</th>
+                  <th className="px-4 py-3 font-semibold">Quận / Địa chỉ</th>
+                  <th className="px-4 py-3 font-semibold">Giá</th>
+                  <th className="px-4 py-3 font-semibold">Rating</th>
+                  <th className="px-4 py-3 font-semibold">Khoảng cách</th>
+                  <th className="px-4 py-3 font-semibold">Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map(r=>(
+                  <tr key={r.id} className="border-b border-border/40 last:border-0 hover:bg-muted/30">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {r.photoUrl && <span className="h-9 w-9 shrink-0 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${r.photoUrl})` }} />}
+                        <span className="font-medium text-foreground line-clamp-2">{r.name}</span>
+                      </div>
+                    </td>
+                    <td className="max-w-[240px] px-4 py-3 text-xs text-muted-foreground">
+                      <div className="font-medium text-foreground/80">{r.district || "—"}</div>
+                      <div className="truncate" title={r.address}>{r.address}</div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">{r.priceMin&&r.priceMax?`${fmt(r.priceMin)} – ${fmt(r.priceMax)}`:"Đang cập nhật"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground"><span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500"/> {r.rating.toFixed(1)}</span></td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">{r.distanceKm!=null?`${r.distanceKm} km`:"—"}</td>
+                    <td className="px-4 py-3"><a href={r.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">Xem <ExternalLink className="h-3 w-3"/></a></td>
+                  </tr>
+                ))}
+                {restaurants.length===0&&<tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-muted-foreground">Không tìm thấy quán phù hợp bộ lọc.</td></tr>}
+              </tbody>
+            </table>
           </div>
           {restaurants.length > 0 && (
             <div className="flex flex-col items-center gap-1 pt-1">
