@@ -140,3 +140,35 @@ No change.
 - Screenshot reviewed: controls render "Trước 1 … 3 4 5 6 7 … 2644 Tiếp" with active page highlighted
 - Build/typecheck/lint PASS (Node v20.20.2); smoke 9/9; verify-ui passed=true, page_errors=[]
 - Deployed via scripts/deploy.sh; https://nutrition.nghgkim.id.vn/login -> HTTP 200
+
+## 10. Single-Screen Table (Tier 2 follow-up)
+- Problem: measured at 1280x900 the document is 1023px tall; table ends at y=928 and page controls sit at y=941, below the fold. Cause: 9 rows x 61px + title/tabs/filters stack higher than the viewport.
+- AC-1: At 1280x900 and 1280x768 the page controls and all 9 rows are visible without document scroll (the table body may scroll internally).
+- AC-2: Table header and first column stay sticky during internal scroll.
+- AC-3: Page controls remain reachable and dark mode has no flash.
+- Architecture: pure CSS/layout only; no API or state change. Failure: very short viewport -> internal table scroll, never hidden controls. QA: Playwright bounding boxes at 900/768, screenshot review.
+### Round 3 evidence (single-screen table)
+- Measured before fix (1280x900): document 1023px, table ended y=928, controls y=941 (below fold)
+- After fix: page padding py-6->py-3, panel gap-2, table wrapper max-h calc(100vh-400px) with internal scroll, sticky thead + sticky first column, controls sticky bottom
+- Playwright: document scrollHeight == innerHeight at 900px and 768px; "Trang 1 /" control fully inside viewport; page 2 button works; page_errors=[]
+- Screenshot reviewed: title, tabs, filters, table + page controls all within one screen
+- Build/typecheck/lint PASS; tests 31/31; smoke 9/9; verify-ui passed=true; URL HTTP 200
+
+## 11. Mental model / visual data flow
+```mermaid
+flowchart LR
+  C[Crawler JSON] --> S[Snapshot copy]
+  S --> I[Import script: filter + dedupe + batch]
+  I --> DB[(Restaurant 23,793 rows)]
+  DB --> R[GET /api/restaurants?limit&offset]
+  DB --> W[GET /api/what-to-eat: server-side match]
+  R --> T[Table: 9 rows + page controls]
+  W --> D[Dish cards with Foody place]
+  T --> P[page state -> new offset -> R]
+```
+
+## 12. Trade-offs & rejected alternatives
+- Rejected: keep full 500-row cap -> owner wanted the whole crawled file; accepted larger DB with paginated reads instead.
+- Rejected: ship the full 23k table to the browser (simpler client filtering) -> 314 KB+ payload and slow render; chosen server-side `where` + `limit/offset` with stable `id` tie-breaker.
+- Rejected: "Xem thêm" cumulative list -> page numbers with fixed 9 rows keep the DOM bounded and the controls within one viewport; internal table scroll retained for short screens.
+- Rejected: client-side dish matching -> would require downloading the dataset; matching happens on the server with a bounded candidate pool.

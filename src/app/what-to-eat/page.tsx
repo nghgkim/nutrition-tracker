@@ -123,7 +123,7 @@ export default function WhatToEatPage() {
   if (loading || !data) return <div className="max-w-5xl mx-auto px-4 py-6"><div className="h-96 skeleton rounded-2xl" /></div>;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 space-y-3">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Gợi ý</p>
         <h1 className="text-2xl font-semibold tracking-tight">Hôm nay ăn gì?</h1>
@@ -215,7 +215,7 @@ export default function WhatToEatPage() {
 
       {/* Tab 2: restaurants with race-safe filters + incremental loading */}
       {activeTab === "restaurants" && (
-        <div className="space-y-3" role="tabpanel">
+        <div className="flex flex-col gap-2" role="tabpanel">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-sm font-semibold flex items-center gap-2"><Utensils className="h-4 w-4 text-rose-500"/> Quán ăn TP.HCM</h2>
             <div className="flex gap-2 flex-wrap">
@@ -225,11 +225,11 @@ export default function WhatToEatPage() {
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground">Nguồn: Foody (dữ liệu công khai, scrape 18/11/2026). Không lưu review hay dữ liệu cá nhân.</p>
-          <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card elevated">
+          <div className="max-h-[calc(100vh-400px)] min-h-[240px] overflow-auto rounded-2xl border border-border/60 bg-card elevated">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
-                <tr className="border-b border-border/60 bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
-                  <th className="sticky left-0 z-10 border-r border-border/60 bg-muted/40 px-4 py-3 font-semibold">Tên quán</th>
+                <tr className="sticky top-0 z-20 border-b border-border/60 bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <th className="sticky left-0 top-0 z-30 border-r border-border/60 bg-muted/40 px-4 py-3 font-semibold">Tên quán</th>
                   <th className="px-4 py-3 font-semibold">Quận / Địa chỉ</th>
                   <th className="px-4 py-3 font-semibold">Giá</th>
                   <th className="px-4 py-3 font-semibold">Rating</th>
@@ -261,7 +261,7 @@ export default function WhatToEatPage() {
             </table>
           </div>
           {totalPages(total, PAGE_SIZE) > 1 && (
-            <div className="flex flex-col items-center gap-2 pt-1">
+            <div className="sticky bottom-0 z-10 flex flex-col items-center gap-2 rounded-xl bg-background/90 py-2 backdrop-blur">
               <span className="text-xs text-muted-foreground">Trang {page} / {totalPages(total, PAGE_SIZE)} · {total} quán</span>
               <div className="flex flex-wrap items-center justify-center gap-1">
                 <button onClick={() => loadRestaurants(page - 1)} disabled={page <= 1}
