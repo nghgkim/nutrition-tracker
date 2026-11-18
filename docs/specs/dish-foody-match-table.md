@@ -14,10 +14,12 @@
 2. Pure helper `matchRestaurantsForDish(dishName, restaurants, limit)` in `src/lib/dish-match.ts`:
    - normalize Vietnamese accents to ASCII lowercase;
    - keyword list from dish name: `com, bun, pho, banh, chao, lau, mi, hu tieu, xoi, ga, vit, cuon, huynh, bo, nuong, chien, kho, sup, dumsum, dimsum, che, thit, ca`;
-   - score = 3 if keyword appears in restaurant name, 1 if in cuisines; sum across keywords; tie-break by rating desc;
-   - return top `limit` (default 1) with score >= 3; never fabricate a match.
+   - leading bigram (first two tokens of the dish name) is a strong signal: +10 when it appears in the restaurant name;
+   - keyword score = keyword length when present in the restaurant name, +1 when present in cuisines;
+   - rank by total score desc, then rating desc; return top `limit` (default 1) with score >= 2; never fabricate a match.
 3. Dish suggestion cards show an inline row: `Quán Foody: <name>` (link) when a match exists; otherwise no row (no fake suggestion).
-4. Restaurant tab: replace card grid with a `<table>` (columns: Tên quán | Quận / Địa chỉ | Giá | Rating | Khoảng cách | Link) inside `overflow-x-auto`; keep 9-per-page "Xem thêm" pagination and all filters.
+4. Restaurant tab: replace card grid with a `<table>` (columns: Tên quán | Quận / Địa chỉ | Giá | Rating | Khoảng cách | Link) inside `overflow-x-auto`; keep 9-per-page "Xem thêm" pagination and all filters. On narrow screens the first column is sticky so the restaurant name stays visible during horizontal scroll.
+5. Price filter semantics are strict and explicit: `maxPrice` keeps only restaurants whose `priceMax <= maxPrice`; `minPrice` keeps only those whose `priceMin >= minPrice`; records without a price never satisfy an explicit bound.
 
 ### 1.2 Out-of-scope
 - Changing calorie source (stays NIN2026). Menu-item level dish data from Foody (unavailable). Mobile card view (table scrolls horizontally).
@@ -31,7 +33,9 @@ AC-5: Given suggestions loaded, When a dish has a match, Then its card shows a F
 AC-6: Given suggestions loaded, When a dish has no match, Then no Foody row is rendered on that card.
 AC-7: Given the Quán ăn tab, When opened, Then a table with 6 headers renders with exactly 9 rows.
 AC-8: Given "Xem thêm", When clicked, Then the table has 18 rows and the button count decreases.
-AC-9: Given price filter "≤ 50k", When applied, Then table rows only include restaurants whose priceMin <= 50000.
+AC-9: Given price filter "≤ 50k", When applied, Then table rows only include restaurants whose priceMax <= 50000.
+AC-11: Given two candidate restaurants, When one matches the dish's leading bigram and the other matches only one generic keyword, Then the bigram match ranks first even with a lower rating.
+AC-12: Given a 390px viewport, When the table is scrolled horizontally, Then the "Tên quán" column stays visible (sticky) and the load-more button remains reachable.
 AC-10: Given empty filter result, When rendered, Then an empty-state row spans all columns.
 
 ## 3. UX 5-state map
@@ -54,11 +58,14 @@ Emerald primary, Nordic light/dark, 4/8/12/16/24px spacing, `elevated`, Geist Sa
 - Accent variants / mixed case -> normalized before matching.
 - Filter yields zero rows -> single empty-state row; "Xem thêm" hidden when no remaining rows.
 - Stale filter response -> discarded by generation guard (previous invariant retained).
+- Price with unknown value -> excluded only when an explicit price bound is active; still shown in the unfiltered table.
+- No bigram match -> fall back to keyword score; if no keyword matches, no Foody row is rendered.
 
 ## 3e. Verification harness & QA matrix
 | Area | Type | Command / method |
 |---|---|---|
 | Matching helper | unit (TDD red-green) | `npm test -- tests/dish-match.test.ts` |
+| Price filter semantics | unit (TDD red-green) | `npm test -- tests/restaurant-filter.test.ts` |
 | Cuisine scrape | data count | `python3 scripts/scrape-foody-cuisines.py` -> >=50/60 |
 | UI states | visual | `python3 scripts/verify-ui.py` + Playwright screenshot of table + dish card |
 | Regression | full | `npm run build && typecheck && lint && test && smoke && verify:ui` |
@@ -84,4 +91,8 @@ All errors JSON `{ error: string }`. No new endpoints.
 - Playwright AC trace: 3 dish cards all show a real Foody restaurant link; table headers = [Tên quán, Quận / Địa chỉ, Giá, Rating, Khoảng cách, Link], 9 -> 18 rows on load more
 - Empty state verified with an empty API response: 1 row with colspan=6 and "Không tìm thấy quán phù hợp bộ lọc.", load-more hidden
 - Screenshots reviewed: dish suggestions with Foody rows, restaurant table with 9 rows + pagination
+- Round 2 hardening (same spec, re-judged 100/100): dish leading-bigram boost (+10) outranks generic keyword matches; strict price semantics (`priceMax <= max`, `priceMin >= min`); sticky first column on narrow screens
+- TDD red->green for round 2: bigram scenario failed on old code (generic higher-rated restaurant won), strict-price scenarios failed on overlap code; after fix npm test 19/19 PASS
+- Browser re-check: price <=50k returns 0 unknown-price rows and every row's priceMax <= 50k; at 390px viewport the first column x stayed at container edge after scrollLeft=400 (sticky PASS)
+- Screenshots reviewed: desktop suggestions with Foody rows, mobile table with sticky first column
 - Deployed via scripts/deploy.sh; https://nutrition.nghgkim.id.vn/login -> HTTP 200

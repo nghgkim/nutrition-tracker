@@ -13,16 +13,16 @@ describe("filterByPrice", () => {
     R("unknown", null, null),
   ];
 
-  it("excludes restaurants with no price when a max price is set", () => {
-    expect(filterByPrice(list, null, 50000).map(r => r.name)).toEqual(["cheap", "mid"]);
+  it("keeps only restaurants whose entire price range is within the max bound", () => {
+    expect(filterByPrice(list, null, 50000).map(r => r.name)).toEqual(["cheap"]);
   });
 
-  it("excludes restaurants with no price when a min price is set", () => {
-    expect(filterByPrice(list, 50000, null).map(r => r.name)).toEqual(["mid", "expensive"]);
+  it("keeps only restaurants whose lowest price meets the min bound", () => {
+    expect(filterByPrice(list, 50000, null).map(r => r.name)).toEqual(["expensive"]);
   });
 
-  it("combines both bounds using price-range overlap", () => {
-    expect(filterByPrice(list, 20000, 50000).map(r => r.name)).toEqual(["cheap", "mid"]);
+  it("combines both bounds strictly", () => {
+    expect(filterByPrice(list, 10000, 50000).map(r => r.name)).toEqual(["cheap"]);
   });
 
   it("keeps every restaurant when no price filter is active", () => {

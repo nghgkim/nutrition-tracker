@@ -35,6 +35,14 @@ describe("matchRestaurantsForDish", () => {
     expect(matchRestaurantsForDish("Nước ép dứa", [R("Quán Mì", "Món Việt")])).toEqual([]);
   });
 
+  it("ranks a leading-bigram match above a higher-rated generic keyword match", () => {
+    const found = matchRestaurantsForDish("Bún bò", [
+      R("Bún Mắm & Lẩu Bò", null, 9.9),
+      R("Bún Bò Huế", null, 5.0),
+    ]);
+    expect(found[0].name).toBe("Bún Bò Huế");
+  });
+
   it("respects the requested limit", () => {
     const found = matchRestaurantsForDish("Cơm gà", [
       R("Cơm Gà 1"), R("Cơm Gà 2"), R("Cơm Gà 3"),

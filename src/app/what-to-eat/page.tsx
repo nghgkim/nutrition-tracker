@@ -210,7 +210,7 @@ export default function WhatToEatPage() {
             <div className="flex gap-2 flex-wrap">
               <button onClick={askLocation} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-muted"><Navigation className="h-3.5 w-3.5"/> {geo?"Vị trí đã lấy":"Dùng vị trí"}</button>
               <select value={district} onChange={e=>setDistrict(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Mọi quận</option>{["Quận 1","Quận 3","Quận 5","Quận 7","Quận 11","Tân Phú","Bình Thạnh","Thủ Đức","Gò Vấp","Quận 10"].map(d=><option key={d}>{d}</option>)}</select>
-              <select value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Mọi giá</option><option value="30000">≤ 30k</option><option value="50000">≤ 50k</option><option value="100000">≤ 100k</option></select>
+              <select value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} title="Chỉ giữ quán có giá tối đa không vượt ngưỡng này" className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Mọi giá</option><option value="30000">≤ 30k</option><option value="50000">≤ 50k</option><option value="100000">≤ 100k</option></select>
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground">Nguồn: Foody (dữ liệu công khai, scrape 18/11/2026). Không lưu review hay dữ liệu cá nhân.</p>
@@ -218,7 +218,7 @@ export default function WhatToEatPage() {
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
                 <tr className="border-b border-border/60 bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
-                  <th className="px-4 py-3 font-semibold">Tên quán</th>
+                  <th className="sticky left-0 z-10 border-r border-border/60 bg-muted/40 px-4 py-3 font-semibold">Tên quán</th>
                   <th className="px-4 py-3 font-semibold">Quận / Địa chỉ</th>
                   <th className="px-4 py-3 font-semibold">Giá</th>
                   <th className="px-4 py-3 font-semibold">Rating</th>
@@ -228,8 +228,8 @@ export default function WhatToEatPage() {
               </thead>
               <tbody>
                 {visible.map(r=>(
-                  <tr key={r.id} className="border-b border-border/40 last:border-0 hover:bg-muted/30">
-                    <td className="px-4 py-3">
+                  <tr key={r.id} className="group border-b border-border/40 last:border-0 hover:bg-muted/30">
+                    <td className="sticky left-0 z-10 border-r border-border/60 bg-card px-4 py-3 group-hover:bg-muted/30">
                       <div className="flex items-center gap-2">
                         {r.photoUrl && <span className="h-9 w-9 shrink-0 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${r.photoUrl})` }} />}
                         <span className="font-medium text-foreground line-clamp-2">{r.name}</span>
