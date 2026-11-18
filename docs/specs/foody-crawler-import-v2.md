@@ -100,3 +100,8 @@ No Prisma model change. Reuses `Restaurant` fields. New rows set `source = "Food
 - TDD: tests/crawler-import.test.ts updated to no-cap behaviour; 25/25 tests pass
 - Build/typecheck/lint clean; smoke 9/9; verify-ui passed=true, page_errors=[]
 - Deployed via scripts/deploy.sh; https://nutrition.nghgkim.id.vn/login -> HTTP 200
+
+## 8. Paging correctness fix
+- Defect: API `orderBy: { rating: desc }` has massive ties across 23,733 venues; Postgres returns unstable row order, so offset pages overlapped (45 rows -> only 20 unique ids). Browser load-more showed duplicate restaurants.
+- Fix: stable order `[{ rating: desc }, { id: asc }]` in `src/lib/restaurant-order.ts`; unit test `tests/restaurant-pagination.test.ts` (TDD red->green) asserts the unique tie-breaker.
+- Verified: offsets 0/9/18/27/36 -> 45 rows with 45 unique ids; Playwright 3x load-more -> 36 rows with 36 unique full names.

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { haversine } from "@/lib/geo";
 import { filterByPrice } from "@/lib/restaurant-filter";
+import { RESTAURANT_ORDER } from "@/lib/restaurant-order";
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();
@@ -23,7 +24,7 @@ export async function GET(req: Request) {
   if (maxPrice != null) where.priceMax = { lte: maxPrice };
 
   const [list, total] = await prisma.$transaction([
-    prisma.restaurant.findMany({ where, take: limit, skip: offset, orderBy: { rating: "desc" } }),
+    prisma.restaurant.findMany({ where, take: limit, skip: offset, orderBy: [...RESTAURANT_ORDER] }),
     prisma.restaurant.count({ where }),
   ]);
   // Pure helper stays as a second line of defence for price semantics.
