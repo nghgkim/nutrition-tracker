@@ -46,7 +46,41 @@ Nhằm tối ưu hóa tốc độ và loại bỏ gánh nặng thủ tục (cere
 
 ---
 
-## 1. Cơ chế Lựa chọn Chế độ Thực thi (Dual-Mode Matrix)
+## 1. Cơ chế Lựa chọn Chế độ Thực thi & Cô lập Subagent (Subagent Isolation Matrix)
+
+Để loại bỏ hiện tượng **Suy giảm ngữ cảnh (Context Drift)** và **Thiên kiến xác nhận (Confirmation Bias)** giữa DEV và QC, mỗi Phase BẮT BUỘC phải được cô lập trong subagent chuyên biệt:
+
+| Phase | Subagent Role | Phạm vi Ngữ cảnh (Context Scope) | Chốt chặn đầu ra (Exit Gate) |
+|---|---|---|---|
+| **Phase 1: BA-PO** | `product-analyst` | Chỉ đọc yêu cầu nghiệp vụ, KB books. KHÔNG đọc code `src/`. | `docs/specs/<f>.md` đạt $\ge 90$đ qua Auto-Judge (`gate judge`). |
+| **Phase 2: DEV** | `software-engineer` | Nhận Spec và Contract từ Phase 1. Làm việc trên worktree độc lập. | Unit tests pass + Production Build exit 0 (`npm run build`). |
+| **Phase 3: QC** | `adversarial-qa` | **Cô lập hoàn toàn khỏi suy luận của DEV.** Chỉ nhận Spec và Code. | Suite `verify-ui.py` pass 100% + `test-run.txt` exit 0 + 0 defect. |
+| **Phase 4: DEVOPS** | `site-reliability` | Nhận mã nguồn đã verify. Kiểm tra manifests, telemetry và ephemeral DB. | `gate audit` pass + Ephemeral DB migration pass + PR generated. |
+
+### 1.1. Chuẩn hóa Tổ chức Thư mục & Tài liệu (Standard Directory Hierarchy)
+Mọi dự án trên hệ thống phải tuân thủ nghiêm ngặt cấu trúc thư mục sau:
+```
+<project-root>/
+├── AGENTS.md                  # Local stack rules, toolchain commands, ADR index
+├── workflows/
+│   └── feature-delivery.md    # Master 4-Phase pipeline contract
+├── docs/
+│   ├── specs/                 # Product specs: <feature>.md, .template-feature-spec.md
+│   ├── decisions/             # Architecture Decision Records: ADR-0001-<slug>.md
+│   ├── evidence/              # Verification proofs: <feature>/test-run.txt, visual/, qa-defects.json
+│   ├── postmortems/           # Incident RCAs: YYYY-MM-DD-<slug>.md
+│   ├── mockups/               # Interactive 5-state HTML mockups: <feature>.html
+│   └── daily/                 # Daily logs & short-term memory (DAILY.md, archive/)
+├── scripts/
+│   ├── smoke.sh               # Host connectivity smoke test
+│   ├── verify-ui.py           # Unified UI verification runner
+│   └── ui-checks/             # Modular micro-verifiers (subresources, layout, visual, states)
+└── src/ / tests/              # Source code và automated test suites
+```
+
+---
+
+## 2. Ma trận Dual-Mode (Human-in-the-Loop vs Zero-Human)
 
 Người dùng có thể kích hoạt chế độ tương ứng qua cờ lệnh hoặc câu lệnh prompt:
 
@@ -60,161 +94,151 @@ Người dùng có thể kích hoạt chế độ tương ứng qua cờ lệnh 
 
 ---
 
-## PHASE 1: BA-PO (Product, System Design & UI Mockup)
-*Skills kích hoạt: `skills/product-analyst`, `skills/api-and-domain-design`, `skills/system-design`, `skills/frontend-engineering-and-ui`, `skills/frontend-craftsman`, `skills/cli-and-sdk-craftsman`*
+## PHASE 1: BA-PO (Spec-Driven Development — SDD & System Design)
+*Subagent Role:* `product-analyst` (Isolated Context — không đọc source code `src/`)  
+*Skills kích hoạt:* `skills/product-analyst`, `skills/api-and-domain-design`, `skills/system-design`, `skills/frontend-engineering-and-ui`, `skills/frontend-craftsman`, `skills/cli-and-sdk-craftsman`
 
 ### 1. Mục tiêu
-Trả lời "tại sao / cho ai / nghiệm thu bằng gì" (PRD) và chốt hợp đồng kiến trúc (System Design & API contract), đồng thời thiết kế bộ **UI Design System & Interactive Mockup** trước khi viết bất kỳ dòng code logic nào.
-> **Invariant:** No Mockup, No Code — Không có spec, design tokens và interactive 5-state UI mockup = tuyệt đối không được chạm vào code sản xuất.
+Vận hành theo phương pháp luận **Spec-Driven Development (SDD)**: Xây dựng bản **Software Design Document (`docs/specs/<feature>.sdd.md`)** hoàn chỉnh làm Nguồn Chân lý Duy nhất (*Single Source of Truth*) trước khi viết bất kỳ dòng code logic nào.
+> **Lệnh khởi tạo nhanh:** `gate sdd new <feature-name> [title] [--archetype=crawler|backend|worker|cli|frontend]`
+> **Invariant:** No SDD, No Code (No Mockup, No Code) — Không có file SDD đạt điểm $\ge 90/100$ qua Auto-Judge = tuyệt đối không được phép chỉnh sửa source code `src/`.
 
-### 2. Tiêu chí kiểm duyệt (Invariants Checklist)
-- [ ] **Contract-First:** OpenAPI/Proto schema hoặc TypeScript interface được định nghĩa chặt chẽ.
-- [ ] **Acceptance Criteria (Gherkin):** Mọi kịch bản nghiệm thu được đánh số `AC-1`, `AC-2`... theo mẫu `Given - When - Then`.
-- [ ] **System Architecture & Bounded Contexts:** Sơ đồ phân tầng rõ ràng 3 lớp: Transport (API/REST) $\rightarrow$ Domain Core (Entities/UseCases) $\rightarrow$ Persistence (DB Adapters).
-- [ ] **Pagination Standard:** Mọi endpoint trả về danh sách lớn bắt buộc dùng Keyset/Cursor-based pagination (`after_id`/opaque token) (Geewax, p.326). Cấm dùng `OFFSET/LIMIT`.
-- [ ] **Idempotency Contract:** Các API mutating nhạy cảm (thanh toán, tạo tài nguyên quan trọng) có header `Idempotency-Key` (Geewax, p.407, 415–416).
-- [ ] **Error Specification:** Cấu trúc lỗi tuân thủ chuẩn RFC 7807 (`application/problem+json`). Cấm trả về `200 OK` kèm cờ lỗi giả tạo.
-- [ ] **UI Design System & Layout Archetype (Nếu có Frontend):**
-  - **Archetype:** Phải chọn 1 trong 4 Archetypes chuẩn: *Master-Detail Shell* (Linear/Mail), *Data-Dense Dashboard* (Stripe/Datadog), *Document Canvas* (Notion), hoặc *Multi-Step Wizard*.
-  - **Design Tokens:** Định nghĩa rõ ràng Semantic Tokens (`bg-canvas`, `bg-surface`, `border-borderSubtle`, `text-textPrimary`, `text-textMuted`, `accent`) theo Theme (*Linear Dark* hoặc *Nordic Clean Light*). Cấm hardcode màu sắc thô.
-  - **Interactive Mockup Artifact:** Tạo file mockup HTML độc lập tại `docs/mockups/<feature>.html` (dựa trên `templates/ui/app-shell.html`) chứa đủ 5 trạng thái: *1. Initial, 2. Loading Skeleton (zero-CLS), 3. Empty (có CTA), 4. Error (RFC 7807 alert + retry), 5. Success (Data grid/table)*.
-  - **Tactile Response:** Mọi tương tác click bắt buộc có `active:scale-[0.98] transition-all duration-150`.
+### 2. Quy trình 5 Bước Nhỏ (Micro-Steps Breakdown)
+* **Bước 1.1: Scope & Problem Statement:** Khởi tạo SDD từ template qua `gate sdd new <feature>`. Xác định rõ vấn đề của user, Persona và ranh giới In-scope / Out-of-scope.
+* **Bước 1.2: Numbered Gherkin ACs:** Đánh số rõ ràng `AC-1`, `AC-2`... theo cấu trúc `Given - When - Then`. Mọi tiêu chí nghiệm thu bắt buộc phải kiểm chứng được tự động (testable).
+* **Bước 1.3: Contract-First & Data Model:**
+  - API endpoint, HTTP method, header `Idempotency-Key` (Geewax, p.407).
+  - Phân trang chuẩn Keyset/Cursor-based (`after_id`/opaque token) (Geewax, p.326). Cấm dùng `OFFSET/LIMIT`.
+  - Định dạng lỗi tuân thủ RFC 7807 (`application/problem+json`).
+  - Database DDL, Composite Index theo quy tắc ESR (Equality -> Sort -> Range), migration rollback ready.
+* **Bước 1.4: Architecture, Mental Model, Concurrency & Rejected Alternatives:**
+  - **Mental Model & Visual Data Flow (Mermaid):** Sơ đồ Sequence/State Diagram trực quan mô tả luồng dữ liệu từ Client qua Boundary đến DB. Giúp kỹ sư nắm bắt bản chất trong 30 giây mà không cần đọc hàng trăm dòng code.
+  - **Trade-offs & Rejected Alternatives (Bắt buộc):** Ghi rõ ít nhất 2 phương án kiến trúc/thư viện đã được cân nhắc và lý do loại bỏ (đánh đổi về RAM, CPU, Latency, Complexity).
+  - **Key Engineering Takeaways:** Tóm tắt 2-3 bài học kiến trúc đọng lại áp dụng được cho các dự án khác.
+  - Sơ đồ 3 tầng: Transport -> Domain Core -> Persistence.
+  - Cơ chế khóa: Optimistic (`version`), Pessimistic (`SELECT FOR UPDATE`), hoặc Atomic.
+  - Bảng Failure Modes: Timeout mạng, Retry Jitter, Rate Limit (429/403), Zombie processes.
+  - *(Nếu có Frontend)*: Archetype UI & 5-State Interactive Mockup (`docs/mockups/<feature>.html`).
+* **Bước 1.5: Auto-Judge Rubric Gate:** Chạy `gate judge docs/specs/<feature>.sdd.md` đạt $\ge 90/100$ điểm (Rubric bắt buộc có Mental Model Mermaid và Rejected Alternatives).
 
 ### 3. Điều kiện chuyển tiếp (Gate Exit)
-- **HITL Mode:** `docs/specs/<feature>.md` tồn tại, mockup `docs/mockups/<feature>.html` có thể mở trên trình duyệt, AC đánh số rõ ràng, con người gõ "Duyệt".
-- **Zero-Human Mode:** Chạy lệnh `gate judge docs/specs/<feature>.md` đạt **Score $\ge 90/100$**. Nếu $< 90$, BA-PO tự động viết lại theo feedback của rubric (tối đa 3 lần).
+- **HITL Mode:** File SDD `docs/specs/<feature>.sdd.md` tồn tại, AC đánh số rõ ràng, con người gõ "Duyệt".
+- **Zero-Human Mode:** Chạy lệnh `gate judge docs/specs/<feature>.sdd.md` đạt **Score $\ge 90/100$**. Nếu $< 90$, BA-PO tự động viết lại theo feedback của rubric (tối đa 3 lần).
 
 ---
 
 ## PHASE 2: DEV (Architecture, Clean Code & Implementation)
-*Skills kích hoạt: `skills/tech-stack-architect`, `skills/database-modeling-and-access`, `skills/testing-and-refactoring`, `skills/clean-code`, `skills/frontend-craftsman`, `skills/dev-event-driven`, `skills/dev-resilient-integration`, `skills/stealth-and-browser-engineering`, `skills/reverse-engineering-and-analysis`, `skills/caching-and-data-sync`, `skills/cli-and-sdk-craftsman`, Stack Overlays*
+*Subagent Role:* `software-engineer` (Làm việc trong git branch/worktree độc lập, chỉ đọc Spec từ Phase 1)  
+*Skills kích hoạt:* `skills/tech-stack-architect`, `skills/database-modeling-and-access`, `skills/testing-and-refactoring`, `skills/clean-code`, `skills/frontend-craftsman`, `skills/dev-event-driven`, `skills/dev-resilient-integration`, `skills/stealth-and-browser-engineering`, `skills/reverse-engineering-and-analysis`, `skills/caching-and-data-sync`, `skills/cli-and-sdk-craftsman`, Stack Overlays
 
 ### 1. Mục tiêu
 Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt, tuân thủ Clean Architecture, Clean Code và các nguyên tắc Concurrency từ DDIA.
 
-### 2. Tiêu chí kiểm duyệt (Invariants Checklist)
-- [ ] **Clean Architecture Boundaries:** Controller/Route Handler chỉ làm nhiệm vụ parse HTTP, gọi UseCase và trả HTTP Status. Cấm tuyệt đối việc query DB hoặc viết nghiệp vụ phức tạp trong Controller.
-- [ ] **Scaffold Checklist (khi khởi tạo project mới):** Trước khi code tính năng đầu tiên, DEV phải verify:
-  * `postcss.config` (hoặc tương đương) tồn tại và Tailwind/CSS framework được xử lý (dev mode phải render styled UI).
-  * Route protection (middleware/guard) cho protected routes (nếu có auth).
-  * `allowedDevOrigins` (hoặc tương đương) bao gồm host thật user dùng (dev-vm, etc.).
-  * `.env.example` tồn tại với tất cả env vars cần thiết.
-  * Smoke test script (`scripts/smoke.sh`) chạy qua host thật, không chỉ localhost.
-  Nếu thiếu bất kỳ item nào = REJECT, không bàn giao QC.
-- [ ] **Clean Code Rules (Robert C. Martin):**
-  - Hàm làm 1 việc duy nhất; độ dài hàm $\le 30$ dòng.
-  - Cấm Flag Arguments (`foo(isValid: boolean)` $\rightarrow$ tách thành `fooValid()` và `fooInvalid()`).
-  - Sử dụng Exceptions / Result types chuẩn thay vì return null hoặc mã lỗi số nguyên.
-- [ ] **Frontend Component Discipline:**
-  - Tách bạch Smart Container (quản lý state/fetch query) và Presentational Component (UI thuần khiết).
-  - Không có file Component nào vượt quá 200 dòng.
-  - Mọi nút bấm và card tuân thủ đúng Design Tokens và hiệu ứng xúc giác từ Mockup Phase 1.
-- [ ] **Race Condition Defense:** Phân loại rõ bài toán: Atomic Update, Pessimistic Locking (`SELECT FOR UPDATE`), hay Optimistic Locking (`version` column) (DDIA, p.268–269; Database Internals, p.120).
-- [ ] **Composite Index (Quy ước ESR):** Thứ tự cột trong composite index: *Equality → Sort → Range* (DDIA, p.109).
-- [ ] **Zero-Downtime Migration:** Sửa đổi schema lớn đi theo quy trình Expand & Contract; có cấu hình `lock_timeout`.
-- [ ] **TDD Cycle (4 bước):**
-  1. *Red Step:* Viết test suite trước, test phải chạy và báo đỏ hợp lý.
-  2. *Green Step:* Viết lượng code sản xuất vừa đủ để test pass xanh.
-  3. *Refactor Step:* Khử trùng lặp, áp dụng Clean Code, đảm bảo Type Strictness (không `any`).
-  4. *Stack Idioms:* Pydantic v2 / uv (Python), sqlc / pgx (Go), Zod / Prisma / Vitest (TS).
+### 2. Quy trình 5 Bước Nhỏ (Micro-Steps Breakdown)
+* **Bước 2.1: Pre-Flight & Scaffold Verification:**
+  - Verify `postcss.config` / CSS engine đã sẵn sàng (không để unstyled UI).
+  - Khởi tạo `.env.example` với đầy đủ biến môi trường.
+  - Kiểm tra `scripts/smoke.sh` và `scripts/verify-ui.py` đã tồn tại trong repo.
+* **Bước 2.2: TDD Red Step (Viết test trước):**
+  - Viết test suite cho từng mã `AC-N` từ spec.
+  - Chạy test và xác nhận test báo ĐỎ hợp lý (Failing).
+* **Bước 2.3: TDD Green Step (Code sản xuất tối thiểu):**
+  - Viết code vừa đủ để test pass XANH. Không viết code thừa ngoài spec.
+* **Bước 2.4: Refactor, Pedagogical Anchors & Clean Code Discipline:**
+  - Tách bạch 3 lớp: Transport (Controller) $\rightarrow$ Domain Core (Entities/UseCases) $\rightarrow$ Persistence (DB Adapters).
+  - Hàm $\le 30$ dòng, không dùng flag arguments, xử lý ngoại lệ tường minh.
+  - **Pedagogical Code Anchors:** Chú thích giải thích cơ chế "dưới nắp capo" (Mental Model) tại các đoạn mã then chốt (React lifecycle, async event loop, locks) để kỹ sư bảo trì và học hỏi dễ dàng.
+  - **Zero Suppression Invariant:** Tuyệt đối không dùng comment ẩn lỗi (`eslint-disable`, `# noqa`, `#[allow(...)]`). Sửa tận gốc nguyên nhân.
+  - Composite Index theo quy ước ESR: *Equality $\rightarrow$ Sort $\rightarrow$ Range* (DDIA, p.109).
+  - Phân loại rõ Concurrency: Atomic Update, Pessimistic Locking (`SELECT FOR UPDATE`), hay Optimistic Locking (`version` column) (DDIA, p.268–269).
+* **Bước 2.5: Build, Typecheck & Hygiene Gate:**
+  - Chạy production build (`npm run build` / `cargo build` / `go build`) exit 0.
+  - Chạy `gate hygiene --staged` đạt 0 vi phạm (Zero inline suppression comments).
+  - Linter & Typecheck đạt 0 error. Cấm warnings im lặng.
+* **Bước 2.6: Pedagogical Debrief & Under-The-Hood Walkthrough (Chống Black-box):**
+  - Kỹ sư/Subagent tóm tắt cơ chế vận hành dưới nắp capo (CPU/Event loop, lifecycle, memory, network).
+  - Ghi nhận 2-3 bẫy kỹ thuật (gotchas) phổ biến đã được phòng ngừa.
+  - Chuẩn bị 3 câu hỏi Socratic để người dùng tự thẩm tra kiến thức.
 
 ### 3. Điều kiện chuyển tiếp (Gate Exit)
-- Toàn bộ unit tests nội bộ của DEV chạy pass (exit 0).
-- Linter & Typecheck của dự án thoát mã 0.
-- **Build Check:** `npm run build` / `cargo build` / `go build` thoát mã 0 (không chỉ dev mode). Nếu build fail = REJECT, không bàn giao QC.
-- **Lint Policy:** Lint phải đạt 0 error; warnings phải được giải thích rõ trong PR (allowlist) hoặc fix. Warnings im lặng không được phép.
-- Mã nguồn và migration script sẵn sàng trong working tree để bàn giao cho QC.
+- 100% Unit test pass (exit 0).
+- Production build sạch exit 0.
+- `gate hygiene --staged` xác nhận 0 suppression tags (`eslint-disable`, `@ts-ignore`, `# noqa`).
+- Mã nguồn và migration sẵn sàng trên branch để bàn giao sang QC.
 
 ---
 
 ## PHASE 3: QC (Adversarial Quality Control & Automated Verification)
-*Skills kích hoạt: `skills/qa-automation`, `skills/qc-frontend`, `skills/qc-backend`, `skills/qc-database`, `skills/qc-performance-load`, `skills/contract-verifier`, `skills/chaos-and-edge-hunter`, `skills/code-auditor`, `skills/app-security-hardening`, `skills/stealth-and-browser-engineering`, `skills/profiling-and-memory-optimization`, `skills/reverse-engineering-and-analysis`, `skills/caching-and-data-sync`*
+*Subagent Role:* `adversarial-qa` (Hoàn toàn độc lập khỏi DEV context — chỉ nhận Spec và Code để tìm cách đánh sập hệ thống)  
+*Skills kích hoạt:* `skills/qa-automation`, `skills/qc-frontend`, `skills/qc-backend`, `skills/qc-database`, `skills/qc-performance-load`, `skills/contract-verifier`, `skills/chaos-and-edge-hunter`, `skills/code-auditor`, `skills/app-security-hardening`, `skills/stealth-and-browser-engineering`, `skills/profiling-and-memory-optimization`, `skills/reverse-engineering-and-analysis`, `skills/caching-and-data-sync`
 
 ### 1. Mục tiêu
-Đóng vai trò đối kháng độc lập (Adversarial Tester): Thẩm định sự tương thích với Spec, săn lỗi biên, stress test và audit an ninh ứng dụng.
+Đóng vai trò đối kháng độc lập (Adversarial Tester): Thẩm định sự tương thích với Spec, săn lỗi biên, stress test, kiểm định đa tầng UI/UX và audit an ninh.
 
-### 2. Tiêu chí kiểm duyệt (Invariants Checklist)
-- [ ] **AC Traceability:** Mọi `AC-N` trong spec bắt buộc phải có test case kiểm thử tương ứng. Thiếu test cho bất kỳ AC nào = REJECT.
-- [ ] **Data Source Verification:** Mọi dữ liệu seed/mock/sample phải có nguồn gốc rõ ràng (citation: URL, book, database). Cấm tuyệt đối việc generate dữ liệu giả (placeholder như "sản phẩm 1", "Combo 1", "item X") mà không có nguồn. Nếu không có nguồn → ghi UNVERIFIED hoặc xóa. REJECT nếu phát hiện data fabricating.
-- [ ] **Spec-Before-Code (ALL features):** Mọi tính năng (kể cả "nhỏ" như dark mode, PWA, notifications) phải có mini-spec trong `docs/specs/` trước khi code. Không có spec = không code. Circuit breaker: nếu DEV code mà không có spec → QC REJECT ngay.
-- [ ] **Build & Lint Gate:** `npm run build` (hoặc tương đương) exit 0 và lint 0 error. Chạy lại ở QC, không tin tưởng DEV's word.
-- [ ] **Dev-Host Smoke Test:** Smoke test (E2E/curl) bắt buộc phải chạy qua **host thật user dùng** (ví dụ `dev-vm:3000`), không chỉ `localhost`. Verify: page load, JS bundle load (no cross-origin block), form submit, API round-trip, cookie auth. Nếu app chỉ chạy được trên localhost = REJECT.
-- [ ] **Visual Verification Gate (BẮT BUỘC chạy script, không phải bằng mắt):** Gộp toàn bộ kiểm tra visual/subresource vào 1 lệnh duy nhất:
-  ```bash
-  python3 scripts/verify-ui.py <base-url> <feature>   # exit 0 = PASS, exit 1 = REJECT
-  ```
-  Script này tự động: (a) chụp screenshot 4 viewport (1440/1024/768/600), (b) audit mọi subresource CSS (`Network.responseReceived`, fail nếu 403/429/500 — bắt được bug CSS 500 trong production), (c) assert `getComputedStyle(body).backgroundColor` ≠ transparent (anti-whiteout), (d) ghi `docs/evidence/<feature>/visual/report.json`.
-  **Sau khi chạy script, QC phải dùng tool `read` để NHÌN trực tiếp ảnh screenshot** và đối chiếu: spacing (4/8/12/16/24px), typography hierarchy, elevation, overflow, truncate, element bị che. Không được chỉ tin exit code.
-  Nếu thiếu `visual/report.json` hoặc ảnh screenshot = REJECT (không chấp nhận "tôi đã kiểm tra bằng mắt").
-  Phát hiện defect → ghi `qa-defects.json` type "visual", trả DEV sửa.
-- [ ] **Interactive Challenge State Classifier:** Khi nghiệm thu navigation/scraping: Test bắt buộc phải assert trang KHÔNG bị kẹt ở trạng thái Bot Challenge (`document.title` chứa "Just a moment...", "Attention Required!", "Security Check" hoặc DOM chứa `#challenge-running`, `.cf-turnstile`, `iframe[src*="challenges.cloudflare.com"]`). Nếu sau settle timeout trang vẫn ở Challenge State = REJECT.
-- [ ] **Cross-Browser & Client Capability Invariant:** Khi cung cấp tính năng phụ thuộc giao thức đặc thù (như Chrome DevTools `chrome-devtools://`): Frontend bắt buộc phải nhận diện engine trình duyệt (`detectClientBrowser`). Nếu người dùng truy cập từ Non-Chromium (như Zen Browser, Firefox, Safari), UI phải hiển thị chỉ dẫn tương thích rõ ràng, nghiêm cấm tạo liên kết chết không mở được.
-- [ ] **Canvas Coordinate & HiDPI Scale Invariant:** Với tính năng Interactive Remote Canvas/Screencast: Phải kiểm định công thức scale tọa độ (`(clientX - left) * naturalWidth / clientWidth`), bắt buộc có guard chống `NaN` khi ảnh chưa tải xong (`rect.width == 0`), đảm bảo click chính xác 100% trên cả màn hình Retina (devicePixelRatio $\ge 2$).
-- [ ] **Hardware Fingerprint Consistency Invariant:** Profile stealth phải đồng nhất giữa OS và phần cứng: Chạy kiểm tra WebGL context (`webgl2` phải khả dụng, không được null do `--disable-gpu`); WebGL Vendor/Renderer phải che giấu dấu vết máy chủ Linux headless (`SwiftShader` / `llvmpipe`).
-- [ ] **Client UX Race & Streaming Invariant:** Khi có cơ chế polling ngầm (`setInterval`, SSE, WebSocket screencast):
-  * **Input Protection:** Background polling TUYỆT ĐỐI không được mutate/overwrite giá trị ô input khi người dùng đang focus/typing (`document.activeElement`).
-  * **Flicker Elimination:** Luồng cập nhật hình ảnh/screencast bắt buộc phải dùng kỹ thuật preloading ngầm (Double-Buffering) hoặc Canvas, nghiêm cấm xóa/gán lại thẻ `<img>` trực tiếp gây giật nhấp nháy màn hình.
-- [ ] **UI/UX & Viewport Invariants (Bắt buộc cho mọi ứng dụng/thay đổi có Frontend / Dashboard):**
-  * **100vh Zero-Scroll Studio Shell:** Cấm cuộn dọc toàn trang trên desktop viewports (`document.documentElement.scrollHeight <= window.innerHeight`). Khu vực canvas/làm việc chính phải chiếm >= 70% chiều cao khả dụng, không bị đè bẹp bởi headers/metrics cards to tướng.
-  * **5-State UI Verification:** Mọi màn hình/component bắt buộc phải hiển thị đúng và có fallback card thẩm mỹ ở cả 5 trạng thái (`Empty`, `Loading`, `Error/Fallback`, `Disconnected/Retained`, `Success`). Nghiêm cấm để giật layout, tụt thanh công cụ, hoặc rơi vào màn hình đen rỗng (`#000`).
-  * **Defensive Flexbox Overflow:** Mọi hàng ngang chứa text động (IDs, titles, badges) bắt buộc phải có `min-width: 0`, text ellipsis, các nút bấm action phải có `flex-shrink: 0`, và danh sách cuộn phải có `scrollbar-gutter: stable; overflow-x: hidden;` để ngăn tràn nút khi xuất hiện scrollbar.
-  * **User-Intent Retention Invariant:** Đối với cơ chế retain preview/state: Chỉ lưu trạng thái khi có hành động click hoặc tương tác rõ ràng từ người dùng (`isUserClick = true`). Mọi session/tác vụ chạy ngầm do hệ thống tự auto-select khi tắt phải dọn dẹp sạch sẽ, không lưu rác.
-  * **Deterministic Automated UI Test:** Kiểm tra giao diện bắt buộc phải có bài test E2E (Playwright) tự động assert 0 scroll và 0 button overflow qua các viewport (`1440px`, `1024px`, `768px`, `600px`).
-- [ ] **Negative & Chaos Testing:** Kiểm tra biên (Edge cases): input rỗng, null, chuỗi quá dài, payload ký tự lạ, concurrency collisions.
-- [ ] **BOLA/IDOR Defense:** Kiểm tra tenant/user ownership trên từng request độc lập (OWASP Sheet; WAHH, p.312–313).
-- [ ] **Automated Security Scan:** Chạy `gate audit` đạt 0 finding ở mức Critical/High (quét secrets, dependency CVEs, SAST).
-- [ ] **Evidence Capture:** Lưu trữ toàn bộ kết quả kiểm thử vào `docs/evidence/<feature>/test-run.txt` thông qua `gate evidence`, kèm báo cáo lỗi `docs/evidence/<feature>/qa-defects.json`.
+### 2. Quy trình 6 Bước Nhỏ (Micro-Steps Breakdown)
+* **Bước 3.1: AC Traceability Check:** Đối chiếu từng `AC-N` trong spec với test suites. Thiếu test cho bất kỳ AC nào = REJECT ngay.
+* **Bước 3.2: Data Integrity & Anti-Fabrication Audit:**
+  - Kiểm tra mọi dữ liệu seed/mock/fixtures phải có nguồn gốc rõ ràng (URL, DB snapshot). Cấm tuyệt đối dữ liệu bịa đặt ("User 1", "Item X").
+* **Bước 3.3: Adversarial Fuzzing & Chaos Stress:**
+  - Test biên: input rỗng, null, payload ký tự lạ, concurrency collisions, IDOR/BOLA tenant isolation.
+* **Bước 3.4: Modular UI Verification Suite (Chạy `scripts/verify-ui.py`):**
+  - **Module 1 (Subresources):** Bắt mọi HTTP 403, 429, 500 của CSS, JS, fonts, images.
+  - **Module 2 (Layout):** Kiểm tra 100vh Studio Shell (`scrollHeight <= innerHeight`), tràn nút, rò rỉ cuộn ngang.
+  - **Module 3 (Visual):** Anti-whiteout, background $\neq$ transparent, có stylesheets hoạt động.
+  - **Module 4 (5-State):** Kiểm tra không rơi vào màn hình đen rỗng (`#000`), có fallback card cho Loading, Empty, Error.
+* **Bước 3.5: Automated Security Scan:** Chạy `gate audit` đạt 0 finding ở mức Critical/High (secrets, dependency CVEs).
+* **Bước 3.6: Defect Tracking & Circuit Breaker Auto-Rollback:**
+  - Nếu có lỗi: QC xuất `docs/evidence/<feature>/qa-defects.json`. DEV sửa và QC re-test (tối đa 3 vòng).
+  - **Auto-Rollback Trigger:** Nếu `cycle > 3` mà lỗi Critical/High chưa giải quyết: Hệ thống tự động kích hoạt `git reset` hoặc `git stash` hoàn nguyên working tree về trạng thái sạch, gắn cờ `BLOCKED_NEEDS_HUMAN` và dừng lại báo cáo rào cản kỹ thuật.
 
-### 3. Điều kiện chuyển tiếp (Gate Exit) & Vòng lặp phản hồi
-- **Nếu phát hiện lỗi (Defects):**
-  * QC ghi log chi tiết lỗi vào `docs/evidence/<feature>/qa-defects.json` (theo schema chuẩn máy đọc).
-  * Trả quyền cho **DEV** sửa lỗi theo danh sách `defects` chưa resolve.
-  * **Circuit Breaker:** Tối đa 3 vòng fix-and-retry. Nếu `cycle > 3` mà lỗi Critical/High vẫn tồn tại $\rightarrow$ Dừng lại, đánh dấu `BLOCKED_NEEDS_HUMAN` và yêu cầu can thiệp.
-- **Definition of Done (tất cả phải có evidence file, không chấp nhận lời nói):**
-  | Evidence | File bắt buộc | Lệnh tạo |
-  |---|---|---|
-  | Build | `docs/evidence/<f>/build.txt` | `gate evidence <f> -- npm run build` |
-  | Smoke (host thật) | `docs/evidence/<f>/smoke.txt` | `gate evidence <f> -- bash scripts/smoke.sh` |
-  | Visual | `docs/evidence/<f>/visual/report.json` + ảnh | `python3 scripts/verify-ui.py <url> <f>` |
-  | QC defects | `docs/evidence/<f>/qa-defects.json` status PASSED | QC ghi |
-  Thiếu bất kỳ evidence nào = KHÔNG ĐƯỢC PASS, dù code chạy được.
-- **Nếu PASS:** 100% test xanh, `gate audit` sạch, 4 evidence files ở trên đầy đủ, `qa-defects.json` có `status: "PASSED"` $\rightarrow$ Ký duyệt bàn giao sang DevOps.
+### 3. Điều kiện chuyển tiếp (Gate Exit)
+- Bắt buộc đầy đủ 4 bằng chứng:
+  1. `docs/evidence/<f>/test-run.txt` (exit code: 0)
+  2. `docs/evidence/<f>/smoke.txt` (chạy qua host thật dev-vm exit 0)
+  3. `docs/evidence/<f>/visual/report.json` (`"passed": true`)
+  4. `docs/evidence/<f>/qa-defects.json` (`status: "PASSED"`, 0 unresolved defect)
+- Thiếu bất kỳ file nào = REJECT, không cho phép bàn giao sang DevOps.
 
 ---
 
 ## PHASE 4: DEVOPS (Packaging, Manifests & Release)
-*Skills kích hoạt: `skills/k8s-manifest-hardening`, `skills/observability-and-release`, `skills/ops-release-strategies`, `skills/linux-ops-troubleshooting`, `skills/cicd-pipeline-engineering`*
+*Subagent Role:* `site-reliability` (Quản trị hạ tầng, cấu hình triển khai an toàn và release)  
+*Skills kích hoạt:* `skills/k8s-manifest-hardening`, `skills/observability-and-release`, `skills/ops-release-strategies`, `skills/linux-ops-troubleshooting`, `skills/cicd-pipeline-engineering`
 
 ### 1. Mục tiêu
 Đảm bảo khả năng quan sát (observability), cấu hình triển khai an toàn, kịch bản rollback và quy trình phát hành tin cậy.
 
-### 2. Tiêu chí kiểm duyệt (Invariants Checklist)
-- [ ] **Structured Telemetry:** Log dạng JSON có gắn kèm `trace_id` / `correlation_id` (Distributed Systems Obs, p.23–24).
-- [ ] **RED & 4 Golden Signals:** Metrics Prometheus về Rate, Errors, Duration và Saturation (Google SRE, p.86).
-- [ ] **Two-Tier Graceful Shutdown:** Xử lý bắt tín hiệu `SIGTERM` (TLPI, p.437), drain requests và giải phóng DB connection pool trước khi thoát.
-- [ ] **Kubernetes Manifest Hardening:** Resource limits/requests đầy đủ; `securityContext: runAsNonRoot: true`, drop ALL capabilities; liveness/readiness probes độc lập.
-
-### 3. Điều kiện chuyển tiếp (Gate Exit)
-- **HITL Mode:** Xuất báo cáo Delivery Report và Kế hoạch triển khai Tầng 2 (lệnh migrate/deploy) để con người phê duyệt.
-- **Zero-Human Mode:**
-  1. Dựng sandbox kiểm thử tạm thời (Ephemeral Staging / Docker Compose), chạy Smoke Test.
-  2. Tự động commit, push branch `feat/<feature>`, và tạo **Pull Request (PR)** trên Git kèm bảng tổng kết và bằng chứng test. Tuyệt đối không tự ý deploy đè production thật.
+### 2. Quy trình 5 Bước Nhỏ (Micro-Steps Breakdown)
+* **Bước 4.1: Ephemeral DB Sandbox Test (`gate db test`):**
+  - Chạy migration UP $\rightarrow$ DOWN $\rightarrow$ UP trong container Postgres độc lập để xác nhận tính an toàn rollback.
+* **Bước 4.2: Infrastructure & K8s Hardening:**
+  - Resource requests/limits đầy đủ; `securityContext: runAsNonRoot: true`, drop ALL capabilities; liveness/readiness probes độc lập.
+* **Bước 4.3: Observability & Telemetry Invariants:**
+  - Structured JSON logs có gắn `trace_id` / `correlation_id`.
+  - Two-tier Graceful Shutdown: bắt `SIGTERM`, drain request và giải phóng kết nối DB.
+* **Bước 4.4: Rollback & Release Runbook:**
+  - Lập tài liệu kế hoạch rollback chi tiết (Database down migration, `kubectl rollout undo`).
+* **Bước 4.5: PR Packaging, Pedagogical Debrief & Delivery Handover (`gate pr create`):**
+  - Tổng hợp toàn bộ bằng chứng từ 4 Phase vào `docs/evidence/<feature>/PR_DESCRIPTION.md`.
+  - **Bắt buộc đính kèm 3 khối nội dung sư phạm (Anti-Blackbox):**
+    1. *Under-the-Hood Mechanics*: Sơ đồ Mermaid sequence & cơ chế runtime giải thích luồng dữ liệu.
+    2. *Trade-offs & Rejected Alternatives*: Tại sao chọn giải pháp này và từ chối các phương án khác.
+    3. *Socratic Mastery Questions*: 3 câu hỏi đào sâu cơ chế để kỹ sư tự rà soát.
+  - **Session Handover Block:** Chạy `gate status` / `gate next` và in rõ 3 hành động cụ thể tiếp theo cùng lệnh thực thi tương ứng.
+  - Mở Git Pull Request (không deploy đè production).
 
 ---
 
-## PHASE 5: INCIDENT RCA & BLAMELESS POSTMORTEM (Continuous Defect-to-Test Invariant Loop)
-*Skills kích hoạt: `skills/incident-rca-and-postmortem`, `skills/qa-automation`, `skills/profiling-and-memory-optimization`, `skills/linux-ops-troubleshooting`*
+## PHASE 5: DAILY KNOWLEDGE INGESTION & DEFECT-TO-INVARIANT LOOP
+*Mục đích:* Tích lũy bài học sự cố hàng ngày và cập nhật bộ nhớ dài hạn cho toàn bộ hệ sinh thái.
 
-### 1. Mục tiêu
-Chuyển hóa mọi sự cố sản xuất, lỗi kiểm thử lọt lưới (QC blind spot/false-green) và suy thoái hiệu năng thành tài sản tri thức và bộ kiểm thử tự động (Automation Test) vĩnh viễn trong CI, ngăn chặn triệt để nguy cơ tái diễn.
-
-### 2. Tiêu chí kiểm duyệt (Invariants Checklist)
-- [ ] **Blameless Culture (Google SRE Ch.15):** Phân tích tập trung 100% vào lỗ hổng hệ thống, quy trình và công cụ kiểm thử. Tuyệt đối không quy kết lỗi cá nhân.
-- [ ] **Chronological Timeline (UTC):** Tái dựng chính xác timeline từ $T_0$ (nguồn cơn), $T_{\text{detect}}$ (phát hiện), $T_{\text{triage}}$, $T_{\text{mitigate}}$ (phục hồi) đến $T_{\text{resolve}}$ (vá vĩnh viễn).
-- [ ] **5 Whys Deep Causal Chain:** Truy vết từ Triệu chứng (Symptom) $\rightarrow$ Nguyên nhân trực tiếp $\rightarrow$ Nguyên nhân kiến trúc $\rightarrow$ Nguyên nhân gốc rễ (Lỗ hổng kiểm thử / Blind spot).
-- [ ] **Mandatory CI Automation Invariant (Zero-Talk Mandate):** Mọi RCA bắt buộc phải đi kèm 1 test case tái hiện lỗi trong CI: Test phải FAIL trên mã nguồn cũ bị lỗi và PASS trên mã nguồn mới đã vá. Không có test tự động = Postmortem bị REJECT.
-- [ ] **Action Items SLA:** Phân loại rõ P0 (chặn lỗi ngay trong 24h), P1 (kiến trúc bền vững trong sprint), P2 (giám sát/cảnh báo).
-- [ ] **Postmortem Artifact:** Lưu trữ đầy đủ tại `docs/postmortems/YYYY-MM-DD-<incident-slug>.md`.
+### 1. Quy trình Quản lý Tri thức Hàng ngày (Daily Workflow)
+1. **Active Working Buffer (`docs/daily/DAILY.md`):** Lưu trữ nhật ký 3–5 ngày gần nhất của dự án (Done, Obstacles, Invariants mới).
+2. **Postmortem to Invariant Ingestion:** Khi có sự cố hoặc bug lọt lưới:
+   - Viết blameless postmortem tại `docs/postmortems/YYYY-MM-DD-<slug>.md`.
+   - Bắt buộc tạo **1 automated test case** bổ sung vào CI suite (chứng minh test fail trên code cũ và pass trên code mới).
+   - Mã hóa invariant mới vào `scripts/ui-checks/` hoặc `workflows/feature-delivery.md`.
+3. **Weekly Archival:** Định kỳ cuối tuần chuyển ngày cũ vào `docs/daily/archive/YYYY-MM.md`.
 
 ---
 
@@ -226,9 +250,24 @@ Chuyển hóa mọi sự cố sản xuất, lỗi kiểm thử lọt lưới (QC
 - **Tier:** [Tier 1 Patch | Tier 2 Minor | Tier 3 Major]
 
 - [x] **Phase 1 (BA-PO):** Spec validated (Gherkin ACs, Contract Schema, 5-State UI). Score: [95/100].
-- [x] **Phase 2 (DEV):** Architecture aligned, DB migration safe (ESR index), TDD all GREEN.
+- [x] **Phase 2 (DEV):** Architecture aligned, DB migration safe (ESR index), TDD all GREEN, Zero suppressions (`gate hygiene`).
 - [x] **Phase 3 (QC):** 100% AC Traceability verified, Chaos/Edge cases passed, `gate audit` 0 findings.
 - [x] **Phase 4 (DevOps):** Structured JSON logs active, SIGTERM graceful drain, PR created / Staging verified.
 
-**Evidence Artifacts:** `docs/evidence/<feature>/test-run.txt`
+#### 1. Under-the-Hood Runtime Mechanics
+- [Tóm tắt luồng dữ liệu, vòng đời bộ nhớ, event loop hoặc cơ chế khóa]
+
+#### 2. Trade-offs & Rejected Alternatives
+- **Đã chọn:** [Giải pháp X]
+- **Từ chối:** [Phương án Y vì lý do...]
+
+#### 3. Socratic Mastery Questions (Kiểm tra hiểu sâu)
+1. [Câu hỏi 1 về cơ chế luồng dữ liệu / concurrency]
+2. [Câu hỏi 2 về giới hạn tài nguyên hoặc failure mode]
+3. [Câu hỏi 3 về cách thức hoạt động ở tầng OS/Network/DB]
+
+#### 4. Session Handover & Next Horizon
+- **Trạng thái hiện tại:** [Hoàn thành Phase X, branch clean]
+- **Lệnh thực thi tiếp theo:** `gate next` hoặc `gate scout`
+- **Hành động cụ thể:** [1. Khởi động feature mới | 2. Review PR | 3. Nghiên cứu sâu qua `gate explain <topic>`]
 ```

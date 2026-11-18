@@ -31,9 +31,18 @@
 - Major production incidents require a blameless postmortem published via `gate postmortem publish`.
 
 ### Principle VI: Zero Suppression & Transparent Diagnostics (Never Hide Bugs)
-- Silencing compiler warnings, linter diagnostics, or type checkers using inline suppression flags (ESLint disable directives, TypeScript ignore directives, Python noqa/type-ignore comments, Go nolint directives, Rust allow attributes) is strictly prohibited.
+- Silencing compiler warnings, linter diagnostics, or type checkers using inline suppression flags (`eslint-disable`, `@ts-ignore`, `@ts-nocheck`, `# noqa`, `# type: ignore`, `//nolint`, `#[allow(...)]`) is strictly prohibited.
 - Every compiler and linter warning is treated as a latent production bug. Fix the root cause in the code or adjust project-level configuration in `eslint.config.mjs` / `pyproject.toml` / `Cargo.toml` with documented architectural rationale.
 - The Git pre-commit hook mechanically enforces `gate hygiene`. Any commit containing inline suppression comments is rejected immediately with exit 1.
+
+### Principle VII: Human Mastery, Pedagogical Transparency & Anti-Blackbox Delivery
+- Extreme automation MUST NOT create an "AI Knowledge Silo" that leaves human engineers blind to system mechanics or excluded from the learning loop.
+- Every architectural deliverable, non-trivial refactor, or complex feature specification MUST articulate:
+  1. **Mental Model & Data Flow**: A visual diagram (Mermaid) and first-principles mechanism explanation.
+  2. **Rejected Alternatives & Trade-offs**: At least two alternative designs evaluated and rejected, detailing trade-offs (memory, CPU, latency, operational complexity).
+  3. **Key Engineering Takeaways**: Generalizable lessons to build engineer mastery.
+- Every defect fix MUST include a **Five Whys** root-cause breakdown to convert isolated bugs into lasting conceptual mental models.
+- AI agents MUST act as Staff Mentors during delivery: explaining under-the-hood physics, surfacing gotchas, and seeking human alignment at key decision gates instead of executing silent black-box rewrites.
 
 ---
 

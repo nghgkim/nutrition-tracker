@@ -191,9 +191,36 @@ Never hide defects or sweep compiler/linter warnings under the rug. Prohibited i
 
 | Ecosystem | Prohibited Suppression Syntax | Resolution Rule |
 |-----------|-------------------------------|-----------------|
-| **TypeScript / JS** | ESLint disable directives, TypeScript ignore / check-suppression directives | Fix root cause in code or configure project policy in `eslint.config.mjs` |
-| **Python** | noqa comments, type-ignore comments, pylint/ruff disable comments | Fix types / syntax or configure `pyproject.toml` |
-| **Go** | nolint directives | Refactor struct/types or configure `.golangci.yml` |
-| **Rust** | allow attributes for unused, dead-code and warning diagnostics | Remove dead code or resolve compiler diagnostic |
+| **TypeScript / JS** | `eslint-disable`, `@ts-ignore`, `@ts-nocheck`, `@ts-expect-error` | Fix root cause in code or configure project policy in `eslint.config.mjs` |
+| **Python** | `# noqa`, `# type: ignore`, `# pylint: disable`, `# ruff: noqa` | Fix types / syntax or configure `pyproject.toml` |
+| **Go** | `//nolint`, `//nolint:...` | Refactor struct/types or configure `.golangci.yml` |
+| **Rust** | `#[allow(unused)]`, `#[allow(dead_code)]`, `#[allow(warnings)]` | Remove dead code or resolve compiler diagnostic |
 
 **Enforcement:** Pre-commit hook runs `gate hygiene` on every commit. Any prohibited suppression tag blocks the commit immediately.
+
+---
+
+## 10. Pedagogical & Transparency Invariants (Anti-Blackbox)
+
+Every engineering artifact produced by agents or contributors must be designed for human comprehension, situational awareness, and learning:
+
+### 10.1 Specifications & Design Documents (`docs/specs/*.md`)
+- **Mental Model & Data Flow**: Must include a visual Mermaid diagram showing component relationships and dataflow from boundary to persistence.
+- **Trade-offs & Rejected Alternatives**: Must document at least 2 alternative architectures or libraries evaluated and rejected, detailing technical trade-offs (memory RSS, latency, cognitive load, lock contention).
+- **Key Engineering Takeaways**: Must document generalizable mental models that engineers can take to other projects.
+
+### 10.2 Bugfixes & Micro-RCAs (`gate fix`)
+- Must document the **Five Whys** root-cause breakdown in `docs/evidence/<bug-name>/micro-rca.md`:
+  1. *Why 1 (Symptom)*: What user-observable failure occurred?
+  2. *Why 2 (Direct Cause)*: What state or variable triggered the failure?
+  3. *Why 3 (Code Flaw)*: What code logic permitted the invalid state?
+  4. *Why 4 (Test Gap)*: Why did existing CI tests fail to catch this earlier?
+  5. *Why 5 (Root Invariant)*: What architectural principle was violated?
+
+### 10.3 Interactive Mentorship Checkpoint
+- Before implementing complex state changes or migrations, the agent must present the core mental model and key trade-offs, seeking human alignment at decision gates.
+- Developers can inspect any file or concept under the hood at any time using:
+  ```bash
+  gate explain <file-path>       # Deep walkthrough: purpose, mechanics, gotchas, book grounding
+  gate explain "<concept-name>"   # First-principles mental model tutorial
+  ```
