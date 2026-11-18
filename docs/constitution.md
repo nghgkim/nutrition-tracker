@@ -30,6 +30,11 @@
 - Every defect, flaky test, or regression encountered must be recorded in `docs/daily/DAILY.md` with an automated invariant to prevent recurrence.
 - Major production incidents require a blameless postmortem published via `gate postmortem publish`.
 
+### Principle VI: Zero Suppression & Transparent Diagnostics (Never Hide Bugs)
+- Silencing compiler warnings, linter diagnostics, or type checkers using inline suppression flags (ESLint disable directives, TypeScript ignore directives, Python noqa/type-ignore comments, Go nolint directives, Rust allow attributes) is strictly prohibited.
+- Every compiler and linter warning is treated as a latent production bug. Fix the root cause in the code or adjust project-level configuration in `eslint.config.mjs` / `pyproject.toml` / `Cargo.toml` with documented architectural rationale.
+- The Git pre-commit hook mechanically enforces `gate hygiene`. Any commit containing inline suppression comments is rejected immediately with exit 1.
+
 ---
 
 ## Governance & Compliance

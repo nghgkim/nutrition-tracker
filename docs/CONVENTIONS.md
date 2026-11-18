@@ -182,3 +182,18 @@ When any defect, test failure, or production bug occurs:
 2. Write a deterministic test case that reproduces the defect in RED status.
 3. Fix the code to turn the test GREEN.
 4. Record the new test name as a permanent **CI Test Invariant** in `DAILY.md`.
+
+---
+
+## 9. Zero Linter & Type Suppression Invariant (Anti-Hiding)
+
+Never hide defects or sweep compiler/linter warnings under the rug. Prohibited in production source code:
+
+| Ecosystem | Prohibited Suppression Syntax | Resolution Rule |
+|-----------|-------------------------------|-----------------|
+| **TypeScript / JS** | ESLint disable directives, TypeScript ignore / check-suppression directives | Fix root cause in code or configure project policy in `eslint.config.mjs` |
+| **Python** | noqa comments, type-ignore comments, pylint/ruff disable comments | Fix types / syntax or configure `pyproject.toml` |
+| **Go** | nolint directives | Refactor struct/types or configure `.golangci.yml` |
+| **Rust** | allow attributes for unused, dead-code and warning diagnostics | Remove dead code or resolve compiler diagnostic |
+
+**Enforcement:** Pre-commit hook runs `gate hygiene` on every commit. Any prohibited suppression tag blocks the commit immediately.

@@ -37,13 +37,18 @@ export default function Nav() {
 
   if (pathname === "/login" || pathname === "/register") return null;
 
+  // Two primary destinations; related pages live in the grouped overflow menu.
   const primary = [
     { href: "/dashboard", label: t("dashboard"), icon: LayoutDashboard },
-    { href: "/foods", label: t("foods"), icon: Utensils },
-    { href: "/what-to-eat", label: "Hôm nay ăn gì", icon: ChefHat },
+    { href: "/what-to-eat", label: "Ăn uống", icon: ChefHat },
   ];
-  // "Hôm nay ăn gì" is a primary link; the overflow menu is grouped by purpose.
   const moreGroups = [
+    {
+      label: "Ăn uống",
+      items: [
+        { href: "/foods", label: "Thư viện món ăn", icon: Utensils },
+      ],
+    },
     {
       label: "Theo dõi",
       items: [
@@ -82,7 +87,7 @@ export default function Nav() {
             <>
               {primary.map((l) => {
                 const Icon = l.icon;
-                const active = pathname === l.href;
+                const active = pathname === l.href || (l.href === "/what-to-eat" && pathname === "/foods");
                 return (
                   <Link key={l.href} href={l.href}
                     className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
