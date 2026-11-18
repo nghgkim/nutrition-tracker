@@ -105,3 +105,38 @@ No Prisma model change. Reuses `Restaurant` fields. New rows set `source = "Food
 - Defect: API `orderBy: { rating: desc }` has massive ties across 23,733 venues; Postgres returns unstable row order, so offset pages overlapped (45 rows -> only 20 unique ids). Browser load-more showed duplicate restaurants.
 - Fix: stable order `[{ rating: desc }, { id: asc }]` in `src/lib/restaurant-order.ts`; unit test `tests/restaurant-pagination.test.ts` (TDD red->green) asserts the unique tie-breaker.
 - Verified: offsets 0/9/18/27/36 -> 45 rows with 45 unique ids; Playwright 3x load-more -> 36 rows with 36 unique full names.
+
+## 9. Numbered Pagination (Tier 2 follow-up)
+### Problem & scope
+- "Xem thêm" appends cumulatively; user wants classic page numbers (1, 2, 3 ...), Previous/Next and total pages.
+
+### Acceptance criteria (Gherkin)
+AC-1: Given 23,793 venues and 9 per page, When the table opens, Then page 1 is selected and "Trang 1 / 2644" is shown.
+AC-2: Given page 1, When "2" or "Next" is clicked, Then exactly 9 new rows replace the old ones (no append).
+AC-3: Given page 2, When "Previous" is clicked, Then page 1 rows return.
+AC-4: Given page 1, When "Previous" is clicked, Then it is disabled.
+AC-5: Given the last page, When "Next" is clicked, Then it is disabled.
+AC-6: Given a filter change, When results reload, Then page resets to 1.
+AC-7: Given many pages, When rendered, Then the page list is windowed with ellipsis markers (no thousands of buttons).
+AC-8: Given stable order, When switching pages, Then no venue id appears twice across pages.
+
+### Architecture / failure modes / QA
+- Pure helper `src/lib/pagination.ts`: `totalPages(total, pageSize)` and `pageWindow(current, total, span)` returning numbers and `"…"`; unit-tested TDD.
+- Local state `page` (1-based); offset = (page - 1) * pageSize; each change replaces rows (no accumulation).
+- Race guard (generation + request key) retained; a stale page response is discarded.
+- Empty result -> totalPages 0, table empty-state row, no page controls.
+- QA: `npm test`, build/typecheck/lint, Playwright page 1 -> 2 -> 1 and filter reset, screenshot review.
+
+### Contract
+Reuses GET /api/restaurants?limit=&offset= returning `{ restaurants, total }`. No new endpoint.
+
+### Data schema
+No change.
+
+### Round 3 evidence (numbered pagination)
+- Spec section 9 judge: 100/100
+- TDD red->green: tests/pagination.test.ts written first; totalPages(23793,9)=2644; pageWindow window+ellipsis; npm test 31/31 PASS
+- Playwright AC trace: page1 label "Trang 1 / 2644 · 23793 quán", page 2 via button, overlap 0, back to page 1 identical rows, filter "≤50k" resets to "Trang 1 / 2 · 18 quán"
+- Screenshot reviewed: controls render "Trước 1 … 3 4 5 6 7 … 2644 Tiếp" with active page highlighted
+- Build/typecheck/lint PASS (Node v20.20.2); smoke 9/9; verify-ui passed=true, page_errors=[]
+- Deployed via scripts/deploy.sh; https://nutrition.nghgkim.id.vn/login -> HTTP 200

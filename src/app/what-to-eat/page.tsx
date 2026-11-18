@@ -1,9 +1,10 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Utensils, RefreshCw, Star, ExternalLink, AlertCircle, ChefHat, Navigation, CalendarRange, Plus, Check, ChevronDown } from "lucide-react";
+import { Utensils, RefreshCw, Star, ExternalLink, AlertCircle, ChefHat, Navigation, CalendarRange, Plus, Check } from "lucide-react";
 import { createGenerationGuard } from "@/lib/request-guard";
 import { selectDayMeals, todayPlanIndex } from "@/lib/meal-plan";
+import { pageWindow, totalPages } from "@/lib/pagination";
 
 interface Dish { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; source: string; }
 interface Suggestion { dish: Dish; reason: string; place: { name: string; url: string } | null; }
@@ -33,6 +34,7 @@ export default function WhatToEatPage() {
   const [confirming, setConfirming] = useState(false);
   const [applyError, setApplyError] = useState("");
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
 
   // Discard out-of-order filter responses and cancel their network requests.
   const guard = useRef(createGenerationGuard());
@@ -47,33 +49,31 @@ export default function WhatToEatPage() {
     setData(await res.json());
   }, [router]);
 
-  const loadRestaurants = useCallback(async (offset = 0, append = false) => {
+  const loadRestaurants = useCallback(async (targetPage = 1) => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     const generation = guard.current.next();
     const p = new URLSearchParams();
     p.set("limit", String(PAGE_SIZE));
-    p.set("offset", String(offset));
+    p.set("offset", String((targetPage - 1) * PAGE_SIZE));
     if (geo) { p.set("lat",String(geo.lat)); p.set("lon",String(geo.lon)); }
     if (district) p.set("district",district);
     if (maxPrice) p.set("maxPrice",maxPrice);
     const requestKey = p.toString();
     latestKeyRef.current = requestKey;
-    if (!append) {
-      itemsRef.current = [];
-      setRestaurants([]);
-    }
+    itemsRef.current = [];
+    setRestaurants([]);
     try {
       const res = await fetch(`/api/restaurants?${p}`, { signal: controller.signal });
       if (!res.ok) return;
       const result = await res.json();
       if (guard.current.isLatest(generation) && latestKeyRef.current === requestKey) {
-        const page: Restaurant[] = result.restaurants || [];
-        const merged = append ? [...itemsRef.current, ...page] : page;
-        itemsRef.current = merged;
-        setRestaurants(merged);
+        const rows: Restaurant[] = result.restaurants || [];
+        itemsRef.current = rows;
+        setRestaurants(rows);
         setTotal(result.total || 0);
+        setPage(targetPage);
       }
     } catch (err) {
       // Aborted or failed request: keep the last valid list, never show stale data as new.
@@ -89,7 +89,7 @@ export default function WhatToEatPage() {
   }, [loadWte]);
 
   useEffect(() => {
-    loadRestaurants(0, false);
+    loadRestaurants(1);
   }, [loadRestaurants]);
 
   function askLocation() {
@@ -260,15 +260,26 @@ export default function WhatToEatPage() {
               </tbody>
             </table>
           </div>
-          {restaurants.length > 0 && (
-            <div className="flex flex-col items-center gap-1 pt-1">
-              <span className="text-xs text-muted-foreground">Hiển thị {restaurants.length} / {total} quán</span>
-              {restaurants.length < total && (
-                <button onClick={() => loadRestaurants(restaurants.length, true)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors">
-                  Xem thêm ({total - restaurants.length}) <ChevronDown className="h-4 w-4" />
-                </button>
-              )}
+          {totalPages(total, PAGE_SIZE) > 1 && (
+            <div className="flex flex-col items-center gap-2 pt-1">
+              <span className="text-xs text-muted-foreground">Trang {page} / {totalPages(total, PAGE_SIZE)} · {total} quán</span>
+              <div className="flex flex-wrap items-center justify-center gap-1">
+                <button onClick={() => loadRestaurants(page - 1)} disabled={page <= 1}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-40">Trước</button>
+                {pageWindow(page, totalPages(total, PAGE_SIZE), 2).map((token, i) =>
+                  token === "…" ? (
+                    <span key={`gap-${i}`} className="px-1 text-xs text-muted-foreground">…</span>
+                  ) : (
+                    <button key={token} onClick={() => loadRestaurants(token)}
+                      aria-current={token === page ? "page" : undefined}
+                      className={`min-w-8 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${token === page ? "bg-primary text-primary-foreground" : "border border-border hover:bg-muted"}`}>
+                      {token}
+                    </button>
+                  )
+                )}
+                <button onClick={() => loadRestaurants(page + 1)} disabled={page >= totalPages(total, PAGE_SIZE)}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-40">Tiếp</button>
+              </div>
             </div>
           )}
         </div>
