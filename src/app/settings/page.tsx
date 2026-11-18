@@ -38,15 +38,13 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState("");
   const [sharing, setSharing] = useState({ exercise: false, finance: false, weight: false });
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const stored = localStorage.getItem("nt-notif");
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored) setPrefs(JSON.parse(stored));
     if ("Notification" in window) setPermission(Notification.permission);
     fetch("/api/push").then(r => r.json()).then(d => setPushSubscribed(d.subscribed)).catch(() => {});
     fetch("/api/locale").then(r => r.json()).then(d => setLocale(d.locale)).catch(() => {});
-    fetch("/api/sharing").then(r => r.json()).then(d => setSharing(d.sharing || sharing)).catch(() => {});
+    fetch("/api/sharing").then(r => r.json()).then(d => setSharing(prev => d.sharing || prev)).catch(() => {});
   }, []);
 
   async function requestPermission() {
@@ -76,10 +74,12 @@ export default function SettingsPage() {
       await Promise.all(regs.map(r => r.update()));
       navigator.serviceWorker.register("/sw.js");
       const reg = await navigator.serviceWorker.ready;
-      await navigator.serviceWorker.controller ? null : new Promise<void>(resolve => {
-        navigator.serviceWorker.addEventListener("controllerchange", () => resolve(), { once: true });
-        setTimeout(resolve, 1500); // fallback
-      });
+      if (!navigator.serviceWorker.controller) {
+        await new Promise<void>(resolve => {
+          navigator.serviceWorker.addEventListener("controllerchange", () => resolve(), { once: true });
+          setTimeout(resolve, 1500); // fallback
+        });
+      }
       const existing = await reg.pushManager.getSubscription();
       if (existing) await existing.unsubscribe();
       const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource });
@@ -112,6 +112,7 @@ export default function SettingsPage() {
     setPrefs(p);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+    scheduleNotifications(p);
     // Persist meal times to server-side scheduler
     ([["breakfast", p.breakfast], ["lunch", p.lunch], ["dinner", p.dinner]] as const).forEach(([mealType, time]) => {
       fetch("/api/reminders", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mealType, time, enabled: p.enabled }) }).catch(() => {});
@@ -122,7 +123,7 @@ export default function SettingsPage() {
     if (!p.enabled || permission !== "granted") return;
     // Clear existing
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.ready.then((reg) => {
+      navigator.serviceWorker.ready.then(() => {
         // Use setTimeout for in-page reminders (best effort)
       });
     }

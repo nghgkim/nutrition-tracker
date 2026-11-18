@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Plus, Mail, Crown, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
@@ -20,7 +20,7 @@ export default function FamilyPage() {
   const [myRole, setMyRole] = useState("");
   const [notMember, setNotMember] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     const res = await fetch("/api/family");
     if (res.status === 401) { router.push("/login"); return; }
     if (res.status === 403) { setNotMember(true); setLoading(false); return; }
@@ -34,9 +34,9 @@ export default function FamilyPage() {
       setMembers(md.members || []);
     }
     setLoading(false);
-  }
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { load(); }, []);
+  }, [router]);
+
+  useEffect(() => { load(); }, [load]);
   useEffect(() => {
     if (!family) return;
     fetch(`/api/family/feed?feature=${feedFeature}`).then(r => r.json()).then(d => setFeed(d.members || [])).catch(() => {});

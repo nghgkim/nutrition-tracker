@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarDays, Flame, Dumbbell, Save, Smile } from "lucide-react";
+import { BarChart3, CalendarDays, Flame, Save } from "lucide-react";
 
 interface DayPoint { date: string; intake: number; burned: number; }
 interface Entry { id: string; date: string; note: string | null; mood: string | null; energy: number | null; }
@@ -22,13 +22,10 @@ export default function InsightsPage() {
     setData(await ins.json());
     setEntries((await jr.json()).entries || []);
   }, [range, router]);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const e = entries.find(x => x.date.slice(0,10) === selected);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm({ note: e?.note || "", mood: e?.mood || "", energy: e?.energy ? String(e.energy) : "" });
   }, [selected, entries]);
 

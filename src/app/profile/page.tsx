@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calculator, Target, Flame, Scale, Activity, User, Save, Plus, Trash2 } from "lucide-react";
+import { Calculator, Target, Flame, Scale, User, Save, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { classifyBMI } from "@/lib/bmi-asian";
 
@@ -45,7 +45,7 @@ export default function ProfilePage() {
       fetch("/api/nutrition/recommended").then(r => r.json()).then(setRecommended).catch(() => {});
       setLoading(false);
     });
-  }, []);
+  }, [router]);
 
   async function loadWeights() {
     const res = await fetch("/api/weight");
@@ -103,6 +103,7 @@ export default function ProfilePage() {
           <div><label className="text-xs font-medium text-foreground">Giới tính</label><select value={profile.gender} onChange={(e) => setProfile({ ...profile, gender: e.target.value })} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="male">Nam</option><option value="female">Nữ</option></select></div>
           <div><label className="text-xs font-medium text-foreground">Mức độ vận động</label><select value={profile.activity} onChange={(e) => setProfile({ ...profile, activity: e.target.value })} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring">{Object.entries(ACTIVITY_LABELS).map(([k, v]) => (<option key={k} value={k}>{v}</option>))}</select></div>
           <div><label className="text-xs font-medium text-foreground">Cân nặng mong muốn (kg)</label><input type="number" step="0.1" value={profile.targetWeight} onChange={(e) => setProfile({ ...profile, targetWeight: e.target.value })} placeholder="VD: 65" className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></div>
+          <div><label className="text-xs font-medium text-foreground">Vòng eo (cm - tùy chọn)</label><input type="number" step="0.5" value={waistInput} onChange={(e) => setWaistInput(e.target.value)} placeholder="VD: 75" className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></div>
         </div>
       </div>
       <div className="rounded-2xl border border-border/60 bg-card p-6 elevated">

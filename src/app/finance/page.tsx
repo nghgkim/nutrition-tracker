@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Wallet, Plus, Trash2, Users, AlertTriangle } from "lucide-react";
+import { Wallet, Plus, Users, AlertTriangle } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " ₫";
@@ -33,7 +33,6 @@ export default function FinancePage() {
     setBudgets({ personal: String(d.personal.budget), household: String(d.household.budget) });
     setLoading(false);
   }, [month, router]);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   async function add(e: React.FormEvent) {

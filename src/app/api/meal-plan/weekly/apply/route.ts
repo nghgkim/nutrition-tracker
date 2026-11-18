@@ -9,7 +9,6 @@ export async function POST(req: Request) {
   // resolve foods by name, create logs transactionally
   const names = meals.map((m:{name:string})=>m.name);
   const foods = await prisma.food.findMany({ where: { name: { in: names }, userId: null } });
-  const byName = new Map(foods.map(f=>[f.name,f]));
   const today = new Date().toISOString().slice(0,10);
   const created = await prisma.$transaction(
     foods.map(f => prisma.foodLog.create({ data: { userId: user.id, foodId: f.id, quantity: 1, date: new Date(today) } }))

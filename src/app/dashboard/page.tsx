@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import WeeklyChart from "@/components/WeeklyChart";
 import { removeDiacritics } from "@/lib/normalize";
-import { Plus, Trash2, Target, Flame, Beef, Wheat, Droplet, Calendar, UtensilsCrossed, ChevronLeft, ChevronRight, Sparkles, Download } from "lucide-react";
+import { Plus, Trash2, Target, Beef, Wheat, Droplet, Calendar, UtensilsCrossed, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 interface Food { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; }
@@ -50,8 +50,8 @@ function CalorieRing({ consumed, goal }: { consumed: number; goal: number }) {
 export default function DashboardPage() {
   const t = useT();
   const router = useRouter();
-  const [date, setDate] = useState("");
-  const [today, setToday] = useState("");
+  const [today] = useState(() => todayStr());
+  const [date, setDate] = useState(() => todayStr());
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [foods, setFoods] = useState<Food[]>([]);
   const [goal, setGoal] = useState<Goal | null>(null);
@@ -68,7 +68,7 @@ export default function DashboardPage() {
     setTimeout(() => setToast(null), 2500);
   }, []);
 
-  async function load(d: string) {
+  const load = useCallback(async (d: string) => {
     if (!d) return;
     setLoading(true);
     try {
@@ -88,17 +88,16 @@ export default function DashboardPage() {
       const exData = await exRes.json();
       const dayBurn = (exData.logs || []).filter((l: { date: string }) => l.date.slice(0,10) === d).reduce((sum: number, l: { calories: number }) => sum + l.calories, 0);
       setBurned(dayBurn);
-      } catch (e) {
+    } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
-  }
+  }, [router]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { const t = todayStr(); setToday(t); if (!date) setDate(t); }, []);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { if (date) load(date); }, [date]);
+  useEffect(() => {
+    if (date) load(date);
+  }, [date, load]);
   useEffect(() => {
     function handleClick(e: MouseEvent) { if (!(e.target as HTMLElement).closest('.relative')) setFoodDropdownOpen(false); }
     document.addEventListener('mousedown', handleClick);

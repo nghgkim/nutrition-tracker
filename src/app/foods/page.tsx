@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Trash2, Apple, Flame, Wheat, Droplet, Download } from "lucide-react";
+import { Plus, Search, Trash2, Apple, Flame, Download } from "lucide-react";
 import { removeDiacritics } from "@/lib/normalize";
 import { useT } from "@/lib/i18n";
 
@@ -27,16 +27,16 @@ export default function FoodsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 15;
 
-  async function loadAll() {
+  const loadAll = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/foods");
     if (res.status === 401) { router.push("/login"); return; }
     const data = await res.json();
     setAllFoods(data.foods || []);
     setLoading(false);
-  }
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { loadAll(); }, []);
+  }, [router]);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
 
   async function loadCandidates() {
     setLoadingCandidates(true);
@@ -59,7 +59,6 @@ export default function FoodsPage() {
   }
 
   // Debounce search input
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setPage(1); }, [debouncedQ]);
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q), 200);

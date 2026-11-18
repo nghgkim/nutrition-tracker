@@ -26,7 +26,6 @@ export default function ExercisePage() {
     setLogs(l.logs || []); setGoal(g.calories); setGoalInput(String(g.calories));
     setStreak(s.streak); setTrend(s.trend || []); setLoading(false);
   }, [router]);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   async function add(e: React.FormEvent) {

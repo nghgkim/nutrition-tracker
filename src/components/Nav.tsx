@@ -42,15 +42,30 @@ export default function Nav() {
     { href: "/foods", label: t("foods"), icon: Utensils },
     { href: "/what-to-eat", label: "Hôm nay ăn gì", icon: ChefHat },
   ];
-  const secondary = [
-    { href: "/what-to-eat", label: "Hôm nay ăn gì", icon: ChefHat },
-    { href: "/insights", label: "Tiến độ & Nhật ký", icon: BarChart3 },
-    { href: "/history", label: t("history"), icon: History },
-    { href: "/profile", label: t("profile"), icon: User },
-    { href: "/exercise", label: t("exercise"), icon: Dumbbell },
-    { href: "/finance", label: t("finance"), icon: Wallet },
-    { href: "/family", label: t("family"), icon: Users },
-    { href: "/settings", label: t("settings"), icon: Settings },
+  // "Hôm nay ăn gì" is a primary link; the overflow menu is grouped by purpose.
+  const moreGroups = [
+    {
+      label: "Theo dõi",
+      items: [
+        { href: "/insights", label: "Tiến độ & Nhật ký", icon: BarChart3 },
+        { href: "/history", label: t("history"), icon: History },
+        { href: "/profile", label: t("profile"), icon: User },
+      ],
+    },
+    {
+      label: "Kế hoạch",
+      items: [
+        { href: "/exercise", label: t("exercise"), icon: Dumbbell },
+        { href: "/finance", label: t("finance"), icon: Wallet },
+      ],
+    },
+    {
+      label: "Khác",
+      items: [
+        { href: "/family", label: t("family"), icon: Users },
+        { href: "/settings", label: t("settings"), icon: Settings },
+      ],
+    },
   ];
 
   return (
@@ -85,20 +100,28 @@ export default function Nav() {
                   <ChevronDown className={`h-4 w-4 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
                 </button>
                 {moreOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-xl border border-border/60 bg-card shadow-lg py-1 z-50">
-                    {secondary.map((l) => {
-                      const Icon = l.icon;
-                      const active = pathname === l.href;
-                      return (
-                        <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)}
-                          className={`flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
-                            active ? "text-primary bg-primary/5" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                          }`}>
-                          <Icon className="h-4 w-4" />
-                          {l.label}
-                        </Link>
-                      );
-                    })}
+                  <div className="absolute right-0 mt-2 w-52 rounded-xl border border-border/60 bg-card shadow-lg py-1 z-50">
+                    {moreGroups.map((group, gi) => (
+                      <div key={group.label}>
+                        {gi > 0 && <div className="border-t border-border/60 my-1" />}
+                        <div className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                          {group.label}
+                        </div>
+                        {group.items.map((l) => {
+                          const Icon = l.icon;
+                          const active = pathname === l.href;
+                          return (
+                            <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)}
+                              className={`flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+                                active ? "text-primary bg-primary/5" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                              }`}>
+                              <Icon className="h-4 w-4" />
+                              {l.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    ))}
                     <div className="border-t border-border/60 mt-1 pt-1">
                       <span className="block px-3 py-1 text-xs text-muted-foreground truncate">{user.name || user.email}</span>
                       <button onClick={logout} className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
