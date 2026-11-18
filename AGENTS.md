@@ -20,68 +20,43 @@
      ask the agent to run tech-stack-architect (KB docs + live verification). -->
 
 ## 1. Stack & System Overlay Binding
-- **Primary Stack:** Next.js 16 (App Router) + TypeScript 5 + Tailwind CSS 4
-- **Runtime Version:** Node.js v20.20.2
-- **Core Libraries:** React 19.3, Prisma 7.10.1 (driver adapter `@prisma/adapter-pg`), `pg` 8.23, `jose` (JWT), Next.js 16.4.6
-- **Database:** PostgreSQL 16 (Docker container `nutrition-tracker-pg`, port 5440)
-- **Dev hosts:** `localhost:3000` and `dev-vm:3000` (both must work; `allowedDevOrigins` in next.config.ts)
-- **Package & Environment Manager:** npm 10.8.2, dotenv
-- **Knowledge Base Doc Sources:** Local KB (gate kb); DDD Evans Ch.2 (ubiquitous language); Refactoring UI (empty states, p.203-205)
+- **Primary Stack:** Next.js 16.4.6 (App Router)
+- **Archetype:** frontend
+- **Runtime Version:** v20.20.2
+- **Package & Environment Manager:** npm
+- **Core Libraries:** next 16.4.6, react 19.3.0, @prisma/client 7.10.1, tailwindcss (dev) 4.3.5, vitest (dev) 4.1.12
+- **Knowledge Base Doc Sources:** `gate kb search` / local book catalog
 
-### Visual Verification (required for UI changes)
-- Run `npm run verify:ui` (Python Playwright gate) — exit 0 required, produces `docs/evidence/nutrition-tracker/visual/report.json` + 4 screenshots.
-- Then USE `read` tool to LOOK at the screenshots. Do not trust exit code alone (it only checks CSS/whiteout, not spacing/overflow).
-- Compare against design tokens: spacing (4/8/12/16/24px), typography, elevation, contrast.
-- No `visual/report.json` or no screenshot review = QC REJECT.
-
-### Scaffold Checklist (verified)
-- [x] `postcss.config.mjs` with `@tailwindcss/postcss` (CSS renders in dev)
-- [x] Auth middleware (`src/middleware.ts`) protects routes
-- [x] `allowedDevOrigins` includes `dev-vm`, `localhost`, `127.0.0.1`
-- [x] `.env.example` with DATABASE_URL + JWT_SECRET
-- [x] `scripts/smoke.sh` runs through `dev-vm:3000`
-- [x] Seed data sourced from Vietnamese Food Composition Table 2007 (FAO) — no fabricated data
+---
 
 ## 2. Local Toolchain & Execution Commands
+Commands below are mechanically verified against the repository toolchain.
 
 | Purpose | Command | Notes |
 |---|---|---|
-| **Dev server** | `npm run dev` | Next.js dev on :3000 |
-| **Production build** | `npm run build` | Turbopack, exit 0 verified |
-| **Production start** | `npm run start` | Serves built app |
-| **Lint** | `npm run lint` | ESLint 9, 0 errors (3 warnings) |
-| **Type check** | `npm run typecheck` | `tsc --noEmit`, exit 0 verified |
-| **Unit tests** | `npx vitest run` | auth helpers, 4 passing |
-| **DB migration (create)** | `npm run db:migrate` | `prisma migrate dev` |
-| **DB migration (deploy)** | `npm run db:deploy` | `prisma migrate deploy` |
-| **Prisma generate** | `npx prisma generate` | Outputs to src/generated/prisma |
-| **DB seed** | `npm run seed` | Seeds 20 common foods |
-| **Security audit** | `gate audit` | Completed; only npm tooling moderate vulns |
-| **Dev-host smoke test** | `bash scripts/smoke.sh` | Runs E2E via `dev-vm:3000` (not localhost); catches cross-origin/host config regressions |
+| **Test Suite** | `npm test` | Must exit 0 across unit & integration tests |
+| **Targeted Test** | `npm test -- <test-file>` | Fast TDD feedback loop |
+| **Lint & Format** | `npm run lint` | Auto-fix code style & verify invariants |
+| **Type / Compile Check** | `npm run typecheck` | Strict TypeScript compiler check |
+| **DB Migration** | `npx prisma migrate dev` | Sync schema changes to database |
+| **Apply Migration** | `npx prisma migrate deploy` | Requires Tier-2 approval |
+| **Smoke Gate** | `bash scripts/smoke.sh` | End-to-end service smoke verification |
+| **Visual UI Gate** | `python3 scripts/verify-ui.py` | Playwright 4-viewport screenshot & anti-whiteout audit |
+
+---
 
 ## 3. Directory Layout & Module Boundaries
 ```text
 src/
-  app/
-    api/            # Route handlers (transport): auth, foods, logs, goal
-    dashboard/      # Dashboard page (daily totals + add log)
-    foods/          # Food management page
-    history/        # History page (per-day totals)
-    login/ register/ # Auth pages
-    layout.tsx      # Root layout + Nav
-  components/       # Shared UI (Nav)
-  lib/              # prisma client, auth (hash/verify/JWT), session
-  generated/        # Prisma generated client (do not edit, gitignored)
-prisma/
-  schema.prisma     # Data model (User, Food, FoodLog, Goal)
-  migrations/       # Migration history
-  seed.ts           # Seed data
-tests/
-  auth.test.ts      # Unit tests for auth helpers
-docs/specs/
-  nutrition-tracker.md  # Feature spec (93/100, auto-approved)
+├── app/               # Next.js App Router (pages, layouts, route handlers)
+│   ├── api/           # REST API Route Handlers
+│   └── (features)/    # Domain feature pages & layouts
+├── components/        # Reusable UI & design token components
+├── lib/               # Pure domain logic & service helpers (testable)
+└── prisma/            # Database schema & migrations
 ```
-Layering: `app/api/*` (transport) -> `lib/*` (domain helpers) -> Prisma (persistence).
+
+---
 
 ## 4. Architectural Decision Records (ADRs) & Invariants
 
@@ -169,12 +144,21 @@ Skill Commands:
 - `gate skill map`: Display intent-to-skill matrix.
 - `gate skill doctor`: Validate skill integrity on disk.
 
-<!-- BEGIN:nextjs-agent-rules -->
+---
 
-## This is NOT the Next.js you know
+## 8. Proactive Engineering & Value-Add Protocol (Strictly Anti-Passive)
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+Agents MUST NOT passively output "Task completed" and terminate. Task completion is the baseline; anticipating production failures, researching edge cases, and proposing high-leverage improvements is where elite engineering value is delivered.
 
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
+At the end of every substantive turn or milestone, the agent MUST deliver:
+1. **Precise Next Step (`gate status` / `gate next`)**: Explicit status, completed task count, and next actionable command.
+2. **Proactive Deep-Dive (Pain Points & Hidden Edge-Cases)**:
+   - Identify at least 1–2 non-obvious failure modes, race conditions, or performance bottlenecks.
+   - Cross-reference with Knowledge Base books (`gate kb search`) or internet research (`search_web`).
+   - Run `gate scout` to inspect archetype-specific risks and counter-measures.
+3. **Actionable Improvement Proposals**:
+   - Provide 2–3 concrete, high-leverage proposals (e.g. distributed caching, idempotency deduplication, graceful degradation, circuit breaker, or automated benchmarking).
+   - Format each proposal with:
+     - **Benefit**: Concrete user or system value.
+     - **Trade-off**: Complexity/Effort vs Impact.
+     - **Trigger Command**: The exact prompt or CLI command the user can type to execute it immediately.

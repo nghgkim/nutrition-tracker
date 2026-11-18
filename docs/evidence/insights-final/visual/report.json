@@ -1,0 +1,145 @@
+{
+  "base_url": "http://localhost:3001",
+  "target_url": "http://localhost:3001/",
+  "feature": "insights-final",
+  "is_studio_mode": false,
+  "checks": [
+    {
+      "viewport": "1440x900",
+      "passed": true,
+      "visual": {
+        "passed": true,
+        "anti_whiteout_passed": true,
+        "stylesheets_loaded": true,
+        "body_background": "rgb(248, 250, 252)",
+        "body_color": "rgb(15, 23, 42)",
+        "stylesheets_count": 2
+      },
+      "layout": {
+        "passed": true,
+        "studio_mode": false,
+        "vertical_scroll_passed": true,
+        "horizontal_scroll_passed": true,
+        "scroll_height": 900,
+        "client_height": 900,
+        "scroll_width": 1440,
+        "client_width": 1440,
+        "button_overflows": []
+      },
+      "states": {
+        "passed": true,
+        "is_black_void_regression": false,
+        "detected_empty_handler": true,
+        "detected_loading_handler": true,
+        "detected_error_handler": false
+      },
+      "failed_subresources": [],
+      "screenshot": "docs/evidence/insights-final/visual/viewport-1440x900.png"
+    },
+    {
+      "viewport": "1024x768",
+      "passed": true,
+      "visual": {
+        "passed": true,
+        "anti_whiteout_passed": true,
+        "stylesheets_loaded": true,
+        "body_background": "rgb(248, 250, 252)",
+        "body_color": "rgb(15, 23, 42)",
+        "stylesheets_count": 2
+      },
+      "layout": {
+        "passed": true,
+        "studio_mode": false,
+        "vertical_scroll_passed": true,
+        "horizontal_scroll_passed": true,
+        "scroll_height": 768,
+        "client_height": 768,
+        "scroll_width": 1024,
+        "client_width": 1024,
+        "button_overflows": []
+      },
+      "states": {
+        "passed": true,
+        "is_black_void_regression": false,
+        "detected_empty_handler": true,
+        "detected_loading_handler": true,
+        "detected_error_handler": false
+      },
+      "failed_subresources": [],
+      "screenshot": "docs/evidence/insights-final/visual/viewport-1024x768.png"
+    },
+    {
+      "viewport": "768x1024",
+      "passed": true,
+      "visual": {
+        "passed": true,
+        "anti_whiteout_passed": true,
+        "stylesheets_loaded": true,
+        "body_background": "rgb(248, 250, 252)",
+        "body_color": "rgb(15, 23, 42)",
+        "stylesheets_count": 2
+      },
+      "layout": {
+        "passed": true,
+        "studio_mode": false,
+        "vertical_scroll_passed": true,
+        "horizontal_scroll_passed": true,
+        "scroll_height": 1024,
+        "client_height": 1024,
+        "scroll_width": 768,
+        "client_width": 768,
+        "button_overflows": []
+      },
+      "states": {
+        "passed": true,
+        "is_black_void_regression": false,
+        "detected_empty_handler": true,
+        "detected_loading_handler": true,
+        "detected_error_handler": false
+      },
+      "failed_subresources": [],
+      "screenshot": "docs/evidence/insights-final/visual/viewport-768x1024.png"
+    },
+    {
+      "viewport": "600x900",
+      "passed": true,
+      "visual": {
+        "passed": true,
+        "anti_whiteout_passed": true,
+        "stylesheets_loaded": true,
+        "body_background": "rgb(248, 250, 252)",
+        "body_color": "rgb(15, 23, 42)",
+        "stylesheets_count": 2
+      },
+      "layout": {
+        "passed": true,
+        "studio_mode": false,
+        "vertical_scroll_passed": true,
+        "horizontal_scroll_passed": true,
+        "scroll_height": 900,
+        "client_height": 900,
+        "scroll_width": 600,
+        "client_width": 600,
+        "button_overflows": []
+      },
+      "states": {
+        "passed": true,
+        "is_black_void_regression": false,
+        "detected_empty_handler": true,
+        "detected_loading_handler": true,
+        "detected_error_handler": false
+      },
+      "failed_subresources": [],
+      "screenshot": "docs/evidence/insights-final/visual/viewport-600x900.png"
+    }
+  ],
+  "screenshots": [
+    "docs/evidence/insights-final/visual/viewport-1440x900.png",
+    "docs/evidence/insights-final/visual/viewport-1024x768.png",
+    "docs/evidence/insights-final/visual/viewport-768x1024.png",
+    "docs/evidence/insights-final/visual/viewport-600x900.png"
+  ],
+  "failed_subresources": [],
+  "page_errors": [],
+  "passed": true
+}

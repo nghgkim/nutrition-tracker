@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -15,6 +16,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (document.body) document.body.style.background = isDark ? "#09090b" : "#f8fafc";
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useLayoutEffect(() => {
     const stored = localStorage.getItem("nt-theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;

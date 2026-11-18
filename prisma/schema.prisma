@@ -37,6 +37,8 @@ model User {
   reminderConfigs ReminderConfig[]
   reminderLogs   ReminderLog[]
   trainingPlan   TrainingPlan?
+  journalEntries JournalEntry[]
+  mealPlan       MealPlan?
 }
 
 model Food {
@@ -235,4 +237,29 @@ model Restaurant {
   city       String   @default("TP.HCM")
   source     String   @default("Foody")
   scrapedAt  DateTime @default(now())
+  priceMin   Float?
+  priceMax   Float?
+  district   String?
+  openHours  String?
+}
+
+model JournalEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  note      String?
+  mood      String?
+  energy    Int?
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+}
+
+model MealPlan {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  week      Json
+  updatedAt DateTime @updatedAt
 }
