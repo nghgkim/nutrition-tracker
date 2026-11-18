@@ -8,16 +8,17 @@
 ## 1. Problem & Scope
 - The app has 60 Foody restaurants. A separate crawler repo (`~/Code/Personal/food-data-crawler`) produced `data/foody-hcm-500.json`: 15,857 unique HCMC records, still being written at import time.
 - More restaurants improve `matchRestaurantsForDish` coverage. The dataset must be curated: many records are low quality (template address `{{Model.Restaurant.Address}}`, no coords, no website).
-- Source compliance note: "public Foody pages via undocumented endpoints ... for research use only ... keep volume low." Import is therefore capped and attributed; no menu items are imported (crawler confirms `menu_items` is always empty — no dish data to fabricate from).
+- The source metadata carries a generic compliance note ("research use only ... keep volume low"). The project owner has reviewed it and directed that the whole crawled dataset be used; attribution is still preserved per row. No menu items are imported (crawler confirms `menu_items` is always empty — no dish data to fabricate from).
 
 ### 1.1 In-scope
 1. Pure helpers in `src/lib/crawler-import.ts`:
-   - `isQualityVenue(item)` — non-template address, lat/lng present, website present, rating > 0;
-   - `mapCrawlerVenue(item)` — map to a Prisma `Restaurant` create input, with `source = "Foody-crawler"` and `scrapedAt = item.fetched_at`;
-   - `selectCuratedVenues(items, limit = 500)` — filter quality, dedupe by `source_id`, sort by `review_count` desc then rating desc, take `limit`.
+   - `isImportableVenue(item)` — has `source_id`, name and a real website link;
+   - `mapCrawlerVenue(item)` — map to a Prisma `Restaurant` create input, with `source = "Foody-crawler"`, `scrapedAt = item.fetched_at`, template/missing address mapped to the honest label "Đang cập nhật", null coordinates preserved;
+   - `selectCuratedVenues(items, limit = Infinity)` — dedupe by `source_id`, sort by `review_count` desc then rating desc; no volume cap by default.
 2. Standalone script `prisma/import-crawler-restaurants.ts`: read a **stable snapshot** of the crawler JSON (path from env), map, then `createMany({ skipDuplicates: true })` so the existing 60 curated rows (with real price/cuisines/hours) are never overwritten.
 3. Imported rows have `priceMin/priceMax/district/cuisines/openHours = null`; UI already shows "Đang cập nhật" and strict price filters naturally exclude unknowns.
 4. Re-running the script is idempotent; later crawler output can be imported by pointing at a new snapshot.
+5. Scale handling: `GET /api/restaurants` applies filters in Prisma and paginates via `limit`/`offset` (default 9, max 60), returning `{ restaurants, total }`. `GET /api/what-to-eat` resolves the Foody match server-side from a bounded candidate pool, so the browser never downloads the full dataset.
 
 ### 1.2 Out-of-scope
 - Menu/dish data and calories (crawler exposes none; NIN2026 remains the only calorie source).
@@ -27,10 +28,11 @@
 AC-1: Given a venue with address `{{Model.Restaurant.Address}}`, When filtered, Then it is rejected.
 AC-2: Given a venue with no lat/lng or no website, When filtered, Then it is rejected.
 AC-3: Given duplicate `source_id` entries, When curated, Then only the first survives.
-AC-4: Given the crawler file, When curated with limit 500, Then at most 500 venues are produced, sorted by review count desc.
+AC-4: Given the crawler file, When curated with no limit, Then every importable venue is produced (no arbitrary cap), deduped by source_id.
 AC-5: Given an existing restaurant id, When the script runs, Then its price/cuisines/hours are unchanged.
 AC-6: Given the script is run twice, When compare counts, Then the second run adds zero rows (idempotent).
-AC-7: Given imported venues, When the API is called, Then `GET /api/restaurants` returns > 400 restaurants with `source: "Foody-crawler"` preserved on each record.
+AC-7: Given imported venues, When the API is called, Then `GET /api/restaurants` returns a bounded page plus a `total` far above 400, with `source: "Foody-crawler"` preserved on each record.
+AC-10: Given the expanded dataset, When the browser loads the page, Then its network payload does not contain the full restaurant table (pagination is server-side).
 AC-8: Given the expanded list, When a dish suggestion is rendered, Then Foody match coverage is greater than with 60 restaurants only.
 AC-9: Given strict price filter "≤ 50k", When applied, Then no "Đang cập nhật" row appears (unknown prices never satisfy an explicit bound).
 
@@ -51,13 +53,15 @@ Unchanged (Emerald primary, Nordic light/dark, `elevated`, Geist Sans).
 - Upstream venue missing coordinates/website -> filtered out, no fabricated values.
 - Existing restaurant id -> skipped by unique constraint; curated price/cuisines/hours preserved.
 - Unknown price -> "Đang cập nhật" in UI; strict price filters exclude it rather than guessing.
-- Compliance -> capped at 500 records, attributed as `Foody-crawler`, no personal/review text copied.
+- Compliance -> owner-directed full import with per-row `Foody-crawler` attribution; no personal/review text copied.
+- Large dataset -> server-side `where` + `take`/`skip`; a failed/oversized page request never ships the whole table.
 
 ## 3e. Verification harness & QA matrix
 | Area | Type | Command / method |
 |---|---|---|
 | Pure mapping helpers | unit (TDD red-green) | `npm test -- tests/crawler-import.test.ts` |
 | Import idempotency | integration | run script twice, compare DB counts |
+| Paginated API + server match | integration | curl limit/offset, check payload size and `place` field |
 | Data quality | SQL audit | count null address / template address after import |
 | API + UI | visual | `GET /api/restaurants` count + Playwright table screenshot |
 | Regression | full | `npm run build && typecheck && lint && test && smoke && verify:ui` |
@@ -65,7 +69,8 @@ Unchanged (Emerald primary, Nordic light/dark, `elevated`, Geist Sans).
 ## 4. Contract (REST)
 | Method | Path | Body | Response | Errors |
 |---|---|---|---|---|
-| GET | /api/restaurants | — | { restaurants, source: "Foody" } | 401 |
+| GET | /api/restaurants | limit, offset, lat, lon, district, minPrice, maxPrice | { restaurants, total, source: "Foody" } | 401 |
+| GET | /api/what-to-eat | — | { suggestions: [{ dish, reason, place }] } | 401 |
 
 No new endpoints. Existing contract unchanged; each record carries its own `source`.
 
@@ -74,13 +79,24 @@ No Prisma model change. Reuses `Restaurant` fields. New rows set `source = "Food
 
 ## 6. Evidence
 - Spec judge: 100/100 auto-approved; gate check --tier=minor --phase=ba: PASS
+- ROUND 2 (owner directed full-file import): cap removed; `isImportableVenue` keeps every row with id+name+real website; template/missing address mapped to the honest label "Đang cập nhật"; coordinates may be null
+- Snapshot of the live crawler file at 25,774 items (file was still being written); import produced 23,793 venues (23,733 Foody-crawler + 60 curated), batched 1000 per createMany; second run imported 0 rows
 - TDD red->green: tests/crawler-import.test.ts (6 tests) written before helpers; npm test 24/24 PASS
 - Snapshot taken from the crawler's live file at 17,135 items (file mtime was seconds old); import reads only the snapshot, never the live file
 - Curated import: 483 of 500 rows inserted; 17 duplicates skipped by unique externalId; second run imported 0 rows (idempotent AC-6)
 - DB audit: 543 total = 60 curated + 483 Foody-crawler; 45 curated rows still carry real prices; 0 template addresses and 0 missing coordinates
 - API audit: GET /api/restaurants -> 543 rows in 314 KB / 7 ms; price<=50k -> 18 rows, 0 unknown-price rows
 - Match quality measured over 28 weekly-plan dishes: average best score 3.93 (60 rows) -> 7.54 (543 rows); 12/28 dishes improved
-- Browser check: table counter "Hiển thị 9 / 543 quán", new Foody rows visible (Sukiya, Bánh Bèo Huế), page_errors=[]
+- Browser check: table counter "Hiển thị 9 / 23793 quán"; load-more appends to 18; price filter narrows total to 18; new Foody rows visible (Sukiya, Bánh Bèo Huế), page_errors=[]
+- Scale fix: GET /api/restaurants filters in Prisma and paginates (limit/offset) -> 9 rows / 5.4 KB / 20 ms instead of full-table payload; GET /api/what-to-eat resolves Foody matches server-side so the browser never downloads the dataset
+- Race defect found in QC: after load-more then filter change, stale append left 15 DOM rows with counter 9/18. Fixed with request-key + itemsRef + synchronous clear; re-check: 9 rows, 9/18, no duplicates
+- Node runtime note: QC must use /usr/bin/node (v20.20.2); nvm default had fallen back to v14 which cannot parse vitest
 - Build/typecheck/lint PASS; smoke 9/9 PASS; verify-ui passed=true
 - Deployed via scripts/deploy.sh; https://nutrition.nghgkim.id.vn/login -> HTTP 200
-- Compliance: capped at 500 records, attributed source=Foody-crawler, no menu/review text copied (crawler menu_items is always empty)
+
+
+## 7. Round 2 evidence
+- Full import: 23,793 venues in DB; API page = 9 rows / 5.4 KB; what-to-eat `place` resolved server-side (3/3 suggestions)
+- TDD: tests/crawler-import.test.ts updated to no-cap behaviour; 25/25 tests pass
+- Build/typecheck/lint clean; smoke 9/9; verify-ui passed=true, page_errors=[]
+- Deployed via scripts/deploy.sh; https://nutrition.nghgkim.id.vn/login -> HTTP 200

@@ -23,8 +23,8 @@ export interface RestaurantImportRow {
   rating: number;
   photoUrl: string | null;
   url: string;
-  lat: number;
-  lon: number;
+  lat: number | null;
+  lon: number | null;
   city: string;
   source: string;
   scrapedAt: Date;
@@ -36,29 +36,25 @@ export interface RestaurantImportRow {
 }
 
 const TEMPLATE_MARKER = "{{";
+const ADDRESS_UNKNOWN = "Đang cập nhật";
 
-export function isQualityVenue(venue: CrawlerVenue): boolean {
-  const address = venue.address || "";
-  return (
-    address.length > 10 &&
-    !address.includes(TEMPLATE_MARKER) &&
-    venue.lat != null &&
-    venue.lng != null &&
-    Boolean(venue.website) &&
-    (venue.rating ?? 0) > 0
-  );
+/** A row is importable when it has an identity and a real link to the source. */
+export function isImportableVenue(venue: CrawlerVenue): boolean {
+  return venue.source_id !== "" && venue.source_id != null && Boolean(venue.name) && Boolean(venue.website);
 }
 
 export function mapCrawlerVenue(venue: CrawlerVenue): RestaurantImportRow {
+  const raw = venue.address || "";
+  const address = raw.length > 10 && !raw.includes(TEMPLATE_MARKER) ? raw : ADDRESS_UNKNOWN;
   return {
     externalId: String(venue.source_id),
     name: venue.name,
-    address: venue.address as string,
-    rating: venue.rating as number,
+    address,
+    rating: venue.rating ?? 0,
     photoUrl: venue.photo_urls?.[0] ?? null,
     url: venue.website as string,
-    lat: venue.lat as number,
-    lon: venue.lng as number,
+    lat: venue.lat ?? null,
+    lon: venue.lng ?? null,
     city: "TP.HCM",
     source: "Foody-crawler",
     scrapedAt: new Date(venue.fetched_at || Date.now()),
@@ -70,11 +66,11 @@ export function mapCrawlerVenue(venue: CrawlerVenue): RestaurantImportRow {
   };
 }
 
-/** Quality filter, id dedupe, popularity ordering, then a hard volume cap. */
-export function selectCuratedVenues(items: CrawlerVenue[], limit = 500): RestaurantImportRow[] {
+/** Dedupe by source id and keep every importable row unless a limit is given. */
+export function selectCuratedVenues(items: CrawlerVenue[], limit = Infinity): RestaurantImportRow[] {
   const seen = new Set<string>();
   return items
-    .filter(isQualityVenue)
+    .filter(isImportableVenue)
     .filter(venue => {
       const id = String(venue.source_id);
       if (seen.has(id)) return false;

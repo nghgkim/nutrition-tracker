@@ -4,10 +4,9 @@ import { useRouter } from "next/navigation";
 import { Utensils, RefreshCw, Star, ExternalLink, AlertCircle, ChefHat, Navigation, CalendarRange, Plus, Check, ChevronDown } from "lucide-react";
 import { createGenerationGuard } from "@/lib/request-guard";
 import { selectDayMeals, todayPlanIndex } from "@/lib/meal-plan";
-import { matchRestaurantsForDish } from "@/lib/dish-match";
 
 interface Dish { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; source: string; }
-interface Suggestion { dish: Dish; reason: string; }
+interface Suggestion { dish: Dish; reason: string; place: { name: string; url: string } | null; }
 interface Restaurant { id: string; name: string; address: string; rating: number; photoUrl: string | null; url: string; distanceKm?: number|null; priceMin?: number|null; priceMax?: number|null; district?: string|null; openHours?: string|null; cuisines?: string|null; }
 interface MealDay { day: number; label: string; meals: { name: string; calories: number; source: string }[]; total: number; }
 interface WteData { goal: number; eaten: number; remaining: number; suggestions: Suggestion[]; }
@@ -33,11 +32,13 @@ export default function WhatToEatPage() {
   const [applied, setApplied] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [applyError, setApplyError] = useState("");
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [total, setTotal] = useState(0);
 
   // Discard out-of-order filter responses and cancel their network requests.
   const guard = useRef(createGenerationGuard());
   const abortRef = useRef<AbortController | null>(null);
+  const itemsRef = useRef<Restaurant[]>([]);
+  const latestKeyRef = useRef("");
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const loadWte = useCallback(async () => {
@@ -46,21 +47,34 @@ export default function WhatToEatPage() {
     setData(await res.json());
   }, [router]);
 
-  const loadRestaurants = useCallback(async () => {
+  const loadRestaurants = useCallback(async (offset = 0, append = false) => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     const generation = guard.current.next();
-    setVisibleCount(PAGE_SIZE);
     const p = new URLSearchParams();
+    p.set("limit", String(PAGE_SIZE));
+    p.set("offset", String(offset));
     if (geo) { p.set("lat",String(geo.lat)); p.set("lon",String(geo.lon)); }
     if (district) p.set("district",district);
     if (maxPrice) p.set("maxPrice",maxPrice);
+    const requestKey = p.toString();
+    latestKeyRef.current = requestKey;
+    if (!append) {
+      itemsRef.current = [];
+      setRestaurants([]);
+    }
     try {
       const res = await fetch(`/api/restaurants?${p}`, { signal: controller.signal });
       if (!res.ok) return;
       const result = await res.json();
-      if (guard.current.isLatest(generation)) setRestaurants(result.restaurants || []);
+      if (guard.current.isLatest(generation) && latestKeyRef.current === requestKey) {
+        const page: Restaurant[] = result.restaurants || [];
+        const merged = append ? [...itemsRef.current, ...page] : page;
+        itemsRef.current = merged;
+        setRestaurants(merged);
+        setTotal(result.total || 0);
+      }
     } catch (err) {
       // Aborted or failed request: keep the last valid list, never show stale data as new.
       if ((err as Error).name !== "AbortError") console.error("restaurant fetch failed", err);
@@ -75,7 +89,7 @@ export default function WhatToEatPage() {
   }, [loadWte]);
 
   useEffect(() => {
-    loadRestaurants();
+    loadRestaurants(0, false);
   }, [loadRestaurants]);
 
   function askLocation() {
@@ -107,9 +121,6 @@ export default function WhatToEatPage() {
   }
 
   if (loading || !data) return <div className="max-w-5xl mx-auto px-4 py-6"><div className="h-96 skeleton rounded-2xl" /></div>;
-
-  const visible = restaurants.slice(0, visibleCount);
-  const remaining = restaurants.length - visible.length;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-5">
@@ -149,7 +160,7 @@ export default function WhatToEatPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {data.suggestions.map((s,i) => {
-                  const place = matchRestaurantsForDish(s.dish.name, restaurants, 1)[0];
+                  const place = s.place;
                   return (
                     <div key={i} className="rounded-xl border border-border/60 p-4 space-y-2">
                       <div className="text-sm font-medium text-foreground">{s.dish.name}</div>
@@ -227,7 +238,7 @@ export default function WhatToEatPage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.map(r=>(
+                {restaurants.map(r=>(
                   <tr key={r.id} className="group border-b border-border/40 last:border-0 hover:bg-muted/30">
                     <td className="sticky left-0 z-10 border-r border-border/60 bg-card px-4 py-3 group-hover:bg-muted/30">
                       <div className="flex items-center gap-2">
@@ -251,11 +262,11 @@ export default function WhatToEatPage() {
           </div>
           {restaurants.length > 0 && (
             <div className="flex flex-col items-center gap-1 pt-1">
-              <span className="text-xs text-muted-foreground">Hiển thị {visible.length} / {restaurants.length} quán</span>
-              {remaining > 0 && (
-                <button onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+              <span className="text-xs text-muted-foreground">Hiển thị {restaurants.length} / {total} quán</span>
+              {restaurants.length < total && (
+                <button onClick={() => loadRestaurants(restaurants.length, true)}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors">
-                  Xem thêm ({remaining}) <ChevronDown className="h-4 w-4" />
+                  Xem thêm ({total - restaurants.length}) <ChevronDown className="h-4 w-4" />
                 </button>
               )}
             </div>
