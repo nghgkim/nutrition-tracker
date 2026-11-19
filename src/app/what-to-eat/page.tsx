@@ -35,6 +35,7 @@ export default function WhatToEatPage() {
   const [applyError, setApplyError] = useState("");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [showFloat, setShowFloat] = useState(false);
 
   // Discard out-of-order filter responses and cancel their network requests.
   const guard = useRef(createGenerationGuard());
@@ -42,6 +43,18 @@ export default function WhatToEatPage() {
   const itemsRef = useRef<Restaurant[]>([]);
   const latestKeyRef = useRef("");
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  // Floating paging appears after real scrolling, with hysteresis to avoid flicker.
+  useEffect(() => {
+    if (activeTab !== "restaurants") { setShowFloat(false); return; }
+    const onScroll = () => {
+      const y = window.scrollY;
+      setShowFloat(prev => (prev ? y > 300 : y > 400));
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [activeTab]);
 
   const loadWte = useCallback(async () => {
     const res = await fetch("/api/what-to-eat");
@@ -261,7 +274,7 @@ export default function WhatToEatPage() {
             </table>
           </div>
           {/* Mobile-first: stacked cards replace the horizontally-scrolling table */}
-          <div className="space-y-2 md:hidden">
+          <div className="space-y-2 pb-24 md:hidden">
             {restaurants.map(r=>(
               <div key={r.id} className="rounded-2xl border border-border/60 bg-card p-4 elevated space-y-2">
                 <div className="flex items-center gap-3">
@@ -304,6 +317,19 @@ export default function WhatToEatPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Floating paging for mobile thumb zone; desktop uses in-flow controls */}
+      {activeTab === "restaurants" && showFloat && totalPages(total, PAGE_SIZE) > 1 && (
+        <div aria-label="Phân trang" className="fixed bottom-0 left-14 right-0 z-50 border-t border-border/60 bg-background/95 px-4 py-2 backdrop-blur md:hidden">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
+            <button onClick={() => { loadRestaurants(page - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }} disabled={page <= 1}
+              className="min-h-11 rounded-lg border border-border px-4 text-sm font-medium hover:bg-muted disabled:opacity-40">Trước</button>
+            <span className="text-sm font-medium text-muted-foreground">Trang {page} / {totalPages(total, PAGE_SIZE)}</span>
+            <button onClick={() => { loadRestaurants(page + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }} disabled={page >= totalPages(total, PAGE_SIZE)}
+              className="min-h-11 rounded-lg border border-border px-4 text-sm font-medium hover:bg-muted disabled:opacity-40">Tiếp</button>
+          </div>
         </div>
       )}
     </div>
