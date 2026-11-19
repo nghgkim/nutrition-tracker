@@ -29,9 +29,9 @@ describe("sortOrder", () => {
   });
 
   it("always ends with a unique tie-breaker", () => {
-    expect(sortOrder("rating")).toEqual([{ rating: "desc" }, { id: "asc" }]);
+    expect(sortOrder("rating")).toEqual([{ rating: "desc" }, { priceMin: "asc" }, { id: "asc" }]);
     expect(sortOrder("price")).toEqual([{ priceMin: "asc" }, { id: "asc" }]);
-    expect(sortOrder("distance" as RestaurantSort)).toEqual([{ rating: "desc" }, { id: "asc" }]);
+    expect(sortOrder("distance" as RestaurantSort)).toEqual([{ rating: "desc" }, { priceMin: "asc" }, { id: "asc" }]);
   });
 
   it("falls back to rating for unknown values", () => {
