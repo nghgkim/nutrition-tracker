@@ -82,12 +82,36 @@ def audit_layout_invariants(page, viewport, is_studio=False):
             return violations.slice(0, 5); // report up to 5 violations
         }""")
 
+    # Invariant 6: Mobile table overflow audit (tables > 1.2x mobile width must transform into cards)
+    table_violations = []
+    if is_mobile:
+        table_violations = page.evaluate("""() => {
+            const violations = [];
+            const tables = document.querySelectorAll('table');
+            for (const t of tables) {
+                const style = window.getComputedStyle(t);
+                if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") continue;
+                const rect = t.getBoundingClientRect();
+                if (rect.width > window.innerWidth * 1.2) {
+                    if (!t.dataset.mobileTable && !t.closest('[data-mobile-table]')) {
+                        violations.push({
+                            title: ((t.querySelector('caption, th') || {}).innerText || "data-table").slice(0, 20),
+                            tableWidth: Math.round(rect.width),
+                            viewportWidth: window.innerWidth
+                        });
+                    }
+                }
+            }
+            return violations.slice(0, 3);
+        }""")
+
     passed = (
         meta_viewport_ok
         and horizontal_scroll_ok
         and vertical_scroll_ok
         and len(button_overflows) == 0
         and len(touch_violations) == 0
+        and len(table_violations) == 0
     )
     
     return {
@@ -102,7 +126,8 @@ def audit_layout_invariants(page, viewport, is_studio=False):
         "scroll_width": metrics["scrollWidth"],
         "client_width": metrics["clientWidth"],
         "button_overflows": button_overflows,
-        "touch_violations": touch_violations
+        "touch_violations": touch_violations,
+        "table_violations": table_violations
     }
 
 if __name__ == "__main__":
