@@ -41,13 +41,13 @@ export default function Nav() {
   if (pathname === "/login" || pathname === "/register") return null;
 
   // Two primary destinations; related pages live in the grouped overflow menu.
-  const primary = [
-    { href: "/what-to-eat", label: "Ăn uống", icon: ChefHat },
-  ];
+  // All destinations live in the overflow menu; header stays logo + Thêm only.
+  const primary: { href: string; label: string; icon: typeof ChefHat }[] = [];
   const moreGroups = [
     {
       label: "Ăn uống",
       items: [
+        { href: "/what-to-eat", label: "Hôm nay ăn gì", icon: ChefHat },
         { href: "/foods", label: "Thư viện món ăn", icon: Utensils },
       ],
     },
@@ -65,6 +65,10 @@ export default function Nav() {
         { href: "/exercise", label: t("exercise"), icon: Dumbbell },
         { href: "/finance", label: t("finance"), icon: Wallet },
       ],
+    },
+    {
+      label: "Giao diện",
+      items: [], // rendered as a theme toggle row below
     },
     {
       label: "Khác",
@@ -100,10 +104,6 @@ export default function Nav() {
                   </Link>
                 );
               })}
-              <button onClick={toggle} aria-label={dark ? "Chế độ sáng" : "Chế độ tối"} title={dark ? "Chế độ sáng" : "Chế độ tối"}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                {dark ? <SunIcon /> : <MoonIcon />}
-              </button>
               <div className="relative" ref={moreRef}>
                 <button onClick={() => setMoreOpen(!moreOpen)}
                   className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
@@ -131,6 +131,13 @@ export default function Nav() {
                             </Link>
                           );
                         })}
+                        {group.label === "Giao diện" && (
+                          <button onClick={toggle} aria-label={dark ? "Chế độ sáng" : "Chế độ tối"}
+                            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                            {dark ? <SunIcon /> : <MoonIcon />}
+                            {dark ? "Chế độ sáng" : "Chế độ tối"}
+                          </button>
+                        )}
                       </div>
                     ))}
                     <div className="border-t border-border/60 mt-1 pt-1">
