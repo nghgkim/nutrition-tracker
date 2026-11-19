@@ -79,10 +79,10 @@ export default function Nav() {
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 font-semibold text-foreground tracking-tight shrink-0">
-          <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-[#faf3e8]">
-            <img src="/logo-mark.png" alt="thuypn by kimnh" className="h-full w-full object-contain" />
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Salad className="h-4 w-4" />
           </span>
-          <span className="hidden sm:inline">thuypn by kimnh</span>
+          <span className="hidden sm:inline">Nutrition Tracker</span>
         </Link>
         <nav className="flex items-center gap-1">
           {user ? (

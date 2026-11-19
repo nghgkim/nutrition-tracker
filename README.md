@@ -1,4 +1,4 @@
-# thuypn by kimnh
+# Nutrition Tracker
 
 A full-stack web app to track daily calorie intake based on logged foods.
 

@@ -13,7 +13,7 @@ export async function middleware(req: NextRequest) {
 
   // Allow public paths and static assets
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return NextResponse.next();
-  if (pathname.startsWith("/_next") || pathname.startsWith("/favicon") || pathname.startsWith("/icon") || pathname.startsWith("/logo") || pathname.startsWith("/manifest") || pathname.startsWith("/sw.js")) {
+  if (pathname.startsWith("/_next") || pathname.startsWith("/favicon") || pathname.startsWith("/icon") || pathname.startsWith("/manifest") || pathname.startsWith("/sw.js")) {
     return NextResponse.next();
   }
 

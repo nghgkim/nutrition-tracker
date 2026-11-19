@@ -10,7 +10,7 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "thuypn by kimnh",
+  title: "Nutrition Tracker",
   description: "Track daily calorie intake",
   manifest: "/manifest.json",
 };

@@ -1,4 +1,4 @@
-# Feature Spec: Rebrand to "thuypn by kimnh" (Tier 2)
+# Feature Spec: Rebrand to "thuypn by kimnh" (Tier 2) — REVERTED
 
 **Status:** Draft
 **Tier:** 2 (Minor — branding assets + display strings, no domain logic)
@@ -87,3 +87,6 @@ No Prisma change. Static assets only.
 - Bug fixed during QC: middleware whitelist did not include `/logo*`, so image requests were redirected to /login and rendered as broken icons; added `/logo` to the allowlist
 - Playwright 375/1440: login title new name, 2 logo images, 0 old-name strings, audit passed; screenshot reviewed: logo mark legible, no blank padding
 - Build/typecheck/lint (0 errors, 8 img warnings)/tests 41/41/smoke 9/9/verify-ui 4/4 PASS; URL HTTP 200
+
+## 9. Revert note
+This rebrand was reverted by `docs/specs/revert-rebrand.md` at the owner's request. The mark variant removed the wordmark and read as a cut-off image; the prior identity is restored. Historical artifact kept for traceability.
