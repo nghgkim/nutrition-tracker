@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Utensils, Star, MapPin, ExternalLink, Navigation, SlidersHorizontal, X } from "lucide-react";
 import { createGenerationGuard } from "@/lib/request-guard";
 import { pageWindow, totalPages } from "@/lib/pagination";
+import { countActiveFilterValues } from "@/lib/filter-badge";
 
 interface Restaurant { id: string; name: string; address: string; rating: number; photoUrl: string | null; url: string; distanceKm?: number|null; priceMin?: number|null; priceMax?: number|null; district?: string|null; openHours?: string|null; cuisines?: string|null; }
 interface WteData { goal: number; eaten: number; remaining: number; }
@@ -116,7 +117,7 @@ export default function WhatToEatPage() {
     );
   }
 
-  const activeFilters = [districts.length > 0, minPrice, maxPrice, minRating, maxDistance].filter(Boolean).length + (sort !== "rating" ? 1 : 0);
+  const activeFilters = countActiveFilterValues({ districts, minPrice, maxPrice, minRating, maxDistance, sort });
   function resetFilters() {
     setDistricts([]); setMinPrice(""); setMaxPrice(""); setSort("rating"); setMinRating(""); setMaxDistance("");
   }
@@ -142,8 +143,8 @@ export default function WhatToEatPage() {
                 <SlidersHorizontal className="h-3.5 w-3.5"/> Bộ lọc{activeFilters > 0 ? ` (${activeFilters})` : ""}
               </button>
               {panelOpen && (
-            <div className="absolute right-0 top-full z-30 mt-2 w-[min(92vw,420px)] rounded-2xl border border-border/60 bg-card p-4 shadow-xl elevated space-y-3" role="region" aria-label="Bộ lọc quán ăn">
-              <div className="flex items-center justify-between">
+            <div className="absolute right-0 top-full z-30 mt-2 max-h-[calc(100vh-120px)] w-[min(92vw,420px)] overflow-y-auto rounded-2xl border border-border/60 bg-card p-4 shadow-xl elevated space-y-3" role="region" aria-label="Bộ lọc quán ăn">
+              <div className="sticky top-0 z-10 -mt-1 flex items-center justify-between bg-card py-1">
                 <span className="text-sm font-semibold">Bộ lọc{activeFilters > 0 ? ` · ${activeFilters} đang áp dụng` : ""}</span>
                 <div className="flex items-center gap-2">
                   <button onClick={resetFilters} className="text-xs text-primary hover:underline">Xóa tất cả</button>
