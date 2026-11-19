@@ -1,6 +1,6 @@
 {
-  "name": "Nutrition Tracker",
-  "short_name": "NutriTrack",
+  "name": "thuypn by kimnh",
+  "short_name": "thuypn",
   "description": "Theo dõi calo và cân nặng mỗi ngày",
   "start_url": "/dashboard",
   "display": "standalone",

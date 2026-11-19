@@ -17,7 +17,7 @@ export async function POST() {
   const results = await Promise.allSettled(subs.map((s) =>
     webpush.sendNotification(
       { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-      JSON.stringify({ title: "🥗 Nutrition Tracker", body: "Thông báo thử nghiệm đã hoạt động!", tag: "test" })
+      JSON.stringify({ title: "🥗 thuypn by kimnh", body: "Thông báo thử nghiệm đã hoạt động!", tag: "test" })
     )
   ));
   const details = results.map((r, i) => ({
