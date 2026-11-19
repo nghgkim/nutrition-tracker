@@ -84,7 +84,7 @@ export default function Nav() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 font-semibold text-foreground tracking-tight shrink-0">
           <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-[#faf3e8]">
-            <img src="/logo-mark.png" alt="thuypn by kimnh" className="h-full w-full object-contain" />
+            <img src="/logo.png" alt="thuypn by kimnh" className="h-full w-full object-contain" />
           </span>
           <span className="hidden sm:inline">thuypn by kimnh</span>
         </Link>
