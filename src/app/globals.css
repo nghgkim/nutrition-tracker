@@ -107,3 +107,24 @@ html.dark select,
 html.dark textarea {
   color-scheme: dark;
 }
+
+/* Principle VIII: Mobile-First touch targets. Base = mobile (>=44px hit area).
+   Desktop (>=768px) restores compact density via progressive enhancement. */
+button,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+select {
+  min-height: 44px;
+  min-width: 44px;
+}
+@media (min-width: 768px) {
+  button,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"],
+  select {
+    min-height: 0;
+    min-width: 0;
+  }
+}

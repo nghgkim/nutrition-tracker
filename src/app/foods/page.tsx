@@ -183,13 +183,13 @@ export default function FoodsPage() {
       )}
 
       <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
-        <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-card px-5 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-card px-5 py-2">
           <h2 className="text-sm font-semibold text-foreground">Món ăn <span className="text-muted-foreground font-normal text-xs">({filteredFoods.length})</span></h2>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input placeholder="Tìm..." value={q} onChange={(e) => setQ(e.target.value)}
-                className="w-40 sm:w-56 rounded-lg border border-border bg-background pl-9 pr-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring" />
+                className="w-full sm:w-56 rounded-lg border border-border bg-background pl-9 pr-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring" />
             </div>
             <button onClick={() => { setShowImport(true); setImportQ(""); setCandidates([]); loadCandidates(); }}
               className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm hover:bg-muted active:scale-[0.98]">
