@@ -115,7 +115,7 @@ export default function Nav() {
                     {moreGroups.map((group, gi) => (
                       <div key={group.label}>
                         {gi > 0 && <div className="border-t border-border/60 my-1" />}
-                        <div className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                        <div className="sticky top-0 z-10 bg-card px-3 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                           {group.label}
                         </div>
                         {group.items.map((l) => {
