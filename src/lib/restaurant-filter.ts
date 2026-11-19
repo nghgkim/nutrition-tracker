@@ -8,6 +8,17 @@ export interface PriceableRestaurant {
   priceMax?: number | null;
 }
 
+/** Trim, dedupe and bound repeated district params before building an OR filter. */
+export function normalizeDistricts(values: string[]): string[] {
+  const seen = new Set<string>();
+  for (const value of values) {
+    const name = value.trim();
+    if (name) seen.add(name);
+    if (seen.size >= 10) break;
+  }
+  return [...seen];
+}
+
 /** Clamp optional multi-criteria params from query strings. */
 export function clampCriteria(
   minRatingRaw: string | null,

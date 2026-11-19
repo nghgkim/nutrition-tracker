@@ -3,7 +3,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { haversine } from "@/lib/geo";
-import { clampCriteria, filterByPrice } from "@/lib/restaurant-filter";
+import { clampCriteria, filterByPrice, normalizeDistricts } from "@/lib/restaurant-filter";
 import { sortOrder } from "@/lib/restaurant-sort";
 import { shouldSortByDistance } from "@/lib/distance-sort";
 
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   const lat = hasGeo ? latRaw : null;
   const lon = hasGeo ? lonRaw : null;
   const sort = q.get("sort") || "rating";
-  const district = q.get("district");
+  const districts = normalizeDistricts(q.getAll("district"));
   const minPrice = q.get("minPrice") ? Number(q.get("minPrice")) : null;
   const maxPrice = q.get("maxPrice") ? Number(q.get("maxPrice")) : null;
   const { minRating, maxDistance } = clampCriteria(q.get("minRating"), q.get("maxDistance"));
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
   const offset = Math.max(Number(q.get("offset")) || 0, 0);
 
   const where: Prisma.RestaurantWhereInput = {};
-  if (district) where.OR = [{ district: { contains: district } }, { address: { contains: district } }];
+  if (districts.length) where.OR = districts.flatMap(d => [{ district: { contains: d } }, { address: { contains: d } }]);
   if (minPrice != null) where.priceMin = { gte: minPrice };
   if (maxPrice != null) where.priceMax = { lte: maxPrice };
   if (minRating != null) where.rating = { gte: minRating };
@@ -35,7 +35,10 @@ export async function GET(req: Request) {
   const useRaw = hasGeo && (shouldSortByDistance(sort, true) || maxDistance != null);
   if (useRaw) {
     const filters: Prisma.Sql[] = [Prisma.sql`TRUE`];
-    if (district) filters.push(Prisma.sql`("district" ILIKE ${`%${district}%`} OR "address" ILIKE ${`%${district}%`})`);
+    if (districts.length) {
+      const districtClauses = districts.map(d => Prisma.sql`("district" ILIKE ${`%${d}%`} OR "address" ILIKE ${`%${d}%`})`);
+      filters.push(Prisma.sql`(${Prisma.join(districtClauses, " OR ")})`);
+    }
     if (minPrice != null) filters.push(Prisma.sql`"priceMin" >= ${minPrice}`);
     if (maxPrice != null) filters.push(Prisma.sql`"priceMax" <= ${maxPrice}`);
     if (minRating != null) filters.push(Prisma.sql`"rating" >= ${minRating}`);

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { normalizePriceRange, type PriceRange } from "@/lib/price-range";
-import { clampCriteria } from "@/lib/restaurant-filter";
+import { clampCriteria, normalizeDistricts } from "@/lib/restaurant-filter";
 import { RESTAURANT_SORTS, sortOrder, type RestaurantSort } from "@/lib/restaurant-sort";
 
 describe("normalizePriceRange", () => {
@@ -48,5 +48,16 @@ describe("clampCriteria", () => {
 
   it("ignores invalid or negative values", () => {
     expect(clampCriteria("-5", "abc")).toEqual({ minRating: null, maxDistance: null });
+  });
+});
+
+describe("normalizeDistricts", () => {
+  it("keeps valid names, trims and dedupes", () => {
+    expect(normalizeDistricts([" Quận 1 ", "Quận 3", "Quận 1", ""])).toEqual(["Quận 1", "Quận 3"]);
+  });
+
+  it("caps at 10 districts and ignores whitespace-only values", () => {
+    expect(normalizeDistricts(Array.from({ length: 15 }, (_, i) => `Quận ${i + 1}`))).toHaveLength(10);
+    expect(normalizeDistricts(["   "])).toEqual([]);
   });
 });

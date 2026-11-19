@@ -17,7 +17,7 @@ export default function WhatToEatPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [geo, setGeo] = useState<{lat:number;lon:number}|null>(null);
-  const [district, setDistrict] = useState("");
+  const [districts, setDistricts] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("rating");
@@ -27,6 +27,17 @@ export default function WhatToEatPage() {
   const [page, setPage] = useState(1);
   const [showFloat, setShowFloat] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
+  const filterWrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!panelOpen) return;
+    const onPointer = (e: PointerEvent) => {
+      if (filterWrapRef.current && !filterWrapRef.current.contains(e.target as Node)) setPanelOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setPanelOpen(false); };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("pointerdown", onPointer); document.removeEventListener("keydown", onKey); };
+  }, [panelOpen]);
 
   // Discard out-of-order filter responses and cancel their network requests.
   const guard = useRef(createGenerationGuard());
@@ -61,7 +72,7 @@ export default function WhatToEatPage() {
     p.set("limit", String(PAGE_SIZE));
     p.set("offset", String((targetPage - 1) * PAGE_SIZE));
     if (geo) { p.set("lat",String(geo.lat)); p.set("lon",String(geo.lon)); }
-    if (district) p.set("district",district);
+    districts.forEach(d => p.append("district", d));
     if (minPrice) p.set("minPrice",minPrice);
     if (maxPrice) p.set("maxPrice",maxPrice);
     if (sort !== "rating") p.set("sort",sort);
@@ -84,7 +95,7 @@ export default function WhatToEatPage() {
       // Aborted or failed request: keep the last valid list, never show stale data as new.
       if ((err as Error).name !== "AbortError") console.error("restaurant fetch failed", err);
     }
-  }, [geo, district, minPrice, maxPrice, sort, minRating, maxDistance]);
+  }, [geo, districts, minPrice, maxPrice, sort, minRating, maxDistance]);
 
   useEffect(() => {
     Promise.all([
@@ -105,9 +116,9 @@ export default function WhatToEatPage() {
     );
   }
 
-  const activeFilters = [district, minPrice, maxPrice, minRating, maxDistance].filter(Boolean).length + (sort !== "rating" ? 1 : 0);
+  const activeFilters = [districts.length > 0, minPrice, maxPrice, minRating, maxDistance].filter(Boolean).length + (sort !== "rating" ? 1 : 0);
   function resetFilters() {
-    setDistrict(""); setMinPrice(""); setMaxPrice(""); setSort("rating"); setMinRating(""); setMaxDistance("");
+    setDistricts([]); setMinPrice(""); setMaxPrice(""); setSort("rating"); setMinRating(""); setMaxDistance("");
   }
 
   if (loading || !data) return <div className="max-w-5xl mx-auto px-4 py-6"><div className="h-96 skeleton rounded-2xl" /></div>;
@@ -124,7 +135,7 @@ export default function WhatToEatPage() {
       <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-sm font-semibold flex items-center gap-2"><Utensils className="h-4 w-4 text-rose-500"/> Quán ăn TP.HCM</h2>
-            <div className="relative flex gap-2 flex-wrap">
+            <div ref={filterWrapRef} className="relative flex gap-2 flex-wrap">
               <button onClick={askLocation} className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border px-3 text-xs hover:bg-muted"><Navigation className="h-3.5 w-3.5"/> {geo?"Vị trí đã lấy":"Dùng vị trí"}</button>
               <button onClick={() => setPanelOpen(!panelOpen)} aria-expanded={panelOpen}
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground">
@@ -140,9 +151,21 @@ export default function WhatToEatPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">Quận
-                  <select value={district} onChange={e=>setDistrict(e.target.value)} className="min-h-11 rounded-lg border border-border bg-background px-2 text-xs text-foreground"><option value="">Mọi quận</option>{["Quận 1","Quận 3","Quận 5","Quận 7","Quận 11","Tân Phú","Bình Thạnh","Thủ Đức","Gò Vấp","Quận 10"].map(d=><option key={d}>{d}</option>)}</select>
-                </label>
+                <div className="col-span-2 flex flex-col gap-1 text-[11px] text-muted-foreground sm:col-span-3">
+                  <div className="flex items-center justify-between">
+                    <span>Quận {districts.length > 0 && `(${districts.length} đã chọn)`}</span>
+                    <button onClick={() => setDistricts([])} className="text-primary hover:underline">Tất cả</button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["Quận 1","Quận 3","Quận 5","Quận 7","Quận 11","Tân Phú","Bình Thạnh","Thủ Đức","Gò Vấp","Quận 10"].map(d => (
+                      <button key={d} onClick={() => setDistricts(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])}
+                        aria-pressed={districts.includes(d)}
+                        className={`min-h-11 rounded-lg border px-2 text-xs transition-colors ${districts.includes(d) ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">Giá từ
                   <select aria-label="Giá từ" value={minPrice} onChange={e=>setMinPrice(e.target.value)} className="min-h-11 rounded-lg border border-border bg-background px-2 text-xs text-foreground"><option value="">Từ</option><option value="20000">20k</option><option value="50000">50k</option><option value="100000">100k</option><option value="200000">200k</option></select>
                 </label>
