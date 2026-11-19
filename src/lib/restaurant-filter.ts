@@ -8,6 +8,20 @@ export interface PriceableRestaurant {
   priceMax?: number | null;
 }
 
+/** Clamp optional multi-criteria params from query strings. */
+export function clampCriteria(
+  minRatingRaw: string | null,
+  maxDistanceRaw: string | null
+): { minRating: number | null; maxDistance: number | null } {
+  const read = (raw: string | null, max: number): number | null => {
+    if (!raw) return null;
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value < 0) return null;
+    return Math.min(value, max);
+  };
+  return { minRating: read(minRatingRaw, 10), maxDistance: read(maxDistanceRaw, 100) };
+}
+
 export function filterByPrice<T extends PriceableRestaurant>(
   restaurants: T[],
   minPrice: number | null,

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { normalizePriceRange, type PriceRange } from "@/lib/price-range";
+import { clampCriteria } from "@/lib/restaurant-filter";
 import { RESTAURANT_SORTS, sortOrder, type RestaurantSort } from "@/lib/restaurant-sort";
 
 describe("normalizePriceRange", () => {
@@ -36,5 +37,16 @@ describe("sortOrder", () => {
 
   it("falls back to rating for unknown values", () => {
     expect(sortOrder("bogus" as RestaurantSort)).toEqual(sortOrder("rating"));
+  });
+});
+
+describe("clampCriteria", () => {
+  it("clamps rating to 0..10 and distance to 0..100", () => {
+    expect(clampCriteria("8", "3")).toEqual({ minRating: 8, maxDistance: 3 });
+    expect(clampCriteria("99", "500")).toEqual({ minRating: 10, maxDistance: 100 });
+  });
+
+  it("ignores invalid or negative values", () => {
+    expect(clampCriteria("-5", "abc")).toEqual({ minRating: null, maxDistance: null });
   });
 });

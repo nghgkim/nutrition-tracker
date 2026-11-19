@@ -21,6 +21,8 @@ export default function WhatToEatPage() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("rating");
+  const [minRating, setMinRating] = useState("");
+  const [maxDistance, setMaxDistance] = useState("");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [showFloat, setShowFloat] = useState(false);
@@ -62,6 +64,8 @@ export default function WhatToEatPage() {
     if (minPrice) p.set("minPrice",minPrice);
     if (maxPrice) p.set("maxPrice",maxPrice);
     if (sort !== "rating") p.set("sort",sort);
+    if (minRating) p.set("minRating",minRating);
+    if (maxDistance && geo) p.set("maxDistance",maxDistance);
     const requestKey = p.toString();
     latestKeyRef.current = requestKey;
     itemsRef.current = [];
@@ -81,7 +85,7 @@ export default function WhatToEatPage() {
       // Aborted or failed request: keep the last valid list, never show stale data as new.
       if ((err as Error).name !== "AbortError") console.error("restaurant fetch failed", err);
     }
-  }, [geo, district, minPrice, maxPrice, sort]);
+  }, [geo, district, minPrice, maxPrice, sort, minRating, maxDistance]);
 
   useEffect(() => {
     Promise.all([
@@ -122,6 +126,8 @@ export default function WhatToEatPage() {
               <select aria-label="Giá từ" value={minPrice} onChange={e=>setMinPrice(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Từ</option><option value="20000">20k</option><option value="50000">50k</option><option value="100000">100k</option><option value="200000">200k</option></select>
               <select aria-label="Giá đến" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Đến</option><option value="30000">30k</option><option value="50000">50k</option><option value="100000">100k</option><option value="200000">200k</option><option value="500000">500k</option></select>
               <select aria-label="Sắp xếp" value={sort} onChange={e=>setSort(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="rating">Đánh giá: cao → thấp</option><option value="price">Giá: thấp → cao</option><option value="distance" disabled={!geo}>Khoảng cách: gần → xa{geo?"":" (cần vị trí)"}</option></select>
+              <select aria-label="Rating tối thiểu" value={minRating} onChange={e=>setMinRating(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Rating ≥</option><option value="6">6+</option><option value="7">7+</option><option value="8">8+</option><option value="9">9+</option></select>
+              <select aria-label="Khoảng cách tối đa" value={maxDistance} onChange={e=>setMaxDistance(e.target.value)} disabled={!geo} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Trong {geo?"":"(cần vị trí)"}</option><option value="1">1 km</option><option value="3">3 km</option><option value="5">5 km</option><option value="10">10 km</option></select>
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground">Nguồn: Foody (dữ liệu công khai, scrape 18/11/2026). Không lưu review hay dữ liệu cá nhân.</p>
