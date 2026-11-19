@@ -118,6 +118,7 @@ Vận hành theo phương pháp luận **Spec-Driven Development (SDD)**: Xây d
   - Sơ đồ 3 tầng: Transport -> Domain Core -> Persistence.
   - Cơ chế khóa: Optimistic (`version`), Pessimistic (`SELECT FOR UPDATE`), hoặc Atomic.
   - Bảng Failure Modes: Timeout mạng, Retry Jitter, Rate Limit (429/403), Zombie processes.
+  - **Security & Zero-Trust Defense (Principle IX):** Ranh giới xác thực (Auth), phân quyền vai trò (RBAC), cô lập Tenant ID (chống BOLA/IDOR), validation schema đầu vào và thiết lập Rate Limiting.
   - *(Nếu có Frontend / UI)*: **Thiết kế Mobile-First bắt buộc (Principle VIII):**
     - Wireframe phân cấp Mobile (375px–390px) trước desktop. Bảng dữ liệu phải có phương án responsive (chuyển sang card hoặc horizontal swipe).
     - Touch ergonomics: Nút bấm và trigger đạt $\ge 44 \times 44\text{px}$, CTA chính neo vào Thumb Zone (vùng ngón cái chạm tới ở đáy màn hình).
@@ -196,7 +197,7 @@ Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt,
     - **Studio Shell:** Kiểm tra 100vh studio constraint (`scrollHeight <= innerHeight`).
   - **Module 3 (Visual):** Anti-whiteout, background $\neq$ transparent, có stylesheets hoạt động.
   - **Module 4 (5-State):** Kiểm tra không rơi vào màn hình đen rỗng (`#000`), có fallback card cho Loading, Empty, Error.
-* **Bước 3.5: Automated Security Scan:** Chạy `gate audit` đạt 0 finding ở mức Critical/High (secrets, dependency CVEs).
+* **Bước 3.5: Automated Zero-Trust Security Scan (`gate sec`):** Chạy `gate sec` đạt 0 finding ở mức Critical/High (SAST quét secrets, fallback credentials, raw SQLi, insecure crypto, RCE sinks, và CVE dependencies).
 * **Bước 3.6: Defect Tracking & Circuit Breaker Auto-Rollback:**
   - Nếu có lỗi: QC xuất `docs/evidence/<feature>/qa-defects.json`. DEV sửa và QC re-test (tối đa 3 vòng).
   - **Auto-Rollback Trigger:** Nếu `cycle > 3` mà lỗi Critical/High chưa giải quyết: Hệ thống tự động kích hoạt `git reset` hoặc `git stash` hoàn nguyên working tree về trạng thái sạch, gắn cờ `BLOCKED_NEEDS_HUMAN` và dừng lại báo cáo rào cản kỹ thuật.

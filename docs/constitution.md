@@ -53,6 +53,15 @@
   4. **Progressive Enhancement:** Base CSS rules must represent the mobile experience. Media queries and breakpoint prefixes (`sm:`, `md:`, `lg:`) are permitted ONLY to scale upward. Desktop-down degradation (`max-md:`, `max-lg:`) is strictly forbidden.
   5. **Viewport Declaration:** HTML documents MUST include `<meta name="viewport" content="width=device-width, initial-scale=1.0">`. Text inputs must maintain minimum 16px font size on mobile to prevent automated iOS viewport zooming.
 
+### Principle IX: Zero-Trust Security, Least Privilege & Secure by Default
+- Applications, APIs, and infrastructure MUST operate under the **Zero-Trust Security Model** grounded in OWASP and WAHH:
+  1. **Server-Side Authorization (No Client Trust):** Every request accessing or mutating data MUST be authorized server-side against the authenticated session and tenant ID. Client-side role checks are strictly for UI presentation; never trust user-supplied `user_id` or `tenant_id` from request bodies (prevent IDOR/BOLA).
+  2. **Parameterized Queries Only (Zero SQLi):** All database operations MUST use prepared statements or parameterized ORM queries. Raw string interpolation or format strings (`f"SELECT..."`, `$queryRawUnsafe`) with dynamic inputs are strictly prohibited.
+  3. **Zero Secret Fallback:** Default fallback secrets (e.g. `process.env.JWT_SECRET || "default_dev_secret"`) in production code are strictly forbidden. The application MUST fail-fast on startup if any required environment secret is undefined.
+  4. **Cryptographic & Token Hygiene:** Passwords MUST be hashed using Argon2id, scrypt, or bcrypt ($work \ge 10$). Plain MD5 or SHA1 is strictly forbidden. JWT tokens MUST enforce signature verification with an explicit algorithm whitelist (never accept `alg: none`).
+  5. **Abuse Defense & Rate Limiting:** All unauthenticated public endpoints (login, registration, password reset, token issuance) and resource-intensive endpoints MUST enforce rate limiting to prevent brute-force attacks and denial-of-service.
+  6. **Context-Aware Output Encoding & Sanitization:** All untrusted user content rendered into the DOM MUST be encoded for the destination context or sanitized via DOMPurify to eliminate Stored and Reflected XSS.
+
 ---
 
 ## Governance & Compliance

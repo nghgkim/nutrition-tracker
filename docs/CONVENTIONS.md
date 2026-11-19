@@ -240,3 +240,39 @@ Every engineering artifact produced by agents or contributors must be designed f
   gate explain <file-path>       # Deep walkthrough: purpose, mechanics, gotchas, book grounding
   gate explain "<concept-name>"   # First-principles mental model tutorial
   ```
+
+---
+
+## 11. Zero-Trust Security & Defensive Engineering Standards
+
+Every line of code and endpoint contract MUST adhere to OWASP Top 10 defense invariants:
+
+### 11.1 Server-Side Authorization & Tenant Isolation (Anti-IDOR/BOLA)
+- Client-side role checks are strictly for UI rendering. Every mutating or read operation MUST enforce authorization on the backend against the authenticated user and tenant scope.
+- **FORBIDDEN:** `SELECT ... WHERE id = req.body.id` without `tenant_id = session.tenant_id`.
+- **Enforcement:** Enforce ownership checks at the repository/service layer before executing queries.
+
+### 11.2 Parameterized Queries Only (Zero SQLi)
+- All database queries MUST use prepared statements or ORM parameterization:
+  - TypeScript/Prisma: Use Prisma Client methods or `Prisma.sql` tagged template literals (which parameterize under the hood). Never use `$queryRawUnsafe` with string templates.
+  - Python: Use SQLAlchemy prepared queries or psycopg2 `%s` parameterized tuples. Never use Python f-strings in queries (`f"SELECT ... {input}"`).
+  - Go: Use `db.Query("SELECT ... WHERE id = ?", id)`. Never format with `fmt.Sprintf`.
+
+### 11.3 Secret Management & Fail-Fast Startup (Zero Fallback Secrets)
+- Hardcoding API keys, passwords, or private keys in source code is strictly prohibited.
+- **FORBIDDEN:** `const secret = process.env.JWT_SECRET || "default_dev_secret"`.
+- If a required secret or configuration variable is missing, the application MUST crash immediately on boot with an explicit diagnostic message.
+
+### 11.4 Cryptographic Hygiene & Token Security
+- Password hashing: Use **Argon2id** (memory $\ge 64\text{MB}$, iterations $\ge 3$) or **bcrypt** ($work \ge 10$). MD5 and SHA1 are prohibited.
+- Session Cookies: MUST include `HttpOnly`, `Secure`, and `SameSite=Lax` or `Strict`.
+- JWT Tokens: Access tokens MUST expire in $\le 15$ minutes. JWT signature verification MUST explicitly whitelist permitted algorithms (`HS256`, `RS256`); never accept `alg: none`.
+
+### 11.5 Abuse Prevention & Rate Limiting
+- All unauthenticated endpoints (login, register, forgot-password, magic-links) MUST enforce rate limiting (e.g. max 5 failed attempts per IP/minute) with HTTP 429 Too Many Requests response adhering to RFC 7807.
+- Resource-intensive export, crawl, or AI inference endpoints MUST be throttled per tenant.
+
+### 11.6 XSS Defense & Output Sanitization
+- Never render raw user-provided HTML directly into the DOM.
+- In React: Do NOT use `dangerouslySetInnerHTML` unless wrapped with `DOMPurify.sanitize(content)`.
+- Configure HTTP response headers: `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`.
