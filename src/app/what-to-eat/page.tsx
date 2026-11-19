@@ -69,8 +69,6 @@ export default function WhatToEatPage() {
     if (maxDistance && geo) p.set("maxDistance",maxDistance);
     const requestKey = p.toString();
     latestKeyRef.current = requestKey;
-    itemsRef.current = [];
-    setRestaurants([]);
     try {
       const res = await fetch(`/api/restaurants?${p}`, { signal: controller.signal });
       if (!res.ok) return;
@@ -126,16 +124,14 @@ export default function WhatToEatPage() {
       <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-sm font-semibold flex items-center gap-2"><Utensils className="h-4 w-4 text-rose-500"/> Quán ăn TP.HCM</h2>
-            <div className="flex gap-2 flex-wrap">
+            <div className="relative flex gap-2 flex-wrap">
               <button onClick={askLocation} className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border px-3 text-xs hover:bg-muted"><Navigation className="h-3.5 w-3.5"/> {geo?"Vị trí đã lấy":"Dùng vị trí"}</button>
               <button onClick={() => setPanelOpen(!panelOpen)} aria-expanded={panelOpen}
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground">
                 <SlidersHorizontal className="h-3.5 w-3.5"/> Bộ lọc{activeFilters > 0 ? ` (${activeFilters})` : ""}
               </button>
-            </div>
-          </div>
-          {panelOpen && (
-            <div className="rounded-2xl border border-border/60 bg-card p-4 elevated space-y-3" role="region" aria-label="Bộ lọc quán ăn">
+              {panelOpen && (
+            <div className="absolute right-0 top-full z-30 mt-2 w-[min(92vw,420px)] rounded-2xl border border-border/60 bg-card p-4 shadow-xl elevated space-y-3" role="region" aria-label="Bộ lọc quán ăn">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold">Bộ lọc{activeFilters > 0 ? ` · ${activeFilters} đang áp dụng` : ""}</span>
                 <div className="flex items-center gap-2">
@@ -165,7 +161,8 @@ export default function WhatToEatPage() {
               </div>
             </div>
           )}
-
+            </div>
+          </div>
           <p className="text-[10px] text-muted-foreground">Nguồn: Foody (dữ liệu công khai, scrape 18/11/2026). Không lưu review hay dữ liệu cá nhân.</p>
           <div className="hidden max-h-[calc(100vh-400px)] min-h-[240px] overflow-auto rounded-2xl border border-border/60 bg-card elevated md:block">
             <table className="w-full min-w-[760px] text-left text-sm">
