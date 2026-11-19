@@ -276,3 +276,60 @@ Every line of code and endpoint contract MUST adhere to OWASP Top 10 defense inv
 - Never render raw user-provided HTML directly into the DOM.
 - In React: Do NOT use `dangerouslySetInnerHTML` unless wrapped with `DOMPurify.sanitize(content)`.
 - Configure HTTP response headers: `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`.
+
+---
+
+## 12. Production Infrastructure & Container Hardening Standards
+
+Every container, manifest, and service lifecycle contract MUST adhere to CIS Benchmarks and TLPI runtime standards:
+
+### 12.1 Container Immutability & Least Privilege (CIS Docker §4)
+- **Non-Root Execution:** Production containers MUST declare a dedicated non-root user (e.g. `USER node`, `USER 10001`). Running as root in the final container stage triggers an automatic build rejection.
+- **Base Image Pinning:** Never use `:latest` or unpinned tags in Dockerfile `FROM` lines. Pin to exact semantic versions or sha256 digests (e.g. `node:20.18.0-alpine3.20`).
+- **Multi-Stage Builds:** Separate build dependencies (compilers, devDependencies, header files) from runtime images.
+- **Zero Secrets in Layers:** Never declare passwords or tokens in `ENV` or `ARG` directives. Use runtime secret mounts.
+
+### 12.2 Kubernetes Manifest Hardening (K8s Best Practices & CIS K8s §5)
+- **Compute Resources:** Every container MUST specify both `resources.requests` and `resources.limits` for CPU and Memory. Unbounded containers lead to cluster-wide OOM cascades.
+- **Health Probes Separation:**
+  - `livenessProbe`: Only checks internal deadlock or runtime crash. NEVER check external databases or network services in liveness probes (prevents cascading restart storms).
+  - `readinessProbe`: Checks whether container is warm and ready to receive traffic.
+- **Security Context:** Pods and containers MUST set `securityContext.runAsNonRoot: true`, `securityContext.allowPrivilegeEscalation: false`, and `capabilities.drop: [ALL]`.
+- **Termination Grace:** `terminationGracePeriodSeconds` must be configured with adequate buffer for in-flight requests (default 30s-60s). Setting to 0 on services is strictly forbidden.
+
+### 12.3 Resilient Lifecycle & Graceful Drain (Systems Performance & TLPI)
+- Applications MUST handle `SIGTERM` signals:
+  1. Stop accepting new inbound requests (fail readiness probe).
+  2. Complete processing of existing in-flight HTTP requests and background worker jobs.
+  3. Flush application write buffers and transaction logs.
+  4. Close database connection pools cleanly before process exit.
+
+---
+
+## 13. Performance Benchmarking, Load Testing & Profiling Standards
+
+Applications and microservices MUST treat performance as a deterministic mechanical constraint:
+
+### 13.1 Strict Percentile SLAs (Google SRE p.86)
+- Performance is judged strictly by percentiles, never averages:
+  - **Median ($p50$):** $\le 50\text{ms}$ for CRUD read endpoints.
+  - **95th Percentile ($p95$):** $\le 200\text{ms}$ under standard concurrent load.
+  - **99th Percentile ($p99$):** $\le 500\text{ms}$ under peak concurrent load.
+  - **Error Rate:** $< 0.1\%$ under concurrent load (HTTP 5xx or connection drops).
+
+### 13.2 Load & Stress Testing Harness (`gate perf`)
+- Services and endpoints MUST be load-tested using `gate perf` or dedicated `k6` scripts in `tests/load/`:
+  ```bash
+  gate perf http://localhost:3000/api/v1/resource --concurrency 20 --requests 200 --p95 200 --p99 500
+  ```
+- Any endpoint that breaches the p95 or p99 SLA triggers a performance REJECT.
+
+### 13.3 Database Query Plan Discipline & N+1 Prevention
+- **Index Alignment:** All queries filtering, joining, or sorting on columns MUST be supported by appropriate composite indexes following the **Equality First, Range Second (ESR)** rule.
+- **Zero N+1 Queries:** Database fetch operations within loops are strictly prohibited. Use eager loading (`include` in Prisma, `select_related` / `prefetch_related` in Django/SQLAlchemy, `JOIN` in SQL).
+- Inspect queries using `EXPLAIN ANALYZE`; sequential scans on tables with $> 1000$ rows trigger optimization review.
+
+### 13.4 Async Event Loop Non-Blocking & Memory Soak Stability
+- **Zero Event Loop Starvation:** Async workers (Node.js event loop, Tokio, asyncio) must NEVER execute synchronous blocking calls (e.g. `fs.readFileSync`, `std::thread::sleep`, CPU-intensive crypto) in async handler threads. Delegate to background worker pools (`worker_threads`, `spawn_blocking`).
+- **Memory Soak Stability:** Under sustained concurrent traffic (soak testing), Resident Set Size (RSS) memory must stabilize. Linear memory growth indicates unclosed streams or lingering event listeners and triggers a FAIL.
+- **Bounded Buffers:** Channel buffers and task queues must always be bounded with explicit backpressure. Unbounded queues turn slow consumers into silent OOM crashes.

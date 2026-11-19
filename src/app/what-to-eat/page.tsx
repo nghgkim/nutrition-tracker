@@ -5,6 +5,7 @@ import { Utensils, RefreshCw, Star, MapPin, ExternalLink, AlertCircle, ChefHat, 
 import { createGenerationGuard } from "@/lib/request-guard";
 import { selectDayMeals, todayPlanIndex } from "@/lib/meal-plan";
 import { pageWindow, totalPages } from "@/lib/pagination";
+import { normalizePriceRange } from "@/lib/price-range";
 
 interface Dish { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; source: string; }
 interface Suggestion { dish: Dish; reason: string; place: { name: string; url: string } | null; }
@@ -29,7 +30,9 @@ export default function WhatToEatPage() {
   const [loading, setLoading] = useState(true);
   const [geo, setGeo] = useState<{lat:number;lon:number}|null>(null);
   const [district, setDistrict] = useState("");
+  const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [sort, setSort] = useState("rating");
   const [applied, setApplied] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [applyError, setApplyError] = useState("");
@@ -72,7 +75,9 @@ export default function WhatToEatPage() {
     p.set("offset", String((targetPage - 1) * PAGE_SIZE));
     if (geo) { p.set("lat",String(geo.lat)); p.set("lon",String(geo.lon)); }
     if (district) p.set("district",district);
+    if (minPrice) p.set("minPrice",minPrice);
     if (maxPrice) p.set("maxPrice",maxPrice);
+    if (sort !== "rating") p.set("sort",sort);
     const requestKey = p.toString();
     latestKeyRef.current = requestKey;
     itemsRef.current = [];
@@ -92,7 +97,7 @@ export default function WhatToEatPage() {
       // Aborted or failed request: keep the last valid list, never show stale data as new.
       if ((err as Error).name !== "AbortError") console.error("restaurant fetch failed", err);
     }
-  }, [geo, district, maxPrice]);
+  }, [geo, district, minPrice, maxPrice, sort]);
 
   useEffect(() => {
     Promise.all([
@@ -234,7 +239,9 @@ export default function WhatToEatPage() {
             <div className="flex gap-2 flex-wrap">
               <button onClick={askLocation} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-muted"><Navigation className="h-3.5 w-3.5"/> {geo?"Vị trí đã lấy":"Dùng vị trí"}</button>
               <select value={district} onChange={e=>setDistrict(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Mọi quận</option>{["Quận 1","Quận 3","Quận 5","Quận 7","Quận 11","Tân Phú","Bình Thạnh","Thủ Đức","Gò Vấp","Quận 10"].map(d=><option key={d}>{d}</option>)}</select>
-              <select value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} title="Chỉ giữ quán có giá tối đa không vượt ngưỡng này" className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Mọi giá</option><option value="30000">≤ 30k</option><option value="50000">≤ 50k</option><option value="100000">≤ 100k</option></select>
+              <select aria-label="Giá từ" value={minPrice} onChange={e=>setMinPrice(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Từ</option><option value="20000">20k</option><option value="50000">50k</option><option value="100000">100k</option><option value="200000">200k</option></select>
+              <select aria-label="Giá đến" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Đến</option><option value="30000">30k</option><option value="50000">50k</option><option value="100000">100k</option><option value="200000">200k</option><option value="500000">500k</option></select>
+              <select aria-label="Sắp xếp" value={sort} onChange={e=>setSort(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="rating">Đánh giá</option><option value="price">Giá tăng</option><option value="distance">Khoảng cách</option></select>
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground">Nguồn: Foody (dữ liệu công khai, scrape 18/11/2026). Không lưu review hay dữ liệu cá nhân.</p>

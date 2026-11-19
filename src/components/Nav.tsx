@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Salad, LogOut, LayoutDashboard, Utensils, ChevronDown, User, Settings, LogIn, UserPlus, History, Dumbbell, Wallet, Users, ChefHat, BarChart3 } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { useTheme, SunIcon, MoonIcon } from "@/components/ThemeProvider";
 
 export default function Nav() {
   const pathname = usePathname();
@@ -11,6 +12,7 @@ export default function Nav() {
   const [user, setUser] = useState<{ email: string; name: string | null } | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const t = useT();
+  const { dark, toggle } = useTheme();
   const moreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -98,6 +100,10 @@ export default function Nav() {
                   </Link>
                 );
               })}
+              <button onClick={toggle} aria-label={dark ? "Chế độ sáng" : "Chế độ tối"} title={dark ? "Chế độ sáng" : "Chế độ tối"}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                {dark ? <SunIcon /> : <MoonIcon />}
+              </button>
               <div className="relative" ref={moreRef}>
                 <button onClick={() => setMoreOpen(!moreOpen)}
                   className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">

@@ -119,6 +119,9 @@ Vận hành theo phương pháp luận **Spec-Driven Development (SDD)**: Xây d
   - Cơ chế khóa: Optimistic (`version`), Pessimistic (`SELECT FOR UPDATE`), hoặc Atomic.
   - Bảng Failure Modes: Timeout mạng, Retry Jitter, Rate Limit (429/403), Zombie processes.
   - **Security & Zero-Trust Defense (Principle IX):** Ranh giới xác thực (Auth), phân quyền vai trò (RBAC), cô lập Tenant ID (chống BOLA/IDOR), validation schema đầu vào và thiết lập Rate Limiting.
+  - **Performance Budget & Infrastructure Profile (Principle X & XI):**
+    - Ngân sách hiệu năng (Latency SLA): $p50 \le 50\text{ms}$, $p95 \le 200\text{ms}$, $p99 \le 500\text{ms}$ dưới tải cao điểm, Error rate $\le 0.1\%$.
+    - Hồ sơ hạ tầng: Tài nguyên ước tính (`requests`/`limits` CPU & RAM), health endpoints (`/healthz`, `/readyz`), thời gian graceful drain.
   - *(Nếu có Frontend / UI)*: **Thiết kế Mobile-First bắt buộc (Principle VIII):**
     - Wireframe phân cấp Mobile (375px–390px) trước desktop. Bảng dữ liệu phải có phương án responsive (chuyển sang card hoặc horizontal swipe).
     - Touch ergonomics: Nút bấm và trigger đạt $\ge 44 \times 44\text{px}$, CTA chính neo vào Thumb Zone (vùng ngón cái chạm tới ở đáy màn hình).
@@ -157,6 +160,8 @@ Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt,
   - **Zero Suppression Invariant:** Tuyệt đối không dùng comment ẩn lỗi (`eslint-disable`, `# noqa`, `#[allow(...)]`). Sửa tận gốc nguyên nhân.
   - Composite Index theo quy ước ESR: *Equality $\rightarrow$ Sort $\rightarrow$ Range* (DDIA, p.109).
   - Phân loại rõ Concurrency: Atomic Update, Pessimistic Locking (`SELECT FOR UPDATE`), hay Optimistic Locking (`version` column) (DDIA, p.268–269).
+  - **Async Event Loop & Non-Blocking Invariant:** Tuyệt đối không dùng blocking calls (`fs.readFileSync`, `time.sleep`) trong async worker threads. Tác vụ nặng CPU phải chuyển sang worker pool.
+  - **Graceful Shutdown Signal Handling:** Bắt tín hiệu `SIGTERM`, dừng nhận request mới, hoàn tất in-flight requests và đóng kết nối database sạch sẽ trước khi thoát.
 * **Bước 2.5: Build, Typecheck & Hygiene Gate:**
   - Chạy production build (`npm run build` / `cargo build` / `go build`) exit 0.
   - Chạy `gate hygiene --staged` đạt 0 vi phạm (Zero inline suppression comments).
@@ -197,7 +202,10 @@ Hiện thực hóa logic nghiệp vụ thông qua chu trình TDD nghiêm ngặt,
     - **Studio Shell:** Kiểm tra 100vh studio constraint (`scrollHeight <= innerHeight`).
   - **Module 3 (Visual):** Anti-whiteout, background $\neq$ transparent, có stylesheets hoạt động.
   - **Module 4 (5-State):** Kiểm tra không rơi vào màn hình đen rỗng (`#000`), có fallback card cho Loading, Empty, Error.
-* **Bước 3.5: Automated Zero-Trust Security Scan (`gate sec`):** Chạy `gate sec` đạt 0 finding ở mức Critical/High (SAST quét secrets, fallback credentials, raw SQLi, insecure crypto, RCE sinks, và CVE dependencies).
+* **Bước 3.5: Automated Security, Infrastructure & Stress Verification:**
+  - **Security Scan (`gate sec`):** Quét secrets, fallback credentials, raw SQLi, insecure crypto, RCE sinks, CVE dependencies (đạt 0 finding Critical/High).
+  - **Infrastructure Audit (`gate infra`):** Quét Dockerfile và Kubernetes manifests theo chuẩn CIS (non-root USER, no `:latest`, explicit requests/limits, probes).
+  - **Load & Stress Testing (`gate perf`):** Chạy kiểm thử chịu tải đồng thời (`gate perf <url> --concurrency 20`) hoặc xác nhận k6 load scripts trong `tests/load/`. p95 bắt buộc $\le 200\text{ms}$, p99 $\le 500\text{ms}$, error rate $< 0.1\%$.
 * **Bước 3.6: Defect Tracking & Circuit Breaker Auto-Rollback:**
   - Nếu có lỗi: QC xuất `docs/evidence/<feature>/qa-defects.json`. DEV sửa và QC re-test (tối đa 3 vòng).
   - **Auto-Rollback Trigger:** Nếu `cycle > 3` mà lỗi Critical/High chưa giải quyết: Hệ thống tự động kích hoạt `git reset` hoặc `git stash` hoàn nguyên working tree về trạng thái sạch, gắn cờ `BLOCKED_NEEDS_HUMAN` và dừng lại báo cáo rào cản kỹ thuật.
