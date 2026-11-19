@@ -33,10 +33,10 @@ export default function LoginPage() {
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.3) 0, transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.2) 0, transparent 40%)" }} />
         <div className="relative">
           <div className="flex items-center gap-2">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-              <Sparkles className="h-5 w-5" />
+            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-[#faf3e8]">
+              <img src="/logo-mark.png" alt="thuypn by kimnh" className="h-full w-full object-contain" />
             </span>
-            <span className="text-lg font-semibold tracking-tight">Nutrition Tracker</span>
+            <span className="text-lg font-semibold tracking-tight">thuypn by kimnh</span>
           </div>
         </div>
         <div className="relative space-y-6">
@@ -55,15 +55,15 @@ export default function LoginPage() {
             ))}
           </ul>
         </div>
-        <div className="relative text-xs text-emerald-200/60">© 2026 Nutrition Tracker</div>
+        <div className="relative text-xs text-emerald-200/60">© 2026 thuypn by kimnh</div>
       </div>
 
       {/* Form panel */}
       <div className="flex items-center justify-center px-6 py-12 bg-background">
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8 text-center">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary"><Sparkles className="h-6 w-6" /></span>
-            <h1 className="mt-3 text-xl font-semibold tracking-tight">Nutrition Tracker</h1>
+            <span className="inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-[#faf3e8]"><img src="/logo-mark.png" alt="thuypn by kimnh" className="h-full w-full object-contain" /></span>
+            <h1 className="mt-3 text-xl font-semibold tracking-tight">thuypn by kimnh</h1>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Chào mừng trở lại</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">Đăng nhập để tiếp tục theo dõi calo của bạn.</p>
