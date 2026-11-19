@@ -5,7 +5,6 @@ import { Utensils, RefreshCw, Star, MapPin, ExternalLink, AlertCircle, ChefHat, 
 import { createGenerationGuard } from "@/lib/request-guard";
 import { selectDayMeals, todayPlanIndex } from "@/lib/meal-plan";
 import { pageWindow, totalPages } from "@/lib/pagination";
-import { normalizePriceRange } from "@/lib/price-range";
 
 interface Dish { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; source: string; }
 interface Suggestion { dish: Dish; reason: string; place: { name: string; url: string } | null; }
@@ -241,7 +240,7 @@ export default function WhatToEatPage() {
               <select value={district} onChange={e=>setDistrict(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Mọi quận</option>{["Quận 1","Quận 3","Quận 5","Quận 7","Quận 11","Tân Phú","Bình Thạnh","Thủ Đức","Gò Vấp","Quận 10"].map(d=><option key={d}>{d}</option>)}</select>
               <select aria-label="Giá từ" value={minPrice} onChange={e=>setMinPrice(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Từ</option><option value="20000">20k</option><option value="50000">50k</option><option value="100000">100k</option><option value="200000">200k</option></select>
               <select aria-label="Giá đến" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Đến</option><option value="30000">30k</option><option value="50000">50k</option><option value="100000">100k</option><option value="200000">200k</option><option value="500000">500k</option></select>
-              <select aria-label="Sắp xếp" value={sort} onChange={e=>setSort(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="rating">Đánh giá</option><option value="price">Giá tăng</option><option value="distance">Khoảng cách</option></select>
+              <select aria-label="Sắp xếp" value={sort} onChange={e=>setSort(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="rating">Đánh giá: cao → thấp</option><option value="price">Giá: thấp → cao</option><option value="distance" disabled={!geo}>Khoảng cách: gần → xa{geo?"":" (cần vị trí)"}</option></select>
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground">Nguồn: Foody (dữ liệu công khai, scrape 18/11/2026). Không lưu review hay dữ liệu cá nhân.</p>
