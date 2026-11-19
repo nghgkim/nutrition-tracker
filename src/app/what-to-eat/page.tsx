@@ -1,40 +1,26 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Utensils, Star, MapPin, ExternalLink, Navigation, CalendarRange, Plus, Check } from "lucide-react";
+import { Utensils, Star, MapPin, ExternalLink, Navigation } from "lucide-react";
 import { createGenerationGuard } from "@/lib/request-guard";
-import { selectDayMeals, todayPlanIndex, swapMeal, type MealDay } from "@/lib/meal-plan";
-import type { Dish } from "@/lib/what-to-eat";
 import { pageWindow, totalPages } from "@/lib/pagination";
 
 interface Restaurant { id: string; name: string; address: string; rating: number; photoUrl: string | null; url: string; distanceKm?: number|null; priceMin?: number|null; priceMax?: number|null; district?: string|null; openHours?: string|null; cuisines?: string|null; }
 interface WteData { goal: number; eaten: number; remaining: number; }
 
-type Tab = "suggest" | "restaurants";
-const TABS: { id: Tab; label: string; icon: typeof Utensils }[] = [
-  { id: "suggest", label: "Thực đơn tuần", icon: CalendarRange },
-  { id: "restaurants", label: "Quán ăn", icon: Utensils },
-];
 const PAGE_SIZE = 9;
 const fmt = (n:number)=>new Intl.NumberFormat("vi-VN").format(n)+"₫";
 
 export default function WhatToEatPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<Tab>("suggest");
   const [data, setData] = useState<WteData | null>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [plan, setPlan] = useState<MealDay[]>([]);
-  const [candidates, setCandidates] = useState<Dish[]>([]);
-  const [swapTarget, setSwapTarget] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [geo, setGeo] = useState<{lat:number;lon:number}|null>(null);
   const [district, setDistrict] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("rating");
-  const [applied, setApplied] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const [applyError, setApplyError] = useState("");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [showFloat, setShowFloat] = useState(false);
@@ -48,7 +34,6 @@ export default function WhatToEatPage() {
 
   // Floating paging appears after real scrolling, with hysteresis to avoid flicker.
   useEffect(() => {
-    if (activeTab !== "restaurants") { setShowFloat(false); return; }
     const onScroll = () => {
       const y = window.scrollY;
       setShowFloat(prev => (prev ? y > 300 : y > 400));
@@ -56,7 +41,7 @@ export default function WhatToEatPage() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [activeTab]);
+  }, []);
 
   const loadWte = useCallback(async () => {
     const res = await fetch("/api/what-to-eat");
@@ -101,8 +86,6 @@ export default function WhatToEatPage() {
   useEffect(() => {
     Promise.all([
       loadWte(),
-      fetch("/api/meal-plan/weekly").then(r => r.json()).then(d => setPlan(d.week || [])),
-      fetch("/api/foods").then(r => r.json()).then(d => setCandidates((d.foods || []).filter((f: Dish & { source?: string }) => f.source?.includes("NIN2026")))),
     ]).finally(() => setLoading(false));
   }, [loadWte]);
 
@@ -119,34 +102,6 @@ export default function WhatToEatPage() {
     );
   }
 
-  const todayIndex = todayPlanIndex();
-  const todayDay = plan.find(d => d.day === todayIndex);
-  const todayMeals = selectDayMeals(plan, todayIndex);
-  const todayTotal = todayMeals.reduce((s, m) => s + m.calories, 0);
-
-  function persistWeek(next: MealDay[]) {
-    setPlan(next);
-    fetch("/api/meal-plan/weekly", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ week: next }),
-    }).then(res => { if (!res.ok) setApplyError("Không thể lưu món đã đổi."); });
-  }
-
-  async function confirmApply() {
-    setApplyError("");
-    const res = await fetch("/api/meal-plan/weekly/apply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ meals: todayMeals }),
-    });
-    if (!res.ok) { setApplyError("Không thể thêm món vào nhật ký. Vui lòng thử lại."); return; }
-    setConfirming(false);
-    setApplied(true);
-    setTimeout(() => setApplied(false), 2500);
-    loadWte();
-  }
-
   if (loading || !data) return <div className="max-w-5xl mx-auto px-4 py-6"><div className="h-96 skeleton rounded-2xl" /></div>;
 
   return (
@@ -157,85 +112,8 @@ export default function WhatToEatPage() {
         <p className="mt-1 text-sm text-muted-foreground">Dựa trên calo còn lại: <span className="font-semibold text-primary">{Math.round(data.remaining)} kcal</span> (đã ăn {Math.round(data.eaten)} / {data.goal})</p>
       </div>
 
-      {/* Two tabs: food ideas and places. Similar content stays inside "Gợi ý". */}
-      <div className="flex gap-1 rounded-xl bg-muted p-1" role="tablist" aria-label="Hôm nay ăn gì">
-        {TABS.map(tab => {
-          const Icon = tab.icon;
-          const active = activeTab === tab.id;
-          return (
-            <button key={tab.id} role="tab" aria-selected={active} onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                active ? "bg-card text-foreground shadow-sm elevated" : "text-muted-foreground hover:text-foreground"
-              }`}>
-              <Icon className="h-4 w-4" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Tab 1: weekly plan only — random NIN dish suggestions removed */}
-      {activeTab === "suggest" && (
-        <div className="space-y-4" role="tabpanel">
-          <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h2 className="text-sm font-semibold flex items-center gap-2"><CalendarRange className="h-4 w-4 text-sky-500"/> Thực đơn gợi ý 7 ngày</h2>
-              <button onClick={() => setConfirming(!confirming)} disabled={todayMeals.length === 0}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
-                {applied?<><Check className="h-4 w-4"/> Đã thêm</>:<><Plus className="h-4 w-4"/> Thêm 4 bữa hôm nay</>}
-              </button>
-            </div>
-            {confirming && (
-              <div className="rounded-xl border border-primary/40 bg-primary/5 p-4 space-y-2">
-                <p className="text-sm font-medium">{todayDay?.label ?? "Hôm nay"} · {todayMeals.length} bữa · tổng {todayTotal} kcal</p>
-                <ul className="text-xs text-muted-foreground space-y-0.5">
-                  {todayMeals.map((m,i)=><li key={i}>{m.name} — {m.calories} kcal</li>)}
-                </ul>
-                {applyError && <p className="text-xs text-destructive">{applyError}</p>}
-                <div className="flex gap-2 pt-1">
-                  <button onClick={confirmApply} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">Xác nhận</button>
-                  <button onClick={() => { setConfirming(false); setApplyError(""); }} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted">Hủy</button>
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
-              {plan.map(d=>(
-                <div key={d.day} className={`rounded-xl border p-2.5 space-y-1 ${d.day === todayIndex ? "border-primary/50 bg-primary/5" : "border-border/60"}`}>
-                  <div className="text-xs font-semibold text-foreground">{d.label}</div>
-                  <div className="text-[10px] font-medium text-primary">{d.total} kcal</div>
-                  {d.meals.map((m,i) => (
-                    <div key={i} className="space-y-0.5">
-                      <div className="flex items-start justify-between gap-1">
-                        <span className="text-[10px] text-muted-foreground truncate" title={m.name}>{m.name}{m.servingSize ? ` · ${m.servingSize}` : ""}</span>
-                        <button onClick={() => setSwapTarget(swapTarget === `${d.day}-${i}` ? null : `${d.day}-${i}`)}
-                          aria-label={`Đổi món ${m.name}`}
-                          className="min-h-8 shrink-0 rounded border border-border px-1 text-[10px] text-primary hover:bg-muted">Đổi</button>
-                      </div>
-                      {swapTarget === `${d.day}-${i}` && (
-                        <div className="max-h-24 overflow-y-auto rounded border border-border/60 bg-background p-1">
-                          {candidates.slice(0, 8).map(f => (
-                            <button key={f.name} onClick={() => {
-                              setSwapTarget(null);
-                              const next = plan.map((day, di) => di === d.day ? swapMeal(day, i, [f]) : day);
-                              persistWeek(next);
-                            }} className="block w-full truncate rounded px-1 py-1 text-left text-[10px] hover:bg-muted">
-                              {f.name} · {f.calories} kcal{f.servingSize ? ` · ${f.servingSize}` : ""}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Tab 2: restaurants with race-safe filters + incremental loading */}
-      {activeTab === "restaurants" && (
-        <div className="flex flex-col gap-2" role="tabpanel">
+      <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-sm font-semibold flex items-center gap-2"><Utensils className="h-4 w-4 text-rose-500"/> Quán ăn TP.HCM</h2>
             <div className="flex gap-2 flex-wrap">
@@ -327,10 +205,9 @@ export default function WhatToEatPage() {
             </div>
           )}
         </div>
-      )}
 
       {/* Floating paging for mobile thumb zone; desktop uses in-flow controls */}
-      {activeTab === "restaurants" && showFloat && totalPages(total, PAGE_SIZE) > 1 && (
+      {showFloat && totalPages(total, PAGE_SIZE) > 1 && (
         <div aria-label="Phân trang" className="fixed bottom-0 left-14 right-0 z-50 border-t border-border/60 bg-background/95 px-4 py-2 backdrop-blur md:hidden">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
             <button onClick={() => { loadRestaurants(page - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }} disabled={page <= 1}

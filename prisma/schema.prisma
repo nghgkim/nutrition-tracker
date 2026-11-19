@@ -38,7 +38,6 @@ model User {
   reminderLogs   ReminderLog[]
   trainingPlan   TrainingPlan?
   journalEntries JournalEntry[]
-  mealPlan       MealPlan?
 }
 
 model Food {
@@ -255,12 +254,4 @@ model JournalEntry {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, date])
-}
-
-model MealPlan {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  week      Json
-  updatedAt DateTime @updatedAt
 }
