@@ -105,13 +105,13 @@ export default function Nav() {
                 );
               })}
               <div className="relative" ref={moreRef}>
-                <button onClick={() => setMoreOpen(!moreOpen)}
-                  className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                  <span className="hidden sm:inline">{t("more")}</span>
+                <button onClick={() => setMoreOpen(!moreOpen)} aria-label={t("more")}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                  <span>{t("more")}</span>
                   <ChevronDown className={`h-4 w-4 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
                 </button>
                 {moreOpen && (
-                  <div className="absolute right-0 mt-2 w-52 rounded-xl border border-border/60 bg-card shadow-lg py-1 z-50">
+                  <div className="absolute right-0 mt-2 max-h-[calc(100vh-100px)] w-52 overflow-y-auto rounded-xl border border-border/60 bg-card shadow-lg py-1 z-50">
                     {moreGroups.map((group, gi) => (
                       <div key={group.label}>
                         {gi > 0 && <div className="border-t border-border/60 my-1" />}
