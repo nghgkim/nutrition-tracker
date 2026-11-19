@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Utensils, Star, MapPin, ExternalLink, Navigation } from "lucide-react";
+import { Utensils, Star, MapPin, ExternalLink, Navigation, SlidersHorizontal, X } from "lucide-react";
 import { createGenerationGuard } from "@/lib/request-guard";
 import { pageWindow, totalPages } from "@/lib/pagination";
 
@@ -26,6 +26,7 @@ export default function WhatToEatPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [showFloat, setShowFloat] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   // Discard out-of-order filter responses and cancel their network requests.
   const guard = useRef(createGenerationGuard());
@@ -106,6 +107,11 @@ export default function WhatToEatPage() {
     );
   }
 
+  const activeFilters = [district, minPrice, maxPrice, minRating, maxDistance].filter(Boolean).length + (sort !== "rating" ? 1 : 0);
+  function resetFilters() {
+    setDistrict(""); setMinPrice(""); setMaxPrice(""); setSort("rating"); setMinRating(""); setMaxDistance("");
+  }
+
   if (loading || !data) return <div className="max-w-5xl mx-auto px-4 py-6"><div className="h-96 skeleton rounded-2xl" /></div>;
 
   return (
@@ -121,15 +127,45 @@ export default function WhatToEatPage() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-sm font-semibold flex items-center gap-2"><Utensils className="h-4 w-4 text-rose-500"/> Quán ăn TP.HCM</h2>
             <div className="flex gap-2 flex-wrap">
-              <button onClick={askLocation} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-muted"><Navigation className="h-3.5 w-3.5"/> {geo?"Vị trí đã lấy":"Dùng vị trí"}</button>
-              <select value={district} onChange={e=>setDistrict(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Mọi quận</option>{["Quận 1","Quận 3","Quận 5","Quận 7","Quận 11","Tân Phú","Bình Thạnh","Thủ Đức","Gò Vấp","Quận 10"].map(d=><option key={d}>{d}</option>)}</select>
-              <select aria-label="Giá từ" value={minPrice} onChange={e=>setMinPrice(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Từ</option><option value="20000">20k</option><option value="50000">50k</option><option value="100000">100k</option><option value="200000">200k</option></select>
-              <select aria-label="Giá đến" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Đến</option><option value="30000">30k</option><option value="50000">50k</option><option value="100000">100k</option><option value="200000">200k</option><option value="500000">500k</option></select>
-              <select aria-label="Sắp xếp" value={sort} onChange={e=>setSort(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="rating">Đánh giá: cao → thấp</option><option value="price">Giá: thấp → cao</option><option value="distance" disabled={!geo}>Khoảng cách: gần → xa{geo?"":" (cần vị trí)"}</option></select>
-              <select aria-label="Rating tối thiểu" value={minRating} onChange={e=>setMinRating(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Rating ≥</option><option value="6">6+</option><option value="7">7+</option><option value="8">8+</option><option value="9">9+</option></select>
-              <select aria-label="Khoảng cách tối đa" value={maxDistance} onChange={e=>setMaxDistance(e.target.value)} disabled={!geo} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="">Trong {geo?"":"(cần vị trí)"}</option><option value="1">1 km</option><option value="3">3 km</option><option value="5">5 km</option><option value="10">10 km</option></select>
+              <button onClick={askLocation} className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border px-3 text-xs hover:bg-muted"><Navigation className="h-3.5 w-3.5"/> {geo?"Vị trí đã lấy":"Dùng vị trí"}</button>
+              <button onClick={() => setPanelOpen(!panelOpen)} aria-expanded={panelOpen}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground">
+                <SlidersHorizontal className="h-3.5 w-3.5"/> Bộ lọc{activeFilters > 0 ? ` (${activeFilters})` : ""}
+              </button>
             </div>
           </div>
+          {panelOpen && (
+            <div className="rounded-2xl border border-border/60 bg-card p-4 elevated space-y-3" role="region" aria-label="Bộ lọc quán ăn">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold">Bộ lọc{activeFilters > 0 ? ` · ${activeFilters} đang áp dụng` : ""}</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={resetFilters} className="text-xs text-primary hover:underline">Xóa tất cả</button>
+                  <button onClick={() => setPanelOpen(false)} aria-label="Đóng bộ lọc" className="inline-flex h-11 w-11 items-center justify-center rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">Quận
+                  <select value={district} onChange={e=>setDistrict(e.target.value)} className="min-h-11 rounded-lg border border-border bg-background px-2 text-xs text-foreground"><option value="">Mọi quận</option>{["Quận 1","Quận 3","Quận 5","Quận 7","Quận 11","Tân Phú","Bình Thạnh","Thủ Đức","Gò Vấp","Quận 10"].map(d=><option key={d}>{d}</option>)}</select>
+                </label>
+                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">Giá từ
+                  <select aria-label="Giá từ" value={minPrice} onChange={e=>setMinPrice(e.target.value)} className="min-h-11 rounded-lg border border-border bg-background px-2 text-xs text-foreground"><option value="">Từ</option><option value="20000">20k</option><option value="50000">50k</option><option value="100000">100k</option><option value="200000">200k</option></select>
+                </label>
+                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">Giá đến
+                  <select aria-label="Giá đến" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} className="min-h-11 rounded-lg border border-border bg-background px-2 text-xs text-foreground"><option value="">Đến</option><option value="30000">30k</option><option value="50000">50k</option><option value="100000">100k</option><option value="200000">200k</option><option value="500000">500k</option></select>
+                </label>
+                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">Rating tối thiểu
+                  <select aria-label="Rating tối thiểu" value={minRating} onChange={e=>setMinRating(e.target.value)} className="min-h-11 rounded-lg border border-border bg-background px-2 text-xs text-foreground"><option value="">Mọi rating</option><option value="6">6+</option><option value="7">7+</option><option value="8">8+</option><option value="9">9+</option></select>
+                </label>
+                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">Khoảng cách
+                  <select aria-label="Khoảng cách tối đa" value={maxDistance} onChange={e=>setMaxDistance(e.target.value)} disabled={!geo} className="min-h-11 rounded-lg border border-border bg-background px-2 text-xs text-foreground disabled:opacity-50"><option value="">{geo?"Mọi khoảng cách":"Cần vị trí"}</option><option value="1">1 km</option><option value="3">3 km</option><option value="5">5 km</option><option value="10">10 km</option></select>
+                </label>
+                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">Sắp xếp
+                  <select aria-label="Sắp xếp" value={sort} onChange={e=>setSort(e.target.value)} className="min-h-11 rounded-lg border border-border bg-background px-2 text-xs text-foreground"><option value="rating">Đánh giá: cao → thấp</option><option value="price">Giá: thấp → cao</option><option value="distance" disabled={!geo}>Khoảng cách: gần → xa</option></select>
+                </label>
+              </div>
+            </div>
+          )}
+
           <p className="text-[10px] text-muted-foreground">Nguồn: Foody (dữ liệu công khai, scrape 18/11/2026). Không lưu review hay dữ liệu cá nhân.</p>
           <div className="hidden max-h-[calc(100vh-400px)] min-h-[240px] overflow-auto rounded-2xl border border-border/60 bg-card elevated md:block">
             <table className="w-full min-w-[760px] text-left text-sm">
