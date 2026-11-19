@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Utensils, RefreshCw, Star, ExternalLink, AlertCircle, ChefHat, Navigation, CalendarRange, Plus, Check } from "lucide-react";
+import { Utensils, RefreshCw, Star, MapPin, ExternalLink, AlertCircle, ChefHat, Navigation, CalendarRange, Plus, Check } from "lucide-react";
 import { createGenerationGuard } from "@/lib/request-guard";
 import { selectDayMeals, todayPlanIndex } from "@/lib/meal-plan";
 import { pageWindow, totalPages } from "@/lib/pagination";
@@ -225,7 +225,7 @@ export default function WhatToEatPage() {
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground">Nguồn: Foody (dữ liệu công khai, scrape 18/11/2026). Không lưu review hay dữ liệu cá nhân.</p>
-          <div className="max-h-[calc(100vh-400px)] min-h-[240px] overflow-auto rounded-2xl border border-border/60 bg-card elevated">
+          <div className="hidden max-h-[calc(100vh-400px)] min-h-[240px] overflow-auto rounded-2xl border border-border/60 bg-card elevated md:block">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
                 <tr className="sticky top-0 z-20 border-b border-border/60 bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -260,8 +260,30 @@ export default function WhatToEatPage() {
               </tbody>
             </table>
           </div>
+          {/* Mobile-first: stacked cards replace the horizontally-scrolling table */}
+          <div className="space-y-2 md:hidden">
+            {restaurants.map(r=>(
+              <div key={r.id} className="rounded-2xl border border-border/60 bg-card p-4 elevated space-y-2">
+                <div className="flex items-center gap-3">
+                  {r.photoUrl && <span className="h-12 w-12 shrink-0 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${r.photoUrl})` }} />}
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-foreground line-clamp-2" title={r.name}>{r.name}</div>
+                    <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500"/> {r.rating.toFixed(1)}</span>
+                      <span>{r.priceMin&&r.priceMax?`${fmt(r.priceMin)} – ${fmt(r.priceMax)}`:"Đang cập nhật"}</span>
+                      {r.distanceKm!=null&&<span>{r.distanceKm} km</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-1 text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0"/><span className="line-clamp-2">{r.district ? `${r.district} · ` : ""}{r.address}</span></div>
+                <a href={r.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline">Xem trên Foody <ExternalLink className="h-3.5 w-3.5"/></a>
+              </div>
+            ))}
+            {restaurants.length===0&&<p className="py-10 text-center text-sm text-muted-foreground">Không tìm thấy quán phù hợp bộ lọc.</p>}
+          </div>
+
           {totalPages(total, PAGE_SIZE) > 1 && (
-            <div className="sticky bottom-0 z-10 flex flex-col items-center gap-2 rounded-xl bg-background/90 py-2 backdrop-blur">
+            <div className="flex flex-col items-center gap-2 rounded-xl bg-background/90 py-2 backdrop-blur md:sticky md:bottom-0 md:z-10">
               <span className="text-xs text-muted-foreground">Trang {page} / {totalPages(total, PAGE_SIZE)} · {total} quán</span>
               <div className="flex flex-wrap items-center justify-center gap-1">
                 <button onClick={() => loadRestaurants(page - 1)} disabled={page <= 1}
