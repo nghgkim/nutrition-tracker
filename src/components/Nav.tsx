@@ -2,9 +2,10 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Salad, LogOut, LayoutDashboard, Utensils, ChevronDown, User, Settings, LogIn, UserPlus, History, Dumbbell, Wallet, Users, ChefHat, BarChart3 } from "lucide-react";
+import { Salad, LogOut, Utensils, ChevronDown, User, Settings, LogIn, UserPlus, History, Dumbbell, Wallet, Users, ChefHat, BarChart3 } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { useTheme, SunIcon, MoonIcon } from "@/components/ThemeProvider";
+import { isNavActive } from "@/lib/nav-active";
 
 export default function Nav() {
   const pathname = usePathname();
@@ -41,7 +42,6 @@ export default function Nav() {
 
   // Two primary destinations; related pages live in the grouped overflow menu.
   const primary = [
-    { href: "/dashboard", label: t("dashboard"), icon: LayoutDashboard },
     { href: "/what-to-eat", label: "Ăn uống", icon: ChefHat },
   ];
   const moreGroups = [
@@ -89,7 +89,7 @@ export default function Nav() {
             <>
               {primary.map((l) => {
                 const Icon = l.icon;
-                const active = pathname === l.href || (l.href === "/what-to-eat" && pathname === "/foods");
+                const active = isNavActive(pathname, l.href);
                 return (
                   <Link key={l.href} href={l.href}
                     className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -120,7 +120,7 @@ export default function Nav() {
                         </div>
                         {group.items.map((l) => {
                           const Icon = l.icon;
-                          const active = pathname === l.href;
+                          const active = isNavActive(pathname, l.href);
                           return (
                             <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)}
                               className={`flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${

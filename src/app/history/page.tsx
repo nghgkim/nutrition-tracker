@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { History as HistoryIcon, Flame } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
@@ -35,7 +36,7 @@ export default function HistoryPage() {
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground"><HistoryIcon className="h-6 w-6" /></span>
           <h3 className="mt-4 text-sm font-semibold text-foreground">Chưa có dữ liệu</h3>
           <p className="mt-1 text-xs text-muted-foreground">Bắt đầu ghi nhận món ăn ở Dashboard để xem lịch sử.</p>
-          <a href="/dashboard" className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]">Đi đến Dashboard</a>
+          <Link href="/" className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]">Đi đến trang chính</Link>
         </div>
       ) : (
         <div className="space-y-4">

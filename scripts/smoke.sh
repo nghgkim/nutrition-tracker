@@ -40,6 +40,6 @@ echo "=== 8. goal ==="
 curl -sf -b "$COOKIE" "$BASE/api/goal" | grep -q '"goal"'
 
 echo "=== 9. page load (JS bundle reachable) ==="
-curl -sf -b "$COOKIE" "$BASE/dashboard" | grep -q "Nutrition Tracker"
+curl -sf -b "$COOKIE" "$BASE/" | grep -q "Nutrition Tracker"
 
 echo "=== ALL SMOKE CHECKS PASSED ==="

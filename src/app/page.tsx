@@ -1,2 +1,2 @@
-import { redirect } from "next/navigation";
-export default function Home() { redirect("/dashboard"); }
+// Canonical homepage renders the dashboard view directly at "/".
+export { default } from "./dashboard/DashboardView";

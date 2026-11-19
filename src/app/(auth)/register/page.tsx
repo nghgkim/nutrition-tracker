@@ -23,7 +23,7 @@ export default function RegisterPage() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) { setError(data.error || "Đăng ký thất bại"); return; }
-    router.push("/dashboard");
+    router.push("/");
     router.refresh();
   }
 
