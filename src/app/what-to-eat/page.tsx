@@ -1,20 +1,18 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Utensils, RefreshCw, Star, MapPin, ExternalLink, AlertCircle, ChefHat, Navigation, CalendarRange, Plus, Check } from "lucide-react";
+import { Utensils, Star, MapPin, ExternalLink, Navigation, CalendarRange, Plus, Check } from "lucide-react";
 import { createGenerationGuard } from "@/lib/request-guard";
 import { selectDayMeals, todayPlanIndex } from "@/lib/meal-plan";
 import { pageWindow, totalPages } from "@/lib/pagination";
 
-interface Dish { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; source: string; }
-interface Suggestion { dish: Dish; reason: string; place: { name: string; url: string } | null; }
 interface Restaurant { id: string; name: string; address: string; rating: number; photoUrl: string | null; url: string; distanceKm?: number|null; priceMin?: number|null; priceMax?: number|null; district?: string|null; openHours?: string|null; cuisines?: string|null; }
 interface MealDay { day: number; label: string; meals: { name: string; calories: number; source: string }[]; total: number; }
-interface WteData { goal: number; eaten: number; remaining: number; suggestions: Suggestion[]; }
+interface WteData { goal: number; eaten: number; remaining: number; }
 
 type Tab = "suggest" | "restaurants";
-const TABS: { id: Tab; label: string; icon: typeof ChefHat }[] = [
-  { id: "suggest", label: "Gợi ý", icon: ChefHat },
+const TABS: { id: Tab; label: string; icon: typeof Utensils }[] = [
+  { id: "suggest", label: "Thực đơn tuần", icon: CalendarRange },
   { id: "restaurants", label: "Quán ăn", icon: Utensils },
 ];
 const PAGE_SIZE = 9;
@@ -164,38 +162,9 @@ export default function WhatToEatPage() {
         })}
       </div>
 
-      {/* Tab 1: dish suggestions + weekly plan */}
+      {/* Tab 1: weekly plan only — random NIN dish suggestions removed */}
       {activeTab === "suggest" && (
         <div className="space-y-4" role="tabpanel">
-          <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold flex items-center gap-2"><ChefHat className="h-4 w-4 text-primary"/> Món gợi ý từ NIN 2026</h2>
-              <button onClick={loadWte} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors"><RefreshCw className="h-4 w-4"/> Gợi ý lại</button>
-            </div>
-            {data.suggestions.length === 0 ? (
-              <div className="flex flex-col items-center py-10 text-center"><AlertCircle className="h-8 w-8 text-amber-500"/><p className="mt-3 text-sm font-medium">Bạn đã vượt mục tiêu calo hôm nay</p></div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {data.suggestions.map((s,i) => {
-                  const place = s.place;
-                  return (
-                    <div key={i} className="rounded-xl border border-border/60 p-4 space-y-2">
-                      <div className="text-sm font-medium text-foreground">{s.dish.name}</div>
-                      <div className="text-lg font-bold text-primary">{s.dish.calories} <span className="text-sm font-normal text-muted-foreground">kcal</span></div>
-                      <div className="text-xs text-muted-foreground">{s.reason}</div>
-                      {place && (
-                        <a href={place.url} target="_blank" rel="noopener noreferrer"
-                          className="inline-flex max-w-full items-center gap-1 text-[11px] text-primary hover:underline">
-                          <span className="truncate">Quán Foody: {place.name}</span><ExternalLink className="h-3 w-3 shrink-0" />
-                        </a>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
           <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="text-sm font-semibold flex items-center gap-2"><CalendarRange className="h-4 w-4 text-sky-500"/> Thực đơn gợi ý 7 ngày</h2>
