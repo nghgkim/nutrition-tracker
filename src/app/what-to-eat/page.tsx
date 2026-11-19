@@ -3,11 +3,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Utensils, Star, MapPin, ExternalLink, Navigation, CalendarRange, Plus, Check } from "lucide-react";
 import { createGenerationGuard } from "@/lib/request-guard";
-import { selectDayMeals, todayPlanIndex } from "@/lib/meal-plan";
+import { selectDayMeals, todayPlanIndex, swapMeal, type MealDay } from "@/lib/meal-plan";
+import type { Dish } from "@/lib/what-to-eat";
 import { pageWindow, totalPages } from "@/lib/pagination";
 
 interface Restaurant { id: string; name: string; address: string; rating: number; photoUrl: string | null; url: string; distanceKm?: number|null; priceMin?: number|null; priceMax?: number|null; district?: string|null; openHours?: string|null; cuisines?: string|null; }
-interface MealDay { day: number; label: string; meals: { name: string; calories: number; source: string }[]; total: number; }
 interface WteData { goal: number; eaten: number; remaining: number; }
 
 type Tab = "suggest" | "restaurants";
@@ -24,6 +24,8 @@ export default function WhatToEatPage() {
   const [data, setData] = useState<WteData | null>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [plan, setPlan] = useState<MealDay[]>([]);
+  const [candidates, setCandidates] = useState<Dish[]>([]);
+  const [swapTarget, setSwapTarget] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [geo, setGeo] = useState<{lat:number;lon:number}|null>(null);
   const [district, setDistrict] = useState("");
@@ -100,6 +102,7 @@ export default function WhatToEatPage() {
     Promise.all([
       loadWte(),
       fetch("/api/meal-plan/weekly").then(r => r.json()).then(d => setPlan(d.week || [])),
+      fetch("/api/foods").then(r => r.json()).then(d => setCandidates((d.foods || []).filter((f: Dish & { source?: string }) => f.source?.includes("NIN2026")))),
     ]).finally(() => setLoading(false));
   }, [loadWte]);
 
@@ -120,6 +123,15 @@ export default function WhatToEatPage() {
   const todayDay = plan.find(d => d.day === todayIndex);
   const todayMeals = selectDayMeals(plan, todayIndex);
   const todayTotal = todayMeals.reduce((s, m) => s + m.calories, 0);
+
+  function persistWeek(next: MealDay[]) {
+    setPlan(next);
+    fetch("/api/meal-plan/weekly", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ week: next }),
+    }).then(res => { if (!res.ok) setApplyError("Không thể lưu món đã đổi."); });
+  }
 
   async function confirmApply() {
     setApplyError("");
@@ -191,7 +203,29 @@ export default function WhatToEatPage() {
                 <div key={d.day} className={`rounded-xl border p-2.5 space-y-1 ${d.day === todayIndex ? "border-primary/50 bg-primary/5" : "border-border/60"}`}>
                   <div className="text-xs font-semibold text-foreground">{d.label}</div>
                   <div className="text-[10px] font-medium text-primary">{d.total} kcal</div>
-                  {d.meals.map((m,i)=><div key={i} className="text-[10px] text-muted-foreground truncate" title={m.name}>{m.name}</div>)}
+                  {d.meals.map((m,i) => (
+                    <div key={i} className="space-y-0.5">
+                      <div className="flex items-start justify-between gap-1">
+                        <span className="text-[10px] text-muted-foreground truncate" title={m.name}>{m.name}{m.servingSize ? ` · ${m.servingSize}` : ""}</span>
+                        <button onClick={() => setSwapTarget(swapTarget === `${d.day}-${i}` ? null : `${d.day}-${i}`)}
+                          aria-label={`Đổi món ${m.name}`}
+                          className="min-h-8 shrink-0 rounded border border-border px-1 text-[10px] text-primary hover:bg-muted">Đổi</button>
+                      </div>
+                      {swapTarget === `${d.day}-${i}` && (
+                        <div className="max-h-24 overflow-y-auto rounded border border-border/60 bg-background p-1">
+                          {candidates.slice(0, 8).map(f => (
+                            <button key={f.name} onClick={() => {
+                              setSwapTarget(null);
+                              const next = plan.map((day, di) => di === d.day ? swapMeal(day, i, [f]) : day);
+                              persistWeek(next);
+                            }} className="block w-full truncate rounded px-1 py-1 text-left text-[10px] hover:bg-muted">
+                              {f.name} · {f.calories} kcal{f.servingSize ? ` · ${f.servingSize}` : ""}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>

@@ -22,9 +22,9 @@ describe("request generation guard", () => {
 
 describe("meal plan day selection", () => {
   const plan: MealDay[] = [
-    { day: 0, label: "Thứ 2", total: 100, meals: [{ name: "A", calories: 40, source: "NIN2026" }, { name: "B", calories: 60, source: "NIN2026" }] },
-    { day: 1, label: "Thứ 3", total: 70, meals: [{ name: "C", calories: 70, source: "NIN2026" }, { name: "—", calories: 0, source: "" }] },
-    { day: 2, label: "Thứ 4", total: 90, meals: [{ name: "D", calories: 90, source: "NIN2026" }] },
+    { day: 0, label: "Thứ 2", total: 100, meals: [{ name: "A", calories: 40, source: "NIN2026", servingSize: null }, { name: "B", calories: 60, source: "NIN2026", servingSize: null }] },
+    { day: 1, label: "Thứ 3", total: 70, meals: [{ name: "C", calories: 70, source: "NIN2026", servingSize: null }, { name: "—", calories: 0, source: "", servingSize: null }] },
+    { day: 2, label: "Thứ 4", total: 90, meals: [{ name: "D", calories: 90, source: "NIN2026", servingSize: null }] },
   ];
 
   it("maps JS weekday (0=Sunday) to Monday-based plan index", () => {
@@ -35,7 +35,7 @@ describe("meal plan day selection", () => {
 
   it("selects only the requested day and drops empty slots", () => {
     const meals = selectDayMeals(plan, 1);
-    expect(meals).toEqual([{ name: "C", calories: 70, source: "NIN2026" }]);
+    expect(meals).toEqual([{ name: "C", calories: 70, source: "NIN2026", servingSize: null }]);
     expect(meals.reduce((s, m) => s + m.calories, 0)).toBe(70);
   });
 

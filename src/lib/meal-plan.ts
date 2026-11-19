@@ -1,5 +1,5 @@
 import type { Dish } from "./what-to-eat";
-export interface MealDay { day: number; label: string; meals: { name: string; calories: number; source: string }[]; total: number; }
+export interface MealDay { day: number; label: string; meals: { name: string; calories: number; source: string; servingSize: string | null }[]; total: number; }
 type PlanMeal = MealDay["meals"][number];
 const LABELS = ["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"];
 
@@ -18,7 +18,7 @@ export function buildWeeklyPlan(foods: Dish[], target: number): MealDay[] {
     .filter(f => f.calories > 100 && f.calories < 900 && f.source.includes("NIN2026"))
     .sort((a, b) => a.calories - b.calories);
   if (base.length === 0) {
-    return LABELS.map((label, i) => ({ day: i, label, meals: [0,1,2,3].map(() => ({ name: "—", calories: 0, source: "" })), total: 0 }));
+    return LABELS.map((label, i) => ({ day: i, label, meals: [0,1,2,3].map(() => ({ name: "—", calories: 0, source: "", servingSize: null })), total: 0 }));
   }
 
   return LABELS.map((label, day) => {
@@ -40,12 +40,29 @@ export function buildWeeklyPlan(foods: Dish[], target: number): MealDay[] {
         const score = Math.abs(f.calories - ideal) + Math.abs(noise);
         if (score < bestScore) { bestScore = score; bestIndex = idx; }
       });
-      if (bestIndex < 0) return { name: "—", calories: 0, source: "" };
+      if (bestIndex < 0) return { name: "—", calories: 0, source: "", servingSize: null };
       used.add(bestIndex);
       const f = pool[bestIndex];
       remaining -= f.calories;
-      return { name: f.name, calories: Math.round(f.calories), source: f.source };
+      return { name: f.name, calories: Math.round(f.calories), source: f.source, servingSize: f.servingSize ?? null };
     });
     return { day, label, meals: picks, total: picks.reduce((s, m) => s + m.calories, 0) };
   });
+}
+
+/** Replace one slot with the closest-calorie food not already used that day. */
+export function swapMeal(day: MealDay, slotIndex: number, candidates: Dish[]): MealDay {
+  const original = day.meals[slotIndex];
+  if (!original || candidates.length === 0) return day;
+  const used = new Set(day.meals.filter((_, i) => i !== slotIndex).map(m => m.name));
+  const options = candidates.filter(f => !used.has(f.name) && f.name !== original.name);
+  if (options.length === 0) return day;
+  const best = options.reduce((a, b) =>
+    Math.abs(b.calories - original.calories) < Math.abs(a.calories - original.calories) ? b : a
+  );
+  const meals = day.meals.map((m, i) => i === slotIndex
+    ? { name: best.name, calories: Math.round(best.calories), source: best.source, servingSize: best.servingSize ?? null }
+    : m
+  );
+  return { ...day, meals, total: meals.reduce((sum, m) => sum + m.calories, 0) };
 }
