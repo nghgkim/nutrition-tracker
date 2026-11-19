@@ -11,7 +11,17 @@ export async function GET() {
     prisma.goal.findUnique({ where: { userId: user.id } }),
   ]);
   const target = goal?.dailyCalories || 2000;
-  const week = plan?.week ?? buildWeeklyPlan(foods as never, target);
+  const isStale = (w: { total: number }[] | undefined): boolean =>
+    !w || w.length !== 7 || w.some(d => Math.abs(d.total - target) > target * 0.1);
+  let week = plan?.week as { total: number }[] | undefined;
+  if (isStale(week)) {
+    week = buildWeeklyPlan(foods as never, target);
+    await prisma.mealPlan.upsert({
+      where: { userId: user.id },
+      update: { week },
+      create: { userId: user.id, week },
+    });
+  }
   return NextResponse.json({ week, target });
 }
 export async function PUT(req: Request) {

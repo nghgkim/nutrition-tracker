@@ -14,14 +14,38 @@ export function selectDayMeals(plan: MealDay[], dayIndex: number): PlanMeal[] {
   return day ? day.meals.filter(m => m.name !== "—") : [];
 }
 export function buildWeeklyPlan(foods: Dish[], target: number): MealDay[] {
-  const pool = foods.filter(f => f.calories > 100 && f.calories < 900 && f.source.includes("NIN2026"));
-  const perMeal = Math.round(target / 4);
-  return LABELS.map((label, i) => {
-    const picks = [0,1,2,3].map(j => {
-      const candidates = pool.filter(f => Math.abs(f.calories - perMeal) < 300);
-      const f = candidates[(i * 4 + j) % Math.max(1, candidates.length)] || pool[(i*4+j) % Math.max(1,pool.length)];
-      return f ? { name: f.name, calories: Math.round(f.calories), source: f.source } : { name: "—", calories: 0, source: "" };
+  const base = foods
+    .filter(f => f.calories > 100 && f.calories < 900 && f.source.includes("NIN2026"))
+    .sort((a, b) => a.calories - b.calories);
+  if (base.length === 0) {
+    return LABELS.map((label, i) => ({ day: i, label, meals: [0,1,2,3].map(() => ({ name: "—", calories: 0, source: "" })), total: 0 }));
+  }
+
+  return LABELS.map((label, day) => {
+    // Rotate the pool per day so the week is not seven identical days; the
+    // small deterministic offset keeps selection reproducible.
+    const pool = [...base.slice(day % base.length), ...base.slice(0, day % base.length)];
+    const used = new Set<number>();
+    let remaining = target;
+    const picks = [0, 1, 2, 3].map(slot => {
+      const slotsLeft = 4 - slot;
+      const ideal = remaining / slotsLeft;
+      let bestIndex = -1;
+      let bestScore = Infinity;
+      pool.forEach((f, idx) => {
+        if (used.has(idx)) return;
+        // Smaller deterministic noise rotates candidates per day for variety,
+        // but stays far below calorie gaps so the total still hits the target.
+        const noise = ((idx * 7 + day * 13 + slot * 3) % 21) - 10;
+        const score = Math.abs(f.calories - ideal) + Math.abs(noise);
+        if (score < bestScore) { bestScore = score; bestIndex = idx; }
+      });
+      if (bestIndex < 0) return { name: "—", calories: 0, source: "" };
+      used.add(bestIndex);
+      const f = pool[bestIndex];
+      remaining -= f.calories;
+      return { name: f.name, calories: Math.round(f.calories), source: f.source };
     });
-    return { day: i, label, meals: picks, total: picks.reduce((s,m)=>s+m.calories,0) };
+    return { day, label, meals: picks, total: picks.reduce((s, m) => s + m.calories, 0) };
   });
 }
