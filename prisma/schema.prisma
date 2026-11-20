@@ -251,6 +251,7 @@ model JournalEntry {
   note      String?
   mood      String?
   energy    Int?
+  tags      String?
   updatedAt DateTime @updatedAt
 
   @@unique([userId, date])

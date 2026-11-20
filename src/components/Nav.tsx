@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Utensils, ChevronDown, User, Settings, LogIn, UserPlus, History, Dumbbell, Wallet, Users, ChefHat, BarChart3 } from "lucide-react";
+import { LogOut, Utensils, ChevronDown, User, Settings, LogIn, UserPlus, History, Dumbbell, Wallet, Users, ChefHat, BarChart3, Smile } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { useTheme, SunIcon, MoonIcon } from "@/components/ThemeProvider";
 import { isNavActive } from "@/lib/nav-active";
@@ -54,7 +54,8 @@ export default function Nav() {
     {
       label: "Theo dõi",
       items: [
-        { href: "/insights", label: "Tiến độ & Nhật ký", icon: BarChart3 },
+        { href: "/insights", label: "Tiến độ", icon: BarChart3 },
+        { href: "/journal", label: "Nhật ký cảm xúc", icon: Smile },
         { href: "/history", label: t("history"), icon: History },
         { href: "/profile", label: t("profile"), icon: User },
       ],

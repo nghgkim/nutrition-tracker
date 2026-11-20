@@ -1,0 +1,1 @@
+ALTER TABLE "JournalEntry" ADD COLUMN IF NOT EXISTS "tags" TEXT;
