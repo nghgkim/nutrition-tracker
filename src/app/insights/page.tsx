@@ -1,7 +1,8 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarDays, Flame, Save } from "lucide-react";
+import { BarChart3, Flame } from "lucide-react";
+import ErrorBanner from "@/components/ErrorBanner";
 
 interface DayPoint { date: string; intake: number; burned: number; }
 interface Entry { id: string; date: string; note: string | null; mood: string | null; energy: number | null; }
@@ -10,14 +11,23 @@ export default function InsightsPage() {
   const router = useRouter();
   const [range, setRange] = useState<"week"|"month">("week");
   const [data, setData] = useState<{ days: DayPoint[]; hitRate: number; goal: number } | null>(null);
+  const [error, setError] = useState("");
+  const [retrying, setRetrying] = useState(false);
 
   const load = useCallback(async () => {
-    const ins = await fetch(`/api/insights?range=${range}`);
-    if (ins.status === 401) { router.push("/login"); return; }
-    setData(await ins.json());
+    setRetrying(true); setError("");
+    try {
+      const ins = await fetch(`/api/insights?range=${range}`);
+      if (ins.status === 401) { router.push("/login"); return; }
+      if (!ins.ok) throw new Error(`HTTP ${ins.status}`);
+      setData(await ins.json());
+    } catch {
+      setError("Không thể tải dữ liệu tiến độ. Vui lòng thử lại.");
+    } finally { setRetrying(false); }
   }, [range, router]);
   useEffect(() => { load(); }, [load]);
 
+  if (error) return <div className="max-w-5xl mx-auto px-4 py-6"><ErrorBanner message={error} onRetry={load} retrying={retrying} /></div>;
   if (!data) return <div className="max-w-5xl mx-auto px-4 py-6"><div className="h-96 skeleton rounded-2xl" /></div>;
   const maxVal = Math.max(...data.days.map(d=>Math.max(d.intake,d.burned)), 1);
 

@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calculator, Target, Flame, Scale, User, Save, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { classifyBMI } from "@/lib/bmi-asian";
+import ErrorBanner from "@/components/ErrorBanner";
 import { useToast } from "@/components/ToastProvider";
 
 const ACTIVITY_FACTORS: Record<string, number> = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, very_active: 1.9 };
@@ -25,6 +26,7 @@ export default function ProfilePage() {
   const [currentWeight, setCurrentWeight] = useState("");
   const [goal, setGoal] = useState<"lose" | "maintain" | "gain">("maintain");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [waistInput, setWaistInput] = useState("");
   const [saved, setSaved] = useState(false);
@@ -34,9 +36,12 @@ export default function ProfilePage() {
   const [wAdding, setWAdding] = useState(false);
   const [recommended, setRecommended] = useState<{ calories: number; source: string } | null>(null);
 
-  useEffect(() => {
-    Promise.all([fetch("/api/profile"), fetch("/api/weight")]).then(async ([pRes, wRes]) => {
+  const loadProfile = useCallback(async () => {
+    setLoading(true); setLoadError("");
+    try {
+      const [pRes, wRes] = await Promise.all([fetch("/api/profile"), fetch("/api/weight")]);
       if (pRes.status === 401) { router.push("/login"); return; }
+      if (!pRes.ok || !wRes.ok) throw new Error("fetch failed");
       const pData = await pRes.json();
       const wData = await wRes.json();
       const prof = pData.profile || {};
@@ -45,9 +50,10 @@ export default function ProfilePage() {
       setWeightLogs(logs);
       if (logs.length > 0) setCurrentWeight(String(logs[logs.length - 1].weight));
       fetch("/api/nutrition/recommended").then(r => r.json()).then(setRecommended).catch(() => {});
-      setLoading(false);
-    });
+    } catch { setLoadError("Không thể tải hồ sơ. Vui lòng thử lại."); }
+    finally { setLoading(false); }
   }, [router]);
+  useEffect(() => { loadProfile(); }, [loadProfile]);
 
   async function loadWeights() {
     const res = await fetch("/api/weight");
@@ -89,6 +95,7 @@ export default function ProfilePage() {
   }
   async function deleteWeight(id: string) { const res = await fetch(`/api/weight/${id}`, { method: "DELETE" }); if (res.ok) { success("Đã xoá cân nặng"); loadWeights(); } else showError("Không thể xoá"); }
 
+  if (loadError) return <div className="max-w-4xl mx-auto px-4 py-8"><ErrorBanner message={loadError} onRetry={loadProfile} /></div>;
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-8"><div className="h-64 skeleton rounded-2xl" /></div>;
 
   return (

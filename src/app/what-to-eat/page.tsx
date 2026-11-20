@@ -5,6 +5,7 @@ import { Utensils, Star, MapPin, ExternalLink, Navigation, SlidersHorizontal, X 
 import { createGenerationGuard } from "@/lib/request-guard";
 import { pageWindow, totalPages } from "@/lib/pagination";
 import { countActiveFilterValues } from "@/lib/filter-badge";
+import ErrorBanner from "@/components/ErrorBanner";
 
 interface Restaurant { id: string; name: string; address: string; rating: number; photoUrl: string | null; url: string; distanceKm?: number|null; priceMin?: number|null; priceMax?: number|null; district?: string|null; openHours?: string|null; cuisines?: string|null; }
 interface WteData { goal: number; eaten: number; remaining: number; }
@@ -28,6 +29,7 @@ export default function WhatToEatPage() {
   const [page, setPage] = useState(1);
   const [showFloat, setShowFloat] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [error, setError] = useState("");
   const filterWrapRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!panelOpen) return;
@@ -59,9 +61,13 @@ export default function WhatToEatPage() {
   }, []);
 
   const loadWte = useCallback(async () => {
-    const res = await fetch("/api/what-to-eat");
-    if (res.status === 401) { router.push("/login"); return; }
-    setData(await res.json());
+    try {
+      const res = await fetch("/api/what-to-eat");
+      if (res.status === 401) { router.push("/login"); return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setData(await res.json());
+      setError("");
+    } catch { setError("Không thể tải dữ liệu. Vui lòng thử lại."); }
   }, [router]);
 
   const loadRestaurants = useCallback(async (targetPage = 1) => {
@@ -132,7 +138,9 @@ export default function WhatToEatPage() {
         <p className="mt-1 text-sm text-muted-foreground">Dựa trên calo còn lại: <span className="font-semibold text-primary">{Math.round(data.remaining)} kcal</span> (đã ăn {Math.round(data.eaten)} / {data.goal})</p>
       </div>
 
-      {/* Tab 2: restaurants with race-safe filters + incremental loading */}
+      {error && <ErrorBanner message={error} onRetry={loadWte} />}
+
+      {/* restaurants with race-safe filters + pagination */}
       <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-sm font-semibold flex items-center gap-2"><Utensils className="h-4 w-4 text-rose-500"/> Quán ăn TP.HCM</h2>
