@@ -116,9 +116,12 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2000);
     scheduleNotifications(p);
     // Persist meal times to server-side scheduler
-    ([["breakfast", p.breakfast], ["lunch", p.lunch], ["dinner", p.dinner]] as const).forEach(([mealType, time]) => {
-      fetch("/api/reminders", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mealType, time, enabled: p.enabled }) }).catch(() => {});
-    });
+    Promise.all(([["breakfast", p.breakfast], ["lunch", p.lunch], ["dinner", p.dinner]] as const).map(([mealType, time]) =>
+      fetch("/api/reminders", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mealType, time, enabled: p.enabled }) })
+    )).then(results => {
+      if (results.every(r => r.ok)) success("Đã lưu giờ nhắc nhở");
+      else showError("Không thể lưu một số giờ nhắc nhở");
+    }).catch(() => showError("Không thể lưu giờ nhắc nhở"));
   }
 
   function scheduleNotifications(p: NotifPrefs) {

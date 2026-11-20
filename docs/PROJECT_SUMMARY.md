@@ -1,4 +1,4 @@
-# Project Summary — Nutrition Tracker
+# Project Summary — thuypn by kimnh
 
 > Handover document. All figures verified from the repository and live database on 2026-11-19.
 
