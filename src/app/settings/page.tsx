@@ -215,7 +215,7 @@ export default function SettingsPage() {
           <Check className="h-4 w-4" /> Lưu cài đặt
         </button>
         {prefs.enabled && permission === "granted" && (
-          <button onClick={disable} className="text-sm text-muted-foreground hover:text-destructive">Tắt thông báo</button>
+          <button onClick={disable} className="text-sm text-muted-foreground hover:text-destructive active:scale-[0.98]">Tắt thông báo</button>
         )}
         {saved && <span className="text-sm text-primary">Đã lưu!</span>}
       </div>
@@ -246,7 +246,7 @@ export default function SettingsPage() {
           </button>
         </div>
         <div className="mt-3 flex gap-2">
-          {pushSubscribed && <button onClick={sendTestPush} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted">Gửi thông báo thử</button>}
+          {pushSubscribed && <button onClick={sendTestPush} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted active:scale-[0.98]">Gửi thông báo thử</button>}
         </div>
         {msg && <p className="mt-2 text-sm text-primary">{msg}</p>}
       </div>

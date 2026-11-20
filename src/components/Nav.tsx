@@ -134,7 +134,7 @@ export default function Nav() {
                         })}
                         {group.label === "Giao diện" && (
                           <button onClick={toggle} aria-label={dark ? "Chế độ sáng" : "Chế độ tối"}
-                            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-[0.98]">
                             {dark ? <SunIcon /> : <MoonIcon />}
                             {dark ? "Chế độ sáng" : "Chế độ tối"}
                           </button>
@@ -143,7 +143,7 @@ export default function Nav() {
                     ))}
                     <div className="border-t border-border/60 mt-1 pt-1">
                       <span className="block px-3 py-1 text-xs text-muted-foreground truncate">{user.name || user.email}</span>
-                      <button onClick={logout} className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                      <button onClick={logout} className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors active:scale-[0.98]">
                         <LogOut className="h-4 w-4" /> {t("logout")}
                       </button>
                     </div>

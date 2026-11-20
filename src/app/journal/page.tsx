@@ -154,10 +154,10 @@ export default function JournalPage() {
             {form.tags.length < 5 && <div className="flex gap-2">
               <input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
                 placeholder="Thêm tag" className="min-h-11 flex-1 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-              <button onClick={addTag} className="min-h-11 rounded-lg border border-border px-3 text-sm">Thêm</button>
+              <button onClick={addTag} className="min-h-11 rounded-lg border border-border px-3 text-sm active:scale-[0.98]">Thêm</button>
             </div>}
           </div>
-          <button onClick={save} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"><Save className="h-4 w-4" /> Lưu nhật ký</button>
+          <button onClick={save} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground active:scale-[0.98]"><Save className="h-4 w-4" /> Lưu nhật ký</button>
         </div>
       </div>
 

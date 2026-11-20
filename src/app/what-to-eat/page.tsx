@@ -137,7 +137,7 @@ export default function WhatToEatPage() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-sm font-semibold flex items-center gap-2"><Utensils className="h-4 w-4 text-rose-500"/> Quán ăn TP.HCM</h2>
             <div ref={filterWrapRef} className="relative flex gap-2 flex-wrap">
-              <button onClick={askLocation} className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border px-3 text-xs hover:bg-muted"><Navigation className="h-3.5 w-3.5"/> {geo?"Vị trí đã lấy":"Dùng vị trí"}</button>
+              <button onClick={askLocation} className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border px-3 text-xs hover:bg-muted active:scale-[0.98]"><Navigation className="h-3.5 w-3.5"/> {geo?"Vị trí đã lấy":"Dùng vị trí"}</button>
               <button onClick={() => setPanelOpen(!panelOpen)} aria-expanded={panelOpen}
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground">
                 <SlidersHorizontal className="h-3.5 w-3.5"/> Bộ lọc{activeFilters > 0 ? ` (${activeFilters})` : ""}
@@ -147,7 +147,7 @@ export default function WhatToEatPage() {
               <div className="sticky top-0 z-10 -mt-1 flex items-center justify-between bg-card py-1">
                 <span className="text-sm font-semibold">Bộ lọc{activeFilters > 0 ? ` · ${activeFilters} đang áp dụng` : ""}</span>
                 <div className="flex items-center gap-2">
-                  <button onClick={resetFilters} className="text-xs text-primary hover:underline">Xóa tất cả</button>
+                  <button onClick={resetFilters} className="text-xs text-primary hover:underline active:scale-[0.98]">Xóa tất cả</button>
                   <button onClick={() => setPanelOpen(false)} aria-label="Đóng bộ lọc" className="inline-flex h-11 w-11 items-center justify-center rounded-lg hover:bg-muted"><X className="h-4 w-4" /></button>
                 </div>
               </div>

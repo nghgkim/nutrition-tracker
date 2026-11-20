@@ -147,7 +147,7 @@ export default function ProfilePage() {
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 elevated space-y-2">
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold text-foreground">🎯 Nhu cầu calo khuyến nghị</div>
-            <div className="text-2xl font-bold text-primary">{recommended.calories} <span className="text-sm font-normal text-muted-foreground">kcal/ngày</span></div>
+            <div className="text-2xl font-bold text-primary tracking-tight">{recommended.calories} <span className="text-sm font-normal text-muted-foreground">kcal/ngày</span></div>
           </div>
           <p className="text-[10px] text-primary/70">Nguồn: {recommended.source}</p>
           {targetCalories !== recommended.calories && (

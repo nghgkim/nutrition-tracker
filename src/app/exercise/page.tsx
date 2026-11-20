@@ -60,20 +60,20 @@ export default function ExercisePage() {
               <circle cx="64" cy="64" r="54" fill="none" strokeWidth="10" strokeLinecap="round" strokeDasharray={2 * Math.PI * 54} strokeDashoffset={2 * Math.PI * 54 - (pct / 100) * 2 * Math.PI * 54} className={todayBurn >= goal ? "stroke-emerald-500" : "stroke-primary"} />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-bold">{todayBurn}</span>
+              <span className="text-2xl font-bold tracking-tight">{todayBurn}</span>
               <span className="text-[10px] text-muted-foreground">/ {goal} kcal</span>
             </div>
           </div>
           <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1"><Target className="h-3.5 w-3.5" /> Mục tiêu hôm nay</div>
-          <div className="mt-2 flex gap-2"><input type="number" value={goalInput} onChange={e => setGoalInput(e.target.value)} className="w-20 rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring" /><button onClick={saveGoal} className="text-xs font-medium text-primary hover:underline">Lưu</button></div>
+          <div className="mt-2 flex gap-2"><input type="number" value={goalInput} onChange={e => setGoalInput(e.target.value)} className="w-20 rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring" /><button onClick={saveGoal} className="text-xs font-medium text-primary hover:underline active:scale-[0.98]">Lưu</button></div>
         </div>
         <div className="rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3">
-          <div><div className="flex items-center gap-2 text-muted-foreground text-xs"><Zap className="h-4 w-4 text-amber-500" /> Chuỗi tập luyện</div><div className="text-3xl font-bold mt-1">{streak} <span className="text-sm font-normal text-muted-foreground">ngày</span></div></div>
-          <div><div className="flex items-center gap-2 text-muted-foreground text-xs"><Flame className="h-4 w-4 text-rose-500" /> Tổng calo đốt</div><div className="text-2xl font-bold mt-1">{totalBurn} <span className="text-sm font-normal text-muted-foreground">kcal</span></div></div>
+          <div><div className="flex items-center gap-2 text-muted-foreground text-xs"><Zap className="h-4 w-4 text-amber-500" /> Chuỗi tập luyện</div><div className="text-3xl font-bold mt-1 tracking-tight">{streak} <span className="text-sm font-normal text-muted-foreground">ngày</span></div></div>
+          <div><div className="flex items-center gap-2 text-muted-foreground text-xs"><Flame className="h-4 w-4 text-rose-500" /> Tổng calo đốt</div><div className="text-2xl font-bold mt-1 tracking-tight">{totalBurn} <span className="text-sm font-normal text-muted-foreground">kcal</span></div></div>
         </div>
         <div className="rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3">
-          <div><div className="flex items-center gap-2 text-muted-foreground text-xs"><Clock className="h-4 w-4 text-sky-500" /> Tổng thời gian</div><div className="text-2xl font-bold mt-1">{totalMin} <span className="text-sm font-normal text-muted-foreground">phút</span></div></div>
-          <div><div className="text-muted-foreground text-xs">Số buổi</div><div className="text-2xl font-bold mt-1">{logs.length}</div></div>
+          <div><div className="flex items-center gap-2 text-muted-foreground text-xs"><Clock className="h-4 w-4 text-sky-500" /> Tổng thời gian</div><div className="text-2xl font-bold mt-1 tracking-tight">{totalMin} <span className="text-sm font-normal text-muted-foreground">phút</span></div></div>
+          <div><div className="text-muted-foreground text-xs">Số buổi</div><div className="text-2xl font-bold mt-1 tracking-tight">{logs.length}</div></div>
         </div>
       </div>
 

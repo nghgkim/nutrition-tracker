@@ -71,7 +71,7 @@ export default function FinancePage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3">
           <div className="flex items-center justify-between"><span className="text-sm font-semibold flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" /> Cá nhân</span>{pPct >= 80 && <AlertTriangle className="h-4 w-4 text-amber-500" />}</div>
-          <div className="text-2xl font-bold">{fmt(data.personal.spent)}</div>
+          <div className="text-2xl font-bold tracking-tight">{fmt(data.personal.spent)}</div>
           <div className="h-2 rounded-full bg-muted overflow-hidden"><div className={`h-full rounded-full ${pPct >= 100 ? "bg-destructive" : pPct >= 80 ? "bg-amber-500" : "bg-primary"}`} style={{ width: `${pPct}%` }} /></div>
           <div className="flex justify-between text-xs text-muted-foreground"><span>Ngân sách {fmt(data.personal.budget)}</span><span>{Math.round(pPct)}%</span></div>
           <div className="flex gap-2 pt-1"><input type="number" value={budgets.personal} onChange={e => setBudgets({ ...budgets, personal: e.target.value })} className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring" /><button onClick={() => saveBudget("personal")} className="text-xs font-medium text-primary hover:underline">Lưu</button></div>
@@ -80,7 +80,7 @@ export default function FinancePage() {
           <div className="flex items-center justify-between"><span className="text-sm font-semibold flex items-center gap-2"><Users className="h-4 w-4 text-sky-500" /> Gia đình</span>{hPct >= 80 && <AlertTriangle className="h-4 w-4 text-amber-500" />}</div>
           {data.household.hasFamily ? (
             <>
-              <div className="text-2xl font-bold">{fmt(data.household.spent)}</div>
+              <div className="text-2xl font-bold tracking-tight">{fmt(data.household.spent)}</div>
               <div className="h-2 rounded-full bg-muted overflow-hidden"><div className={`h-full rounded-full ${hPct >= 100 ? "bg-destructive" : hPct >= 80 ? "bg-amber-500" : "bg-sky-500"}`} style={{ width: `${hPct}%` }} /></div>
               <div className="flex justify-between text-xs text-muted-foreground"><span>Quỹ chung {fmt(data.household.budget)}</span><span>{Math.round(hPct)}%</span></div>
               {data.household.isOwner ? (

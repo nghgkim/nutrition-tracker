@@ -75,7 +75,7 @@ export default function FamilyPage() {
           <p className="mt-1 text-sm text-muted-foreground">Tạo gia đình hoặc chờ lời mời từ thành viên khác.</p>
           <form onSubmit={create} className="mt-5 flex gap-2 justify-center">
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên gia đình" className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" required />
-            <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"><Plus className="h-4 w-4" /> Tạo</button>
+            <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]"><Plus className="h-4 w-4" /> Tạo</button>
           </form>
         </div>
       ) : !family ? (
@@ -85,7 +85,7 @@ export default function FamilyPage() {
           <p className="mt-1 text-sm text-muted-foreground">Theo dõi calo của cả nhà cùng một chỗ.</p>
           <form onSubmit={create} className="mt-5 flex gap-2 justify-center">
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên gia đình" className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" required />
-            <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"><Plus className="h-4 w-4" /> Tạo</button>
+            <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]"><Plus className="h-4 w-4" /> Tạo</button>
           </form>
         </div>
       ) : (
@@ -97,7 +97,7 @@ export default function FamilyPage() {
             </div>
             <form onSubmit={invite} className="mt-5 flex gap-2">
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email người cần mời" className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" required />
-              <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"><Mail className="h-4 w-4" /> Mời</button>
+              <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]"><Mail className="h-4 w-4" /> Mời</button>
             </form>
             {msg && <p className="mt-2 text-sm text-primary">{msg}</p>}
           </div>

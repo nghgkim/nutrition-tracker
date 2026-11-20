@@ -29,9 +29,9 @@ export default function InsightsPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-border/60 bg-card p-5 elevated"><div className="text-xs text-muted-foreground flex items-center gap-1"><Flame className="h-4 w-4 text-rose-500"/> Tỷ lệ ngày đạt</div><div className="text-2xl font-bold mt-1">{data.hitRate}%</div></div>
-        <div className="rounded-2xl border border-border/60 bg-card p-5 elevated"><div className="text-xs text-muted-foreground">Mục tiêu</div><div className="text-2xl font-bold mt-1">{data.goal} kcal</div></div>
-        <div className="rounded-2xl border border-border/60 bg-card p-5 elevated"><div className="text-xs text-muted-foreground">Số ngày có dữ liệu</div><div className="text-2xl font-bold mt-1">{data.days.filter(d=>d.intake>0).length}</div></div>
+        <div className="rounded-2xl border border-border/60 bg-card p-5 elevated"><div className="text-xs text-muted-foreground flex items-center gap-1"><Flame className="h-4 w-4 text-rose-500"/> Tỷ lệ ngày đạt</div><div className="text-2xl font-bold mt-1 tracking-tight">{data.hitRate}%</div></div>
+        <div className="rounded-2xl border border-border/60 bg-card p-5 elevated"><div className="text-xs text-muted-foreground">Mục tiêu</div><div className="text-2xl font-bold mt-1 tracking-tight">{data.goal} kcal</div></div>
+        <div className="rounded-2xl border border-border/60 bg-card p-5 elevated"><div className="text-xs text-muted-foreground">Số ngày có dữ liệu</div><div className="text-2xl font-bold mt-1 tracking-tight">{data.days.filter(d=>d.intake>0).length}</div></div>
       </div>
 
       <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-3">
