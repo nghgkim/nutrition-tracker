@@ -85,7 +85,7 @@ Restaurant enrichment:
 
 | Gate | Result |
 |---|---|
-| `npm test` | 9 files, 41 tests passed |
+| `npm test` | 12 files, 52 tests passed |
 | `npm run typecheck` | clean |
 | `npm run lint` | 0 errors |
 | `npm run build` | success |
@@ -121,7 +121,7 @@ Secrets (`.env`, gitignored): `DATABASE_URL`, `JWT_SECRET`, Cloudflare tunnel to
 - `opening_hours` exists for just the 60 curated venues; no open-now filter.
 - Distance sort uses a SQL haversine expression without PostGIS — fine at 23k rows, revisit at ~100k.
 - NIN2026 calories may be per 100 g for some dishes; the weekly plan displays `servingSize` to reduce ambiguity.
-- Service-worker cache name is still `nutritrack-v3`; bump it if a stale PWA bundle is observed.
+- Service-worker cache is `thuypn-v4`; bump on future brand/route changes.
 
 ## 10. History
 
