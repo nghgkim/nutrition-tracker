@@ -4,12 +4,14 @@ import { useRouter } from "next/navigation";
 import { Plus, Search, Trash2, Apple, Flame, Download } from "lucide-react";
 import { removeDiacritics } from "@/lib/normalize";
 import { useT } from "@/lib/i18n";
+import { useToast } from "@/components/ToastProvider";
 
 interface Food { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; isCustom: boolean; userId: string | null; }
 interface ImportCandidate { name: string; restaurant_name: string | null; source: string; source_id: string; price: number | null; image_url: string | null; external_url: string | null; suggestion: { calories: number; protein: number; carbs: number; fat: number; servingSize: string | null } | null; }
 
 export default function FoodsPage() {
   const t = useT();
+  const { success, error: showError } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", calories: "", protein: "", carbs: "", fat: "", servingSize: "" });
@@ -75,16 +77,19 @@ export default function FoodsPage() {
   async function addFood(e: React.FormEvent) {
     e.preventDefault();
     setAdding(true);
-    await fetch("/api/foods", {
+    const res = await fetch("/api/foods", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: form.name, calories: Number(form.calories), protein: Number(form.protein || 0), carbs: Number(form.carbs || 0), fat: Number(form.fat || 0), servingSize: form.servingSize || null }),
     });
-    setForm({ name: "", calories: "", protein: "", carbs: "", fat: "", servingSize: "" });
+    if (res.ok) {
+      success(`Đã thêm món "${form.name}"`);
+      setForm({ name: "", calories: "", protein: "", carbs: "", fat: "", servingSize: "" });
+      loadAll();
+    } else showError("Không thể thêm món. Kiểm tra lại thông tin.");
     setAdding(false);
-    loadAll();
   }
-  async function deleteFood(id: string) { await fetch(`/api/foods/${id}`, { method: "DELETE" }); loadAll(); }
+  async function deleteFood(id: string) { const res = await fetch(`/api/foods/${id}`, { method: "DELETE" }); if (res.ok) { success("Đã xoá món"); loadAll(); } else showError("Không thể xoá món."); }
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-4">

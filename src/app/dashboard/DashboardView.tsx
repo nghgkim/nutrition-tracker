@@ -6,6 +6,7 @@ import WeeklyChart from "@/components/WeeklyChart";
 import { removeDiacritics } from "@/lib/normalize";
 import { Plus, Trash2, Target, Beef, Wheat, Droplet, Calendar, UtensilsCrossed, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { useToast } from "@/components/ToastProvider";
 
 interface Food { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; }
 interface FoodLog { id: string; quantity: number; mealType: string | null; date: string; food: Food; }
@@ -61,12 +62,7 @@ export default function DashboardPage() {
   const [foodSearch, setFoodSearch] = useState("");
   const [foodDropdownOpen, setFoodDropdownOpen] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
-  }, []);
+  const { success, error: showError } = useToast();
 
   const load = useCallback(async (d: string) => {
     if (!d) return;
@@ -116,17 +112,19 @@ export default function DashboardPage() {
     setAdding(false);
     if (res.ok) {
       const food = foods.find(f => f.id === form.foodId);
-      showToast(`Đã thêm ${food?.name ?? "món ăn"}`);
+      success(`Đã thêm ${food?.name ?? "món ăn"}`);
       setForm({ foodId: "", quantity: "1", mealType: form.mealType });
-    setFoodSearch("");
+      setFoodSearch("");
       load(date);
+    } else {
+      showError("Không thể thêm món vào nhật ký. Thử lại nhé.");
     }
   }
 
   async function deleteLog(id: string, name: string) {
-    await fetch(`/api/logs/${id}`, { method: "DELETE" });
-    showToast(`Đã xoá ${name}`);
-    load(date);
+    const res = await fetch(`/api/logs/${id}`, { method: "DELETE" });
+    if (res.ok) { success(`Đã xoá ${name}`); load(date); }
+    else showError("Không thể xoá món. Thử lại nhé.");
   }
 
 
@@ -141,15 +139,6 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
-          <div className="flex items-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-background shadow-lg">
-            <Sparkles className="h-4 w-4" /> {toast}
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
