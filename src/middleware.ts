@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { getSecret } from "@/lib/secret";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "dev-secret-change-me-in-production-please"
-);
+function jwtSecret(): Uint8Array {
+  return new TextEncoder().encode(getSecret("JWT_SECRET"));
+}
 
 const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/api/reminders/tick"];
 
@@ -26,7 +27,7 @@ export async function middleware(req: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, JWT_SECRET);
+    await jwtVerify(token, jwtSecret());
     return NextResponse.next();
   } catch {
     const url = req.nextUrl.clone();

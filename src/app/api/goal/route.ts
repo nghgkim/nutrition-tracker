@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { problemResponse } from "@/lib/http-problem";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const goal = await prisma.goal.upsert({
     where: { userId: user.id },
     update: {},
@@ -15,7 +16,7 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const { dailyCalories } = await req.json();
   const goal = await prisma.goal.upsert({
     where: { userId: user.id },

@@ -4,6 +4,8 @@
 **Tier:** 1 (Docs fix — verified numbers only)
 **Date:** 2026-11-20
 **Grounding:** Principle VII (transparent diagnostics)
+**KB citations (retrieved this session):**
+- OWASP Cheat Sheet Series — Fail fast if the token is missing to avoid confusing 4xx errors. > Zero Trust Architecture Cheat Sheet > Technology Components — p.1 (chunk 52867324960cbc97268271d32aa93543).
 
 ## 1. Problem & Context
 `docs/PROJECT_SUMMARY.md` reports 9 test files / 41 tests and says the SW cache is `nutritrack-v3`. Verified actuals: 12 files / 52 tests and `thuypn-v4`.

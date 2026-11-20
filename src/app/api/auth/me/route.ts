@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { sendDueReminders } from "@/lib/reminder-scheduler";
+import { getSecret } from "@/lib/secret";
 export async function GET(req: Request) {
   // Internal cron tick via secret header (public path /api/auth, no middleware block)
-  if (req.headers.get("authorization") === "Bearer nutrition-tracker-cron") {
+  if (req.headers.get("authorization") === `Bearer ${getSecret("CRON_SECRET")}`) {
     const sent = await sendDueReminders();
     return NextResponse.json({ cron: true, sent });
   }

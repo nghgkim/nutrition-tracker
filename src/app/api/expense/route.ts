@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { problemResponse } from "@/lib/http-problem";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { checkBudgetAlert } from "@/lib/budget-alert";
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const [logs, budget] = await Promise.all([
     prisma.expense.findMany({ where: { userId: user.id }, orderBy: { date: "asc" } }),
     prisma.budget.findUnique({ where: { userId: user.id } }),
@@ -16,16 +17,16 @@ export async function GET() {
 }
 export async function POST(req: Request) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const { category, amount, date, note, fundSource } = await req.json();
-  if (!category || amount === undefined || Number(amount) <= 0) return NextResponse.json({ error: "category and positive amount required" }, { status: 400 });
+  if (!category || amount === undefined || Number(amount) <= 0) return NextResponse.json(problemResponse("category and positive amount required", 400), { status: 400 });
   const source = fundSource === "household" ? "household" : "personal";
 
   // household expenses require family membership
   let membership = null;
   if (source === "household") {
     membership = await prisma.familyMember.findFirst({ where: { userId: user.id } });
-    if (!membership) return NextResponse.json({ error: "Must be in a family to use household fund" }, { status: 400 });
+    if (!membership) return NextResponse.json(problemResponse("Must be in a family to use household fund", 400), { status: 400 });
   }
 
   const d = date ? new Date(date) : new Date();

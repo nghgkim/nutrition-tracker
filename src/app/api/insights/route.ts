@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { problemResponse } from "@/lib/http-problem";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { buildProgress } from "@/lib/progress";
 export async function GET(req: Request) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const range = new URL(req.url).searchParams.get("range") || "week";
   const days = range === "month" ? 30 : 7;
   const since = new Date(); since.setDate(since.getDate() - days);

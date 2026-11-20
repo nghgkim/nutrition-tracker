@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { problemResponse } from "@/lib/http-problem";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { removeDiacritics } from "@/lib/normalize";
@@ -31,7 +32,7 @@ function normalize(value: string): string {
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
 
   const base = (process.env.FOOD_CRAWLER_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
   const query = normalize(new URL(req.url).searchParams.get("q")?.trim() || "");

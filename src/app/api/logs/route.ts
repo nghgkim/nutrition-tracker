@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { problemResponse } from "@/lib/http-problem";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const url = new URL(req.url);
   const date = url.searchParams.get("date");
   const where: { userId: string; date?: Date } = { userId: user.id };
@@ -19,10 +20,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const body = await req.json();
   const { foodId, quantity, mealType, date } = body;
-  if (!foodId) return NextResponse.json({ error: "foodId required" }, { status: 400 });
+  if (!foodId) return NextResponse.json(problemResponse("foodId required", 400), { status: 400 });
   const log = await prisma.foodLog.create({
     data: {
       userId: user.id,

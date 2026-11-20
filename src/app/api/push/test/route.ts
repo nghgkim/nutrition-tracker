@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { problemResponse } from "@/lib/http-problem";
 import * as webpush from "web-push";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
@@ -9,10 +10,10 @@ if (publicKey && privateKey) webpush.setVapidDetails("mailto:admin@nutrition-tra
 
 export async function POST() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!publicKey || !privateKey) return NextResponse.json({ error: "VAPID keys not configured" }, { status: 503 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
+  if (!publicKey || !privateKey) return NextResponse.json(problemResponse("VAPID keys not configured", 503), { status: 503 });
   const subs = await prisma.pushSubscription.findMany({ where: { userId: user.id } });
-  if (subs.length === 0) return NextResponse.json({ error: "No subscription" }, { status: 404 });
+  if (subs.length === 0) return NextResponse.json(problemResponse("No subscription", 404), { status: 404 });
 
   const results = await Promise.allSettled(subs.map((s) =>
     webpush.sendNotification(

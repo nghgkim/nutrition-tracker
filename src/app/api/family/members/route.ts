@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { problemResponse } from "@/lib/http-problem";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const myMembership = await prisma.familyMember.findFirst({ where: { userId: user.id } });
-  if (!myMembership) return NextResponse.json({ error: "Not in a family" }, { status: 403 });
+  if (!myMembership) return NextResponse.json(problemResponse("Not in a family", 403), { status: 403 });
   const members = await prisma.familyMember.findMany({
     where: { familyId: myMembership.familyId },
     include: { user: { select: { id: true, name: true, email: true } } },

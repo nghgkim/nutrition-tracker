@@ -23,10 +23,10 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://nutrition_tracker:nutrition_tracker_dev_pw@db:5432/nutrition_tracker
-      JWT_SECRET: change-me-to-a-long-random-string-in-production
-      NEXT_PUBLIC_VAPID_PUBLIC_KEY: BAjLh-Z7uScT8uRMqgV_i6onUODiraoVdqLelp_RE4PWG1KbXiekCCf0wjJBk1r8rSM2tWH6eFZtuBXYdmTEV7w
-      VAPID_PRIVATE_KEY: 32Eu3sGvVjk0xshvY_VDY-ajzeXLU0X6MXKQiW7ap2o
-      CRON_SECRET: nutrition-tracker-cron
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:?required}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:?required}
+      CRON_SECRET: ${CRON_SECRET:?CRON_SECRET is required}
       PORT: 3000
       HOSTNAME: 0.0.0.0
     ports:
@@ -44,8 +44,9 @@ services:
     depends_on:
       app:
         condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "while true; do curl -sf -H 'Authorization: Bearer nutrition-tracker-cron' http://app:3000/api/auth/me || true; sleep 60; done"
+    environment:
+      CRON_SECRET: ${CRON_SECRET:?CRON_SECRET is required}
+    entrypoint: ["/bin/sh", "-c", 'while true; do curl -sf -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/auth/me || true; sleep 60; done']
 
   tunnel:
     image: cloudflare/cloudflared:latest

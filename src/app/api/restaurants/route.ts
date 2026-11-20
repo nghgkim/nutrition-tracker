@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { problemResponse } from "@/lib/http-problem";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -9,7 +10,7 @@ import { shouldSortByDistance } from "@/lib/distance-sort";
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const q = new URL(req.url).searchParams;
   const latRaw = q.get("lat") ? Number(q.get("lat")) : null;
   const lonRaw = q.get("lon") ? Number(q.get("lon")) : null;

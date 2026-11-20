@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { problemResponse } from "@/lib/http-problem";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const full = await prisma.user.findUnique({
     where: { id: user.id },
     select: { id: true, email: true, name: true, height: true, age: true, gender: true, activity: true, targetWeight: true },
@@ -14,7 +15,7 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const { height, age, gender, activity, targetWeight } = await req.json();
   const updated = await prisma.user.update({
     where: { id: user.id },

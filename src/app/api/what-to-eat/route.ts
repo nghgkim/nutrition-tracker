@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { problemResponse } from "@/lib/http-problem";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const today = new Date().toISOString().slice(0, 10);
   const [goalRow, logs] = await Promise.all([
     prisma.goal.findUnique({ where: { userId: user.id } }),
