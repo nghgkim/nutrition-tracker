@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Bell, BellOff, Clock, Check, Smartphone } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { useToast } from "@/components/ToastProvider";
+import { canSaveReminders } from "@/lib/reminder-permission";
 
 interface NotifPrefs {
   enabled: boolean;
@@ -209,7 +210,7 @@ export default function SettingsPage() {
 
       {/* Save */}
       <div className="flex items-center gap-3">
-        <button onClick={() => save(prefs)} disabled={permission !== "granted"}
+        <button onClick={() => save(prefs)} disabled={!canSaveReminders(permission)}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50">
           <Check className="h-4 w-4" /> Lưu cài đặt
         </button>
