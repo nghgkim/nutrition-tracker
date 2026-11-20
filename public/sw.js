@@ -1,4 +1,4 @@
-const CACHE_NAME = "nutritrack-v3";
+const CACHE_NAME = "thuypn-v4";
 const PRECACHE = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -48,14 +48,14 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  let data = { title: "Nutrition Tracker", body: "Nhắc nhở bữa ăn", icon: "/icon-192.png" };
+  let data = { title: "thuypn by kimnh", body: "Nhắc nhở bữa ăn", icon: "/icon-192.png" };
   if (event.data) { try { data = { ...data, ...event.data.json() }; } catch {} }
   event.waitUntil(self.registration.showNotification(data.title, {
-    body: data.body, icon: data.icon, badge: "/icon-192.png", tag: data.tag || "nutritrack-reminder",
+    body: data.body, icon: data.icon, badge: "/icon-192.png", tag: data.tag || "thuypn-reminder",
   }));
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  event.waitUntil(clients.openWindow("/dashboard"));
+  event.waitUntil(clients.openWindow("/"));
 });
