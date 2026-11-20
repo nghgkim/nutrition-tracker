@@ -107,7 +107,7 @@ export default function ExercisePage() {
       <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
         <div className="px-5 py-3 border-b border-border/60"><h2 className="text-sm font-semibold">Lịch sử</h2></div>
         {logs.length === 0 ? (
-          <div className="flex flex-col items-center py-10 text-center"><Dumbbell className="h-8 w-8 text-muted-foreground" /><p className="mt-3 text-sm text-muted-foreground">Chưa có buổi tập nào</p></div>
+          <div className="flex flex-col items-center py-10 text-center"><Dumbbell className="h-8 w-8 text-muted-foreground" /><p className="mt-3 text-sm text-muted-foreground">Chưa có buổi tập nào</p><button onClick={() => document.querySelector<HTMLInputElement>('input[placeholder]')?.focus()} className="mt-4 min-h-11 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground active:scale-[0.98]">Ghi buổi tập đầu tiên</button></div>
         ) : (
           <ul className="divide-y divide-border/60">
             {[...logs].reverse().map(l => (<li key={l.id} className="flex items-center justify-between px-5 py-3">

@@ -121,7 +121,7 @@ export default function FinancePage() {
       <div className="rounded-2xl border border-border/60 bg-card elevated overflow-hidden">
         <div className="px-5 py-3 border-b border-border/60"><h2 className="text-sm font-semibold">Lịch sử ({data.history.length} ngày)</h2></div>
         {data.history.length === 0 ? (
-          <div className="flex flex-col items-center py-10 text-center"><Wallet className="h-8 w-8 text-muted-foreground" /><p className="mt-3 text-sm text-muted-foreground">Chưa có chi tiêu tháng này</p></div>
+          <div className="flex flex-col items-center py-10 text-center"><Wallet className="h-8 w-8 text-muted-foreground" /><p className="mt-3 text-sm text-muted-foreground">Chưa có chi tiêu tháng này</p><p className="mt-2 text-xs text-muted-foreground">Dùng form bên trên để thêm chi tiêu đầu tiên.</p></div>
         ) : (
           <ul className="divide-y divide-border/60">
             {[...data.history].reverse().map(h => (<li key={h.date} className="flex items-center justify-between px-5 py-3">

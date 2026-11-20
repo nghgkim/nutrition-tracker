@@ -163,7 +163,7 @@ export default function WhatToEatPage() {
                 <div className="col-span-2 flex flex-col gap-1 text-[11px] text-muted-foreground sm:col-span-3">
                   <div className="flex items-center justify-between">
                     <span>Quận {districts.length > 0 && `(${districts.length} đã chọn)`}</span>
-                    <button onClick={() => setDistricts([])} className="text-primary hover:underline">Tất cả</button>
+                    <button onClick={() => setDistricts([])} className="min-h-11 rounded-full border border-border bg-background px-3 text-xs font-medium text-foreground transition-all hover:bg-muted active:scale-[0.98]">Tất cả</button>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {["Quận 1","Quận 3","Quận 5","Quận 7","Quận 11","Tân Phú","Bình Thạnh","Thủ Đức","Gò Vấp","Quận 10"].map(d => (
