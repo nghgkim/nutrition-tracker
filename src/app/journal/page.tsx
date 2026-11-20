@@ -22,6 +22,9 @@ export default function JournalPage() {
   const [selected, setSelected] = useState(todayStr());
   const [form, setForm] = useState({ note: "", mood: "", energy: "", tags: [] as string[] });
   const [tagInput, setTagInput] = useState("");
+  const [activeTag, setActiveTag] = useState("");
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [correlation, setCorrelation] = useState<{ mood: string; count: number; avgKcal: number }[]>([]);
 
   const { from, to } = monthRange(year, month);
   const load = useCallback(async () => {
@@ -30,8 +33,19 @@ export default function JournalPage() {
     const data = await res.json();
     setEntries(data.entries || []);
     setLoading(false);
-  }, [from, to, router]);
+  }, [from, to, activeTag, router]);
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    fetch("/api/journal").then(r => r.json()).then(d => {
+      const tags: string[] = (d.entries || []).flatMap((e: JournalEntry) => e.tags || []);
+      setAllTags([...new Set<string>(tags)].slice(0, 12));
+    }).catch(() => {});
+  }, [entries]);
+  useEffect(() => {
+    fetch(`/api/journal/correlation?year=${year}&month=${month}`).then(r => r.json())
+      .then(d => setCorrelation(d.moods || [])).catch(() => {});
+  }, [year, month, entries]);
 
   useEffect(() => {
     const e = entries.find(x => x.date === selected);
@@ -73,6 +87,13 @@ export default function JournalPage() {
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Theo dõi</p>
         <h1 className="text-2xl font-semibold tracking-tight">Nhật ký cảm xúc</h1>
         <p className="mt-1 text-sm text-muted-foreground">Ghi lại cảm xúc, năng lượng và ghi chú mỗi ngày.</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground">Lọc tag:</span>
+        <button onClick={() => setActiveTag("")} className={`min-h-11 rounded-full border px-3 text-xs ${!activeTag ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>Tất cả</button>
+        {allTags.map(t => <button key={t} onClick={() => setActiveTag(t)}
+          className={`min-h-11 rounded-full border px-3 text-xs ${activeTag === t ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{t}</button>)}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -139,6 +160,20 @@ export default function JournalPage() {
             <div className="flex flex-wrap gap-2">
               {Object.entries(stats.byMood).map(([mood, count]) => <span key={mood} className="rounded-full bg-muted px-3 py-1 text-xs">{mood} · {count}</span>)}
             </div>
+          </div>
+        )}
+      </div>
+      <div className="rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3">
+        <h2 className="text-sm font-semibold">Cảm xúc & calo nạp tháng này</h2>
+        {correlation.length === 0 ? <p className="text-sm text-muted-foreground">Chưa có dữ liệu tháng này.</p> : (
+          <div className="space-y-2">
+            {correlation.map(c => {
+              const max = Math.max(...correlation.map(x => x.avgKcal), 1);
+              return <div key={c.mood} className="space-y-1">
+                <div className="flex justify-between text-xs"><span>{c.mood} <span className="text-muted-foreground">({c.count} ngày)</span></span><span className="font-medium">{c.avgKcal} kcal</span></div>
+                <div className="h-2 rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${(c.avgKcal / max) * 100}%` }} /></div>
+              </div>;
+            })}
           </div>
         )}
       </div>

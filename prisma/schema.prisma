@@ -253,6 +253,17 @@ model JournalEntry {
   energy    Int?
   tags      String?
   updatedAt DateTime @updatedAt
+  journalTags JournalTag[]
 
   @@unique([userId, date])
+}
+
+model JournalTag {
+  id        String   @id @default(cuid())
+  entryId   String
+  entry     JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  tag       String
+
+  @@unique([entryId, tag])
+  @@index([tag])
 }

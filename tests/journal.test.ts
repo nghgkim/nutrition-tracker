@@ -38,3 +38,34 @@ describe("journalStats", () => {
     expect(journalStats([])).toMatchObject({ total: 0, avgEnergy: 0, byMood: {} });
   });
 });
+
+import { journalCorrelation, type CalorieLog } from "@/lib/journal";
+
+describe("journalCorrelation", () => {
+  const logs: CalorieLog[] = [
+    { date: "2026-11-02", calories: 2000 },
+    { date: "2026-11-02", calories: 500 },
+    { date: "2026-11-05", calories: 1800 },
+    { date: "2026-11-09", calories: 1200 },
+  ];
+  const entries: JournalEntry[] = [
+    { id: "1", date: "2026-11-02", note: "", mood: "😊 Tốt", energy: 8, tags: ["gym"] },
+    { id: "2", date: "2026-11-05", note: "", mood: "😊 Tốt", energy: 6, tags: [] },
+    { id: "3", date: "2026-11-09", note: "", mood: "😴 Mệt", energy: 3, tags: null },
+  ];
+
+  it("averages real intake per mood, summing multiple logs on the same day", () => {
+    const result = journalCorrelation(entries, logs);
+    expect(result.find(r => r.mood === "😊 Tốt")).toMatchObject({ count: 2, avgKcal: 2150 });
+    expect(result.find(r => r.mood === "😴 Mệt")).toMatchObject({ count: 1, avgKcal: 1200 });
+  });
+
+  it("reports zero kcal for moods with no logs (no fabricated value)", () => {
+    const result = journalCorrelation([{ ...entries[0], id: "4", date: "2026-11-04" }], logs);
+    expect(result[0]).toMatchObject({ count: 1, avgKcal: 0 });
+  });
+
+  it("returns an empty list when there are no entries", () => {
+    expect(journalCorrelation([], logs)).toEqual([]);
+  });
+});

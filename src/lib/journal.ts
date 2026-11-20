@@ -47,3 +47,24 @@ export function journalStats(entries: JournalEntry[]): {
     byMood,
   };
 }
+
+export interface CalorieLog { date: string; calories: number; }
+export interface MoodCorrelation { mood: string; count: number; avgKcal: number; }
+
+/** Average real daily intake per mood, from two bounded datasets. */
+export function journalCorrelation(entries: JournalEntry[], logs: CalorieLog[]): MoodCorrelation[] {
+  const byDate = new Map<string, number>();
+  for (const log of logs) byDate.set(log.date, (byDate.get(log.date) || 0) + log.calories);
+  const groups = new Map<string, { count: number; kcal: number }>();
+  for (const entry of entries) {
+    if (!entry.mood) continue;
+    const g = groups.get(entry.mood) || { count: 0, kcal: 0 };
+    g.count += 1;
+    g.kcal += byDate.get(entry.date) || 0;
+    groups.set(entry.mood, g);
+  }
+  return [...groups.entries()].map(([mood, g]) => ({
+    mood, count: g.count,
+    avgKcal: g.count && g.kcal ? Math.round(g.kcal / g.count) : 0,
+  }));
+}
