@@ -25,6 +25,8 @@ export default function JournalPage() {
   const [activeTag, setActiveTag] = useState("");
   const [allTags, setAllTags] = useState<string[]>([]);
   const [correlation, setCorrelation] = useState<{ mood: string; count: number; avgKcal: number }[]>([]);
+  type JTab = "calendar" | "note" | "stats";
+  const [tab, setTab] = useState<JTab>("calendar");
 
   const { from, to } = monthRange(year, month);
   const load = useCallback(async () => {
@@ -89,6 +91,13 @@ export default function JournalPage() {
         <p className="mt-1 text-sm text-muted-foreground">Ghi lại cảm xúc, năng lượng và ghi chú mỗi ngày.</p>
       </div>
 
+      <div className="flex gap-1 rounded-xl bg-muted p-1 md:hidden" role="tablist" aria-label="Nhật ký">
+        {([["calendar","Lịch"],["note","Ghi chú"],["stats","Thống kê"]] as [JTab,string][]).map(([id,label]) => (
+          <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
+            className={`flex-1 min-h-11 rounded-lg text-sm font-medium ${tab === id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>{label}</button>
+        ))}
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-muted-foreground">Lọc tag:</span>
         <button onClick={() => setActiveTag("")} className={`min-h-11 rounded-full border px-3 text-xs ${!activeTag ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>Tất cả</button>
@@ -96,8 +105,8 @@ export default function JournalPage() {
           className={`min-h-11 rounded-full border px-3 text-xs ${activeTag === t ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{t}</button>)}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <div className={`${tab === "calendar" ? "block" : "hidden"} md:block rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3`}>
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold flex items-center gap-2"><CalendarDays className="h-4 w-4 text-sky-500"/> {year} / {pad(month)}</h2>
             <div className="flex gap-1">
@@ -114,7 +123,7 @@ export default function JournalPage() {
               const dateStr = `${year}-${pad(month)}-${pad(day)}`;
               const e = byDate.get(dateStr);
               return (
-                <button key={dateStr} onClick={() => setSelected(dateStr)}
+                <button key={dateStr} onClick={() => { setSelected(dateStr); setTab("note"); }}
                   className={`min-h-11 rounded-lg border text-xs transition-colors ${selected === dateStr ? "border-primary bg-primary/10" : "border-border/60 hover:bg-muted"}`}>
                   <div>{day}</div>
                   <div className="text-sm leading-none">{e?.mood?.slice(0, 2) || ""}</div>
@@ -124,7 +133,7 @@ export default function JournalPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3">
+        <div className={`${tab === "note" ? "block" : "hidden"} md:block rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3`}>
           <h2 className="text-sm font-semibold">{selected}</h2>
           <div className="flex flex-wrap gap-2">
             {MOODS.map(m => <button key={m} onClick={() => setForm(f => ({ ...f, mood: m }))}
@@ -152,7 +161,7 @@ export default function JournalPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3">
+      <div className={`${tab === "stats" ? "block" : "hidden"} md:block lg:col-span-2 rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3`}>
         <h2 className="text-sm font-semibold">Thống kê tháng này</h2>
         {stats.total === 0 ? <p className="text-sm text-muted-foreground">Chưa có dữ liệu tháng này.</p> : (
           <div className="space-y-2">
@@ -163,7 +172,7 @@ export default function JournalPage() {
           </div>
         )}
       </div>
-      <div className="rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3">
+      <div className={`${tab === "stats" ? "block" : "hidden"} md:block lg:col-span-2 rounded-2xl border border-border/60 bg-card p-5 elevated space-y-3`}>
         <h2 className="text-sm font-semibold">Cảm xúc & calo nạp tháng này</h2>
         {correlation.length === 0 ? <p className="text-sm text-muted-foreground">Chưa có dữ liệu tháng này.</p> : (
           <div className="space-y-2">
