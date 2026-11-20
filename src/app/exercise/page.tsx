@@ -4,12 +4,14 @@ import { useRouter } from "next/navigation";
 import { Dumbbell, Plus, Trash2, Flame, Clock, Target, Zap } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import TrainingGuidance from "@/components/TrainingGuidance";
+import { useToast } from "@/components/ToastProvider";
 
 interface ExerciseLog { id: string; type: string; duration: number; calories: number; date: string; }
 const TYPES = ["Chạy bộ", "Đi bộ", "Tập gym", "Bơi", "Đạp xe", "Yoga", "Cầu lông", "Khác"];
 
 export default function ExercisePage() {
   const t = useT();
+  const { success, error: showError } = useToast();
   const router = useRouter();
   const [logs, setLogs] = useState<ExerciseLog[]>([]);
   const [goal, setGoal] = useState(300);
@@ -30,12 +32,11 @@ export default function ExercisePage() {
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
-    await fetch("/api/exercise", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    setForm({ ...form, duration: "", calories: "" });
-    load();
+    const res = await fetch("/api/exercise", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    if (res.ok) { success("Đã lưu bài tập"); setForm({ ...form, duration: "", calories: "" }); load(); } else showError("Không thể lưu bài tập");
   }
-  async function del(id: string) { await fetch(`/api/exercise/${id}`, { method: "DELETE" }); load(); }
-  async function saveGoal() { await fetch("/api/exercise/goal", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ calories: Number(goalInput) }) }); load(); }
+  async function del(id: string) { const res = await fetch(`/api/exercise/${id}`, { method: "DELETE" }); if (res.ok) { success("Đã xoá bài tập"); load(); } else showError("Không thể xoá"); }
+  async function saveGoal() { const res = await fetch("/api/exercise/goal", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ calories: Number(goalInput) }) }); if (res.ok) { success("Đã lưu mục tiêu tập luyện"); load(); } else showError("Không thể lưu mục tiêu"); }
 
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-6"><div className="h-96 skeleton rounded-2xl" /></div>;
 

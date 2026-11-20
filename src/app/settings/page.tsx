@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Bell, BellOff, Clock, Check, Smartphone } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { useToast } from "@/components/ToastProvider";
 
 interface NotifPrefs {
   enabled: boolean;
@@ -36,6 +37,7 @@ export default function SettingsPage() {
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [locale, setLocale] = useState<"vi" | "en">("vi");
   const [msg, setMsg] = useState("");
+  const { success, error: showError } = useToast();
   const [sharing, setSharing] = useState({ exercise: false, finance: false, weight: false });
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function SettingsPage() {
   async function togglePush() {
     if (!("serviceWorker" in navigator) || !VAPID_PUBLIC_KEY) { setMsg("Push chưa được cấu hình (VAPID key)"); return; }
     if (pushSubscribed) {
-      await fetch("/api/push", { method: "DELETE" });
+      const res = await fetch("/api/push", { method: "DELETE" }); if (res.ok) success("Đã tắt thông báo");
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
       await sub?.unsubscribe();
@@ -84,8 +86,8 @@ export default function SettingsPage() {
       if (existing) await existing.unsubscribe();
       const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource });
       const json = sub.toJSON();
-      await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: json.endpoint, p256dh: json.keys?.p256dh, auth: json.keys?.auth }) });
-      setPushSubscribed(true);
+      const res = await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: json.endpoint, p256dh: json.keys?.p256dh, auth: json.keys?.auth }) });
+      if (res.ok) { success("Đã bật thông báo"); setPushSubscribed(true); } else showError("Không thể bật thông báo");
       // Auto send a confirmation push
       fetch("/api/push/test", { method: "POST" }).catch(() => {});
     }
@@ -97,15 +99,15 @@ export default function SettingsPage() {
       const domain = d.details?.[0]?.endpoint?.match(/https:\/\/([^/]+)/)?.[1] || "push service";
       setMsg(`Đã gửi ${d.sent} thông báo tới ${domain}. Nếu chưa hiện: kiểm tra quyền Notification của site trong thanh địa chỉ (biểu tượng khóa), và đảm bảo đang dùng đúng browser đã bật thông báo.`);
     } else {
-      setMsg(d.error || "Lỗi gửi");
+      setMsg(d.error || "Lỗi gửi"); showError(d.error || "Không thể gửi thông báo thử");
     }
   }
   async function toggleShare(key: "exercise" | "finance" | "weight") {
     const next = { ...sharing, [key]: !sharing[key] };
     setSharing(next);
-    await fetch("/api/sharing", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
+    const res = await fetch("/api/sharing", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) }); if (res.ok) success("Đã cập nhật chia sẻ"); else showError("Không thể cập nhật chia sẻ");
   }
-  async function changeLocale(l: "vi" | "en") { setLocale(l); await fetch("/api/locale", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale: l }) }); window.dispatchEvent(new Event("localechange")); }
+  async function changeLocale(l: "vi" | "en") { setLocale(l); const res = await fetch("/api/locale", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale: l }) }); window.dispatchEvent(new Event("localechange")); if (res.ok) success("Đã đổi ngôn ngữ"); }
 
   function save(p: NotifPrefs) {
     localStorage.setItem("nt-notif", JSON.stringify(p));

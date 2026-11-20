@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Wallet, Plus, Users, AlertTriangle } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { useToast } from "@/components/ToastProvider";
 
 const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " ₫";
 const CATS = ["Ăn uống", "Tập gym", "Mua sắm", "Di lại", "Hóa đơn", "Giải trí", "Khác"];
@@ -17,6 +18,7 @@ interface Summary {
 
 export default function FinancePage() {
   const t = useT();
+  const { success, error: showError } = useToast();
   const router = useRouter();
   const [data, setData] = useState<Summary | null>(null);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -39,14 +41,14 @@ export default function FinancePage() {
     e.preventDefault();
     const res = await fetch("/api/expense", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
     const d = await res.json();
-    if (res.ok) setMsg(d.alert ? `Đã lưu. ${d.alert.threshold === 100 ? "🚨 Vượt" : "⚠️ Gần"} ngân sách!` : "Đã lưu chi tiêu");
-    else setMsg(d.error || "Lỗi");
+    if (res.ok) { const text = d.alert ? `Đã lưu. ${d.alert.threshold === 100 ? "🚨 Vượt" : "⚠️ Gần"} ngân sách!` : "Đã lưu chi tiêu"; setMsg(text); success(text); }
+    else { setMsg(d.error || "Lỗi"); showError(d.error || "Không thể lưu chi tiêu"); }
     setForm({ ...form, amount: "", note: "" });
     load();
   }
   async function saveBudget(type: "personal" | "household") {
-    await fetch(`/api/budget/${type}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount: Number(budgets[type]) }) });
-    setMsg("Đã cập nhật ngân sách");
+    const res = await fetch(`/api/budget/${type}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount: Number(budgets[type]) }) });
+    if (res.ok) { setMsg("Đã cập nhật ngân sách"); success("Đã cập nhật ngân sách"); } else showError("Không thể cập nhật ngân sách");
     load();
   }
 

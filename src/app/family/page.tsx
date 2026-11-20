@@ -3,11 +3,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Plus, Mail, Crown, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { useToast } from "@/components/ToastProvider";
 
 interface Member { userId: string; name: string | null; email: string; role: string; caloriesToday: number; memberId?: string; }
 
 export default function FamilyPage() {
   const t = useT();
+  const { success, error: showError } = useToast();
   const router = useRouter();
   const [family, setFamily] = useState<{ name: string } | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -43,22 +45,21 @@ export default function FamilyPage() {
   }, [feedFeature, family]);
 
   async function removeMember(memberId: string) {
-    await fetch(`/api/family/members/${memberId}`, { method: "DELETE" });
-    load();
+    const res = await fetch(`/api/family/members/${memberId}`, { method: "DELETE" });
+    if (res.ok) { success("Đã xoá thành viên"); load(); } else showError("Không thể xoá thành viên");
   }
   async function create(e: React.FormEvent) {
     e.preventDefault();
     if (!name) return;
-    await fetch("/api/family", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
-    setName("");
-    load();
+    const res = await fetch("/api/family", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+    if (res.ok) { success("Đã tạo gia đình"); setName(""); load(); } else showError("Không thể tạo gia đình");
   }
   async function invite(e: React.FormEvent) {
     e.preventDefault();
     const res = await fetch("/api/family/invite", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
     const d = await res.json();
-    setMsg(res.ok ? "Đã mời thành công" : (d.error || "Lỗi"));
-    if (res.ok) setEmail("");
+    const text = res.ok ? "Đã mời thành công" : (d.error || "Lỗi"); setMsg(text);
+    if (res.ok) { success(text); setEmail(""); } else showError(text);
     load();
   }
 

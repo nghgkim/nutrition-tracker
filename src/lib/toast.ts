@@ -13,3 +13,11 @@ export function pushToast(queue: Toast[], message: string, kind: "success" | "er
   const next = [...queue, { id: nextId, message, kind }];
   return next.length > MAX_TOASTS ? next.slice(next.length - MAX_TOASTS) : next;
 }
+
+const MAX_MESSAGE = 60;
+
+/** Bound displayed text by Unicode code points so diacritics stay intact. */
+export function formatToastMessage(message: string): string {
+  const chars = Array.from(message);
+  return chars.length <= MAX_MESSAGE ? message : `${chars.slice(0, MAX_MESSAGE - 1).join("")}…`;
+}

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Calculator, Target, Flame, Scale, User, Save, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { classifyBMI } from "@/lib/bmi-asian";
+import { useToast } from "@/components/ToastProvider";
 
 const ACTIVITY_FACTORS: Record<string, number> = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, very_active: 1.9 };
 const ACTIVITY_LABELS: Record<string, string> = { sedentary: "Ít vận động", light: "Nhẹ (1-3 buổi/tuần)", moderate: "Trung bình (3-5 buổi/tuần)", active: "Nhiều (6-7 buổi/tuần)", very_active: "Rất nhiều" };
@@ -27,6 +28,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [waistInput, setWaistInput] = useState("");
   const [saved, setSaved] = useState(false);
+  const { success, error: showError } = useToast();
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
   const [wForm, setWForm] = useState({ weight: "", date: new Date().toISOString().slice(0, 10), note: "" });
   const [wAdding, setWAdding] = useState(false);
@@ -73,18 +75,19 @@ export default function ProfilePage() {
     setSaving(true);
     await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ height: profile.height ? Number(profile.height) : null, age: profile.age ? Number(profile.age) : null, gender: profile.gender, activity: profile.activity, targetWeight: profile.targetWeight ? Number(profile.targetWeight) : null }) });
     await fetch("/api/goal", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dailyCalories: targetCalories }) });
-    setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000);
+    setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000); success("Đã lưu hồ sơ và mục tiêu");
   }
   async function addWeight(e: React.FormEvent) {
     e.preventDefault();
     if (!wForm.weight) return;
     setWAdding(true);
-    await fetch("/api/weight", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ weight: Number(wForm.weight), date: wForm.date, note: wForm.note || null }) });
+    const res = await fetch("/api/weight", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ weight: Number(wForm.weight), date: wForm.date, note: wForm.note || null }) });
+    if (res.ok) success("Đã lưu cân nặng"); else showError("Không thể lưu cân nặng");
     setWForm({ weight: "", date: new Date().toISOString().slice(0, 10), note: "" });
     setWAdding(false);
     loadWeights();
   }
-  async function deleteWeight(id: string) { await fetch(`/api/weight/${id}`, { method: "DELETE" }); loadWeights(); }
+  async function deleteWeight(id: string) { const res = await fetch(`/api/weight/${id}`, { method: "DELETE" }); if (res.ok) { success("Đã xoá cân nặng"); loadWeights(); } else showError("Không thể xoá"); }
 
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-8"><div className="h-64 skeleton rounded-2xl" /></div>;
 

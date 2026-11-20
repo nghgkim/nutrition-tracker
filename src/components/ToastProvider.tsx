@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { CheckCircle2, XCircle, X } from "lucide-react";
-import { pushToast, type Toast } from "@/lib/toast";
+import { pushToast, formatToastMessage, type Toast } from "@/lib/toast";
 
 interface ToastApi {
   success: (message: string) => void;
@@ -22,7 +22,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const add = useCallback((message: string, kind: "success" | "error") => {
     setToasts(prev => {
-      const next = pushToast(prev, message, kind);
+      const next = pushToast(prev, formatToastMessage(message), kind);
       // schedule dismissal for any newly added toast
       for (const toast of next) {
         if (!timers.current.has(toast.id)) {
