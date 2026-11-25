@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Trash2, Apple, Flame, Download } from "lucide-react";
 import { removeDiacritics } from "@/lib/normalize";
@@ -14,7 +14,7 @@ export default function FoodsPage() {
   const { success, error: showError } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: "", calories: "", protein: "", carbs: "", fat: "", servingSize: "" });
+  const [form, setForm] = useState({ name: "", calories: "", protein: "", carbs: "", fat: "", servingSize: "", source: "" });
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -23,6 +23,9 @@ export default function FoodsPage() {
   const [candidates, setCandidates] = useState<ImportCandidate[]>([]);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [importError, setImportError] = useState("");
+  const [suggestions, setSuggestions] = useState<{ id: string; name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; source: string | null }[]>([]);
+  const [suggestError, setSuggestError] = useState("");
+  const suggestKey = useRef("");
 
   const [allFoods, setAllFoods] = useState<Food[]>([]);
   const [debouncedQ, setDebouncedQ] = useState("");
@@ -39,6 +42,21 @@ export default function FoodsPage() {
   }, [router]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
+
+  useEffect(() => {
+    const name = form.name.trim();
+    if (name.length < 2) { setSuggestions([]); setSuggestError(""); return; }
+    const key = name;
+    suggestKey.current = key;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/foods/suggest?q=${encodeURIComponent(name)}`);
+        const data = await res.json();
+        if (suggestKey.current === key) { setSuggestions(data.foods || []); setSuggestError(""); }
+      } catch { if (suggestKey.current === key) setSuggestError("Không thể tải gợi ý"); }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [form.name]);
 
   async function loadCandidates() {
     setLoadingCandidates(true);
@@ -74,17 +92,31 @@ export default function FoodsPage() {
   const totalPages = Math.max(1, Math.ceil(filteredFoods.length / pageSize));
   const foods = filteredFoods.slice((page - 1) * pageSize, page * pageSize);
 
+  function autofill(food: { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; source?: string | null }) {
+    setForm({
+      name: food.name,
+      calories: String(food.calories),
+      protein: String(food.protein ?? 0),
+      carbs: String(food.carbs ?? 0),
+      fat: String(food.fat ?? 0),
+      servingSize: food.servingSize || "",
+      source: food.source || "NIN2026",
+    });
+    setSuggestions([]);
+    success(`Đã điền từ NIN2026: ${food.name}`);
+  }
+
   async function addFood(e: React.FormEvent) {
     e.preventDefault();
     setAdding(true);
     const res = await fetch("/api/foods", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, calories: Number(form.calories), protein: Number(form.protein || 0), carbs: Number(form.carbs || 0), fat: Number(form.fat || 0), servingSize: form.servingSize || null }),
+      body: JSON.stringify({ name: form.name, calories: Number(form.calories), protein: Number(form.protein || 0), carbs: Number(form.carbs || 0), fat: Number(form.fat || 0), servingSize: form.servingSize || null, source: form.source || null }),
     });
     if (res.ok) {
       success(`Đã thêm món "${form.name}"`);
-      setForm({ name: "", calories: "", protein: "", carbs: "", fat: "", servingSize: "" });
+      setForm({ name: "", calories: "", protein: "", carbs: "", fat: "", servingSize: "", source: "" });
       loadAll();
     } else showError("Không thể thêm món. Kiểm tra lại thông tin.");
     setAdding(false);
@@ -142,6 +174,7 @@ export default function FoodsPage() {
                         carbs: c.suggestion ? String(c.suggestion.carbs) : "",
                         fat: c.suggestion ? String(c.suggestion.fat) : "",
                         servingSize: c.suggestion?.servingSize || "1 phần",
+                        source: c.suggestion ? "Foody→NIN2026" : "",
                       });
                       setShowImport(false);
                       setShowForm(true);
@@ -168,6 +201,19 @@ export default function FoodsPage() {
             <form onSubmit={addFood} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input placeholder="Tên món *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring lg:col-span-2" />
+          {(suggestions.length > 0 || suggestError) && (
+            <div className="lg:col-span-2 rounded-lg border border-border/60 bg-muted/30 p-2 space-y-1 max-h-52 overflow-y-auto">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Gợi ý từ NIN2026 (dữ liệu thật)</p>
+              {suggestError && <p className="text-xs text-destructive">{suggestError}</p>}
+              {suggestions.map((f) => (
+                <button key={f.id} type="button" onClick={() => autofill(f as Parameters<typeof autofill>[0])}
+                  className="flex w-full items-center justify-between gap-2 rounded-md border border-border/60 bg-card px-3 py-2 text-left text-xs hover:bg-muted active:scale-[0.98]">
+                  <span className="font-medium text-foreground">{f.name}</span>
+                  <span className="shrink-0 font-mono text-muted-foreground">{f.calories} kcal{f.servingSize ? ` · ${f.servingSize}` : ""}</span>
+                </button>
+              ))}
+            </div>
+          )}
           <input type="number" placeholder="Calo *" value={form.calories} onChange={(e) => setForm({ ...form, calories: e.target.value })} required
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
           <input placeholder="Khẩu phần (vd 100g)" value={form.servingSize} onChange={(e) => setForm({ ...form, servingSize: e.target.value })}

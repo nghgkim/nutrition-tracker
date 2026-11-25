@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const body = await req.json();
-  const { name, calories, protein, carbs, fat, servingSize } = body;
+  const { name, calories, protein, carbs, fat, servingSize, source } = body;
   if (!name || calories === undefined) {
     return NextResponse.json(problemResponse("Name and calories required", 400), { status: 400 });
   }
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
       carbs: Number(carbs ?? 0),
       fat: Number(fat ?? 0),
       servingSize: servingSize ?? null,
+      source: typeof source === "string" && source.length <= 40 ? source : null,
       isCustom: true,
       userId: user.id,
     },
