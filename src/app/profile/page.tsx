@@ -116,44 +116,8 @@ export default function ProfilePage() {
           <div><label className="text-xs font-medium text-foreground">Cân nặng mong muốn (kg)</label><input type="number" step="0.1" value={profile.targetWeight} onChange={(e) => setProfile({ ...profile, targetWeight: e.target.value })} placeholder="VD: 65" className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></div>
           <div><label className="text-xs font-medium text-foreground">Vòng eo (cm - tùy chọn)</label><input type="number" step="0.5" value={waistInput} onChange={(e) => setWaistInput(e.target.value)} placeholder="VD: 75" className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></div>
         </div>
-      </div>
-      <div className="rounded-2xl border border-border/60 bg-card p-6 elevated">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Target className="h-4 w-4 text-primary" /> Mục tiêu</h2>
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          {[{ key: "lose" as const, label: "Giảm cân", desc: "Thâm hụt 500 kcal" }, { key: "maintain" as const, label: "Duy trì", desc: "Giữ nguyên" }, { key: "gain" as const, label: "Tăng cân", desc: "Thặng dư 500 kcal" }].map((g) => (
-            <button key={g.key} onClick={() => setGoal(g.key)} className={`rounded-xl border p-4 text-left transition-all ${goal === g.key ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:border-primary/50"}`}>
-              <div className="text-sm font-semibold text-foreground">{g.label}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{g.desc}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-      {hasData && (
-        <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-4">
-          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Calculator className="h-4 w-4 text-primary" /> Kết quả</h2>
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
-            <div><div className="text-xs text-muted-foreground">BMI</div><div className={`text-2xl font-bold tracking-tight ${bmiInfo!.color}`}>{bmiInfo!.bmi}</div></div>
-            <div className={`text-sm font-medium ${bmiInfo!.color}`}>{bmiInfo!.category}</div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl bg-muted/50"><div className="text-xs text-muted-foreground">BMR</div><div className="text-xl font-bold tracking-tight">{Math.round(bmr)} <span className="text-sm font-normal text-muted-foreground">kcal</span></div></div>
-            <div className="p-4 rounded-xl bg-muted/50"><div className="text-xs text-muted-foreground">TDEE</div><div className="text-xl font-bold tracking-tight">{Math.round(tdee)} <span className="text-sm font-normal text-muted-foreground">kcal</span></div></div>
-          </div>
-          <div className="p-5 rounded-xl bg-primary/5 border border-primary/20">
-            <div className="flex items-center justify-between">
-              <div><div className="text-xs text-muted-foreground">Mục tiêu calo/ngày</div><div className="text-3xl font-bold tracking-tight text-primary">{targetCalories} <span className="text-sm font-normal text-muted-foreground">kcal</span></div></div>
-              <Flame className="h-8 w-8 text-primary/40" />
-            </div>
-            {weeksToGoal !== null && weeksToGoal > 0 && <p className="mt-2 text-xs text-muted-foreground">Ước tính đạt {profile.targetWeight} kg sau ~{Math.round(weeksToGoal)} tuần.</p>}
-          </div>
-        </div>
-      )}
-      <button onClick={saveProfile} disabled={saving} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50">
-        <Save className="h-4 w-4" /> {saving ? "Đang lưu..." : "Lưu & cập nhật mục tiêu calo"} {saved && "✓"}
-      </button>
-
-      <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-4">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Scale className="h-4 w-4 text-primary" /> Theo dõi cân nặng</h2>
+        <div className="border-t border-border/60 pt-4 mt-2">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3"><Scale className="h-4 w-4 text-primary" /> Cân nặng hiện tại</h3>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center"><div className="text-2xl font-bold tracking-tight">{latest !== null ? latest.toFixed(1) : "—"} <span className="text-sm font-normal text-muted-foreground">kg</span></div><div className="text-xs text-muted-foreground">Hiện tại</div></div>
           <div className="text-center"><div className={`text-2xl font-bold tracking-tight ${diff <= 0 ? "text-emerald-500" : "text-rose-500"}`}>{diff > 0 ? "+" : ""}{diff.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">kg</span></div><div className="text-xs text-muted-foreground">Thay đổi</div></div>
@@ -192,7 +156,43 @@ export default function ProfilePage() {
             </ul>
           </div>
         )}
+        </div>
       </div>
+      <div className="rounded-2xl border border-border/60 bg-card p-6 elevated">
+        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Target className="h-4 w-4 text-primary" /> Mục tiêu</h2>
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          {[{ key: "lose" as const, label: "Giảm cân", desc: "Thâm hụt 500 kcal" }, { key: "maintain" as const, label: "Duy trì", desc: "Giữ nguyên" }, { key: "gain" as const, label: "Tăng cân", desc: "Thặng dư 500 kcal" }].map((g) => (
+            <button key={g.key} onClick={() => setGoal(g.key)} className={`rounded-xl border p-4 text-left transition-all ${goal === g.key ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:border-primary/50"}`}>
+              <div className="text-sm font-semibold text-foreground">{g.label}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{g.desc}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+      {hasData && (
+        <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-4">
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Calculator className="h-4 w-4 text-primary" /> Kết quả</h2>
+          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
+            <div><div className="text-xs text-muted-foreground">BMI</div><div className={`text-2xl font-bold tracking-tight ${bmiInfo!.color}`}>{bmiInfo!.bmi}</div></div>
+            <div className={`text-sm font-medium ${bmiInfo!.color}`}>{bmiInfo!.category}</div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-muted/50"><div className="text-xs text-muted-foreground">BMR</div><div className="text-xl font-bold tracking-tight">{Math.round(bmr)} <span className="text-sm font-normal text-muted-foreground">kcal</span></div></div>
+            <div className="p-4 rounded-xl bg-muted/50"><div className="text-xs text-muted-foreground">TDEE</div><div className="text-xl font-bold tracking-tight">{Math.round(tdee)} <span className="text-sm font-normal text-muted-foreground">kcal</span></div></div>
+          </div>
+          <div className="p-5 rounded-xl bg-primary/5 border border-primary/20">
+            <div className="flex items-center justify-between">
+              <div><div className="text-xs text-muted-foreground">Mục tiêu calo/ngày</div><div className="text-3xl font-bold tracking-tight text-primary">{targetCalories} <span className="text-sm font-normal text-muted-foreground">kcal</span></div></div>
+              <Flame className="h-8 w-8 text-primary/40" />
+            </div>
+            {weeksToGoal !== null && weeksToGoal > 0 && <p className="mt-2 text-xs text-muted-foreground">Ước tính đạt {profile.targetWeight} kg sau ~{Math.round(weeksToGoal)} tuần.</p>}
+          </div>
+        </div>
+      )}
+      <button onClick={saveProfile} disabled={saving} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50">
+        <Save className="h-4 w-4" /> {saving ? "Đang lưu..." : "Lưu & cập nhật mục tiêu calo"} {saved && "✓"}
+      </button>
+
     </div>
   );
 }
