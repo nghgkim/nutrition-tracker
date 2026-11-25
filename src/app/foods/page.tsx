@@ -23,7 +23,8 @@ export default function FoodsPage() {
   const [candidates, setCandidates] = useState<ImportCandidate[]>([]);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [importError, setImportError] = useState("");
-  const [suggestions, setSuggestions] = useState<{ id: string; name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; source: string | null }[]>([]);
+  type SearchItem = { id: string; name: string; calories: number | null; protein: number | null; carbs: number | null; fat: number | null; servingSize: string | null; source: string | null };
+  const [suggestions, setSuggestions] = useState<{ source: string; items: SearchItem[] }[]>([]);
   const [suggestError, setSuggestError] = useState("");
   const suggestKey = useRef("");
 
@@ -50,9 +51,12 @@ export default function FoodsPage() {
     suggestKey.current = key;
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/foods/suggest?q=${encodeURIComponent(name)}`);
+        const res = await fetch(`/api/foods/search-all?q=${encodeURIComponent(name)}`);
         const data = await res.json();
-        if (suggestKey.current === key) { setSuggestions(data.foods || []); setSuggestError(""); }
+        if (suggestKey.current === key) {
+          setSuggestions(data.groups || []);
+          setSuggestError((data.degraded || []).join(" · "));
+        }
       } catch { if (suggestKey.current === key) setSuggestError("Không thể tải gợi ý"); }
     }, 250);
     return () => clearTimeout(timer);
@@ -95,15 +99,15 @@ export default function FoodsPage() {
   function autofill(food: { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string | null; source?: string | null }) {
     setForm({
       name: food.name,
-      calories: String(food.calories),
-      protein: String(food.protein ?? 0),
-      carbs: String(food.carbs ?? 0),
-      fat: String(food.fat ?? 0),
+      calories: food.calories != null ? String(food.calories) : "",
+      protein: food.protein != null ? String(food.protein) : "",
+      carbs: food.carbs != null ? String(food.carbs) : "",
+      fat: food.fat != null ? String(food.fat) : "",
       servingSize: food.servingSize || "",
       source: food.source || "NIN2026",
     });
     setSuggestions([]);
-    success(`Đã điền từ NIN2026: ${food.name}`);
+    success(`Đã điền từ ${food.source || "NIN2026"}: ${food.name} (có thể chỉnh trước khi lưu)`);
   }
 
   async function addFood(e: React.FormEvent) {
@@ -202,15 +206,20 @@ export default function FoodsPage() {
           <input placeholder="Tên món *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring lg:col-span-2" />
           {(suggestions.length > 0 || suggestError) && (
-            <div className="lg:col-span-2 rounded-lg border border-border/60 bg-muted/30 p-2 space-y-1 max-h-52 overflow-y-auto">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Gợi ý từ NIN2026 (dữ liệu thật)</p>
-              {suggestError && <p className="text-xs text-destructive">{suggestError}</p>}
-              {suggestions.map((f) => (
-                <button key={f.id} type="button" onClick={() => autofill(f as Parameters<typeof autofill>[0])}
-                  className="flex w-full items-center justify-between gap-2 rounded-md border border-border/60 bg-card px-3 py-2 text-left text-xs hover:bg-muted active:scale-[0.98]">
-                  <span className="font-medium text-foreground">{f.name}</span>
-                  <span className="shrink-0 font-mono text-muted-foreground">{f.calories} kcal{f.servingSize ? ` · ${f.servingSize}` : ""}</span>
-                </button>
+            <div className="lg:col-span-2 rounded-lg border border-border/60 bg-muted/30 p-2 space-y-2 max-h-64 overflow-y-auto">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Tìm kiếm đa nguồn · calo tính trên {form.servingSize || "100g"}</p>
+              {suggestError && <p className="text-xs text-amber-600">{suggestError}</p>}
+              {suggestions.map(group => (
+                <div key={group.source} className="space-y-1">
+                  <p className="text-[10px] font-semibold text-primary">{group.source} {group.items.length > 0 && `(${group.items.length})`}</p>
+                  {group.items.map(f => (
+                    <button key={f.id} type="button" onClick={() => autofill(f as Parameters<typeof autofill>[0])}
+                      className="flex w-full items-center justify-between gap-2 rounded-md border border-border/60 bg-card px-3 py-2 text-left text-xs hover:bg-muted active:scale-[0.98]">
+                      <span className="min-w-0 truncate font-medium text-foreground">{f.name}</span>
+                      <span className="shrink-0 font-mono text-muted-foreground">{f.calories != null ? `${f.calories} kcal` : "—"}{f.servingSize ? ` · ${f.servingSize}` : ""}</span>
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
           )}
