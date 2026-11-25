@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { problemResponse } from "@/lib/http-problem";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { toNullableNumber } from "@/lib/profile-values";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -20,11 +21,11 @@ export async function PUT(req: Request) {
   const updated = await prisma.user.update({
     where: { id: user.id },
     data: {
-      height: height !== undefined ? Number(height) : undefined,
-      age: age !== undefined ? Number(age) : undefined,
+      height: toNullableNumber(height),
+      age: toNullableNumber(age),
       gender: gender ?? undefined,
       activity: activity ?? undefined,
-      targetWeight: targetWeight !== undefined ? Number(targetWeight) : undefined,
+      targetWeight: toNullableNumber(targetWeight),
     },
     select: { id: true, email: true, name: true, height: true, age: true, gender: true, activity: true, targetWeight: true },
   });

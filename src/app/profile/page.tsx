@@ -145,11 +145,12 @@ export default function ProfilePage() {
             </div>
             {weeksToGoal !== null && weeksToGoal > 0 && <p className="mt-2 text-xs text-muted-foreground">Ước tính đạt {profile.targetWeight} kg sau ~{Math.round(weeksToGoal)} tuần.</p>}
           </div>
-          <button onClick={saveProfile} disabled={saving} className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50">
-            <Save className="h-4 w-4" /> {saving ? "Đang lưu..." : "Lưu & cập nhật mục tiêu calo"} {saved && "✓"}
-          </button>
         </div>
       )}
+      <button onClick={saveProfile} disabled={saving} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50">
+        <Save className="h-4 w-4" /> {saving ? "Đang lưu..." : "Lưu & cập nhật mục tiêu calo"} {saved && "✓"}
+      </button>
+
       {recommended && (
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 elevated space-y-2">
           <div className="flex items-center justify-between">
