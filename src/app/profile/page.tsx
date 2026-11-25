@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calculator, Target, Flame, Scale, User, Save, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { toNullableNumber, parseWeight } from "@/lib/profile-values";
 import { classifyBMI } from "@/lib/bmi-asian";
 import ErrorBanner from "@/components/ErrorBanner";
 import { useToast } from "@/components/ToastProvider";
@@ -85,9 +86,10 @@ export default function ProfilePage() {
   }
   async function addWeight(e: React.FormEvent) {
     e.preventDefault();
-    if (!wForm.weight) return;
+    const weight = parseWeight(wForm.weight);
+    if (weight == null) { showError("Nhập cân nặng hợp lệ (0-500 kg)."); return; }
     setWAdding(true);
-    const res = await fetch("/api/weight", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ weight: Number(wForm.weight), date: wForm.date, note: wForm.note || null }) });
+    const res = await fetch("/api/weight", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ weight, date: wForm.date, note: wForm.note || null }) });
     if (res.ok) success("Đã lưu cân nặng"); else showError("Không thể lưu cân nặng");
     setWForm({ weight: "", date: new Date().toISOString().slice(0, 10), note: "" });
     setWAdding(false);
@@ -107,7 +109,7 @@ export default function ProfilePage() {
       <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-4">
         <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><User className="h-4 w-4 text-primary" /> Thông tin cá nhân</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label className="text-xs font-medium text-foreground">Cân nặng hiện tại (kg)</label><input type="number" step="0.1" value={currentWeight} onChange={(e) => setCurrentWeight(e.target.value)} placeholder="VD: 70" className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></div>
+          <div><span className="text-xs font-medium text-foreground">Cân nặng hiện tại</span><div className="mt-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm text-foreground">{currentWeight ? `${currentWeight} kg` : "Chưa có — thêm bên dưới"}</div></div>
           <div><label className="text-xs font-medium text-foreground">Chiều cao (cm)</label><input type="number" value={profile.height} onChange={(e) => setProfile({ ...profile, height: e.target.value })} placeholder="VD: 170" className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></div>
           <div><label className="text-xs font-medium text-foreground">Tuổi</label><input type="number" value={profile.age} onChange={(e) => setProfile({ ...profile, age: e.target.value })} placeholder="VD: 25" className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></div>
           <div><label className="text-xs font-medium text-foreground">Giới tính</label><select value={profile.gender} onChange={(e) => setProfile({ ...profile, gender: e.target.value })} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="male">Nam</option><option value="female">Nữ</option></select></div>
@@ -185,7 +187,7 @@ export default function ProfilePage() {
           </div>
         )}
         <form onSubmit={addWeight} className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <input type="number" step="0.1" placeholder="Cân nặng (kg) *" value={wForm.weight} onChange={(e) => setWForm({ ...wForm, weight: e.target.value })} required className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <input type="number" step="0.1" placeholder="Cân nặng (kg)" value={wForm.weight} onChange={(e) => setWForm({ ...wForm, weight: e.target.value })} className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
           <input type="date" value={wForm.date} onChange={(e) => setWForm({ ...wForm, date: e.target.value })} className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
           <input placeholder="Ghi chú" value={wForm.note} onChange={(e) => setWForm({ ...wForm, note: e.target.value })} className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
           <button type="submit" disabled={wAdding} className="sm:col-span-3 inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50">

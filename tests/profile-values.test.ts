@@ -13,3 +13,14 @@ describe("toNullableNumber", () => {
     expect(toNullableNumber("65.5")).toBe(65.5);
   });
 });
+
+import { parseWeight } from "@/lib/profile-values";
+
+describe("parseWeight", () => {
+  it("parses valid weights and rejects invalid ones", () => {
+    expect(parseWeight("70.5")).toBe(70.5);
+    expect(parseWeight("0")).toBeNull();
+    expect(parseWeight("-3")).toBeNull();
+    expect(parseWeight("abc")).toBeNull();
+  });
+});

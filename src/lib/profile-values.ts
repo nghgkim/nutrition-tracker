@@ -4,3 +4,9 @@ export function toNullableNumber(value: unknown): number | null {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
+
+/** Validated positive weight in kg; null when missing or out of range. */
+export function parseWeight(value: string): number | null {
+  const n = toNullableNumber(value);
+  return n != null && n > 0 && n < 500 ? n : null;
+}
