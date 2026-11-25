@@ -35,7 +35,6 @@ export default function ProfilePage() {
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
   const [wForm, setWForm] = useState({ weight: "", date: new Date().toISOString().slice(0, 10), note: "" });
   const [wAdding, setWAdding] = useState(false);
-  const [recommended, setRecommended] = useState<{ calories: number; source: string } | null>(null);
 
   const loadProfile = useCallback(async () => {
     setLoading(true); setLoadError("");
@@ -50,7 +49,6 @@ export default function ProfilePage() {
       const logs = wData.logs || [];
       setWeightLogs(logs);
       if (logs.length > 0) setCurrentWeight(String(logs[logs.length - 1].weight));
-      fetch("/api/nutrition/recommended").then(r => r.json()).then(setRecommended).catch(() => {});
     } catch { setLoadError("Không thể tải hồ sơ. Vui lòng thử lại."); }
     finally { setLoading(false); }
   }, [router]);
@@ -109,8 +107,7 @@ export default function ProfilePage() {
       <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-4">
         <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><User className="h-4 w-4 text-primary" /> Thông tin cá nhân</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><span className="text-xs font-medium text-foreground">Cân nặng hiện tại</span><div className="mt-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm text-foreground">{currentWeight ? `${currentWeight} kg` : "Chưa có — thêm bên dưới"}</div></div>
-          <div><label className="text-xs font-medium text-foreground">Chiều cao (cm)</label><input type="number" value={profile.height} onChange={(e) => setProfile({ ...profile, height: e.target.value })} placeholder="VD: 170" className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></div>
+                    <div><label className="text-xs font-medium text-foreground">Chiều cao (cm)</label><input type="number" value={profile.height} onChange={(e) => setProfile({ ...profile, height: e.target.value })} placeholder="VD: 170" className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></div>
           <div><label className="text-xs font-medium text-foreground">Tuổi</label><input type="number" value={profile.age} onChange={(e) => setProfile({ ...profile, age: e.target.value })} placeholder="VD: 25" className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></div>
           <div><label className="text-xs font-medium text-foreground">Giới tính</label><select value={profile.gender} onChange={(e) => setProfile({ ...profile, gender: e.target.value })} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="male">Nam</option><option value="female">Nữ</option></select></div>
           <div><label className="text-xs font-medium text-foreground">Mức độ vận động</label><select value={profile.activity} onChange={(e) => setProfile({ ...profile, activity: e.target.value })} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring">{Object.entries(ACTIVITY_LABELS).map(([k, v]) => (<option key={k} value={k}>{v}</option>))}</select></div>
@@ -152,20 +149,6 @@ export default function ProfilePage() {
       <button onClick={saveProfile} disabled={saving} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50">
         <Save className="h-4 w-4" /> {saving ? "Đang lưu..." : "Lưu & cập nhật mục tiêu calo"} {saved && "✓"}
       </button>
-
-      {recommended && (
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 elevated space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold text-foreground">🎯 Nhu cầu calo khuyến nghị</div>
-            <div className="text-2xl font-bold text-primary tracking-tight">{recommended.calories} <span className="text-sm font-normal text-muted-foreground">kcal/ngày</span></div>
-          </div>
-          <p className="text-[10px] text-primary/70">Nguồn: {recommended.source}</p>
-          {targetCalories !== recommended.calories && (
-            <button onClick={async () => { await fetch("/api/goal", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dailyCalories: recommended.calories }) }); setSaved(true); setTimeout(() => setSaved(false), 2000); }}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]">Áp dụng khuyến nghị</button>
-          )}
-        </div>
-      )}
 
       <div className="rounded-2xl border border-border/60 bg-card p-6 elevated space-y-4">
         <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Scale className="h-4 w-4 text-primary" /> Theo dõi cân nặng</h2>
