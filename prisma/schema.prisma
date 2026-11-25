@@ -94,6 +94,7 @@ model Goal {
   userId        String   @unique
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   dailyCalories Int      @default(2000)
+  mode          String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Calculator, Target, Flame, Scale, User, Save, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { toNullableNumber, parseWeight } from "@/lib/profile-values";
+import { normalizeGoalMode, type GoalMode } from "@/lib/goal-mode";
 import { classifyBMI } from "@/lib/bmi-asian";
 import ErrorBanner from "@/components/ErrorBanner";
 import { useToast } from "@/components/ToastProvider";
@@ -25,7 +26,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState({ height: "", age: "", gender: "male", activity: "moderate", targetWeight: "" });
   const [currentWeight, setCurrentWeight] = useState("");
-  const [goal, setGoal] = useState<"lose" | "maintain" | "gain">("maintain");
+  const [goal, setGoal] = useState<GoalMode>("maintain");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -39,9 +40,10 @@ export default function ProfilePage() {
   const loadProfile = useCallback(async () => {
     setLoading(true); setLoadError("");
     try {
-      const [pRes, wRes] = await Promise.all([fetch("/api/profile"), fetch("/api/weight")]);
+      const [pRes, wRes, gRes] = await Promise.all([fetch("/api/profile"), fetch("/api/weight"), fetch("/api/goal")]);
       if (pRes.status === 401) { router.push("/login"); return; }
-      if (!pRes.ok || !wRes.ok) throw new Error("fetch failed");
+      if (!pRes.ok || !wRes.ok || !gRes.ok) throw new Error("fetch failed");
+      setGoal(normalizeGoalMode((await gRes.json()).goal?.mode));
       const pData = await pRes.json();
       const wData = await wRes.json();
       const prof = pData.profile || {};
@@ -79,7 +81,7 @@ export default function ProfilePage() {
   async function saveProfile() {
     setSaving(true);
     await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ height: profile.height ? Number(profile.height) : null, age: profile.age ? Number(profile.age) : null, gender: profile.gender, activity: profile.activity, targetWeight: profile.targetWeight ? Number(profile.targetWeight) : null }) });
-    await fetch("/api/goal", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dailyCalories: targetCalories }) });
+    await fetch("/api/goal", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dailyCalories: targetCalories, mode: goal }) });
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000); success("Đã lưu hồ sơ và mục tiêu");
   }
   async function addWeight(e: React.FormEvent) {
