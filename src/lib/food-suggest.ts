@@ -28,3 +28,8 @@ export function rankFoodMatches(foods: SuggestFood[], query: string, limit = 8):
   scored.sort((a, b) => a.score - b.score || a.food.name.localeCompare(b.food.name));
   return scored.slice(0, limit).map(x => x.food);
 }
+
+/** Prefill the add-food form from the user's own search query (not an estimate). */
+export function prefillFoodName(query: string): string {
+  return query.trim().slice(0, 60);
+}

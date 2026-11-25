@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Trash2, Apple, Flame, Download } from "lucide-react";
 import { removeDiacritics } from "@/lib/normalize";
+import { prefillFoodName } from "@/lib/food-suggest";
 import { useT } from "@/lib/i18n";
 import { useToast } from "@/components/ToastProvider";
 
@@ -110,6 +111,13 @@ export default function FoodsPage() {
     success(`Đã điền từ ${food.source || "NIN2026"}: ${food.name} (có thể chỉnh trước khi lưu)`);
   }
 
+  function openAddWith(name: string) {
+    const prefilled = prefillFoodName(name);
+    setForm({ name: prefilled, calories: "", protein: "", carbs: "", fat: "", servingSize: "", source: "" });
+    setShowImport(false);
+    setShowForm(true);
+  }
+
   async function addFood(e: React.FormEvent) {
     e.preventDefault();
     setAdding(true);
@@ -156,7 +164,12 @@ export default function FoodsPage() {
             {importError && <p className="text-xs text-destructive mb-3">{importError}</p>}
             <div className="max-h-80 space-y-2 overflow-y-auto">
               {candidates.length === 0 && !loadingCandidates && (
-                <p className="py-6 text-center text-xs text-muted-foreground">Không có món nào để nhập.</p>
+                <div className="py-6 text-center space-y-3">
+                  <p className="text-xs text-muted-foreground">Không có món nào để nhập.</p>
+                  <button onClick={() => openAddWith(importQ)} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground active:scale-[0.98]">
+                    <Plus className="h-4 w-4" /> {prefillFoodName(importQ) ? `Thêm món "${prefillFoodName(importQ)}"` : "Thêm món mới"}
+                  </button>
+                </div>
               )}
               {candidates.map((c, i) => (
                 <div key={`${c.source}-${c.source_id}-${i}`} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2">
@@ -266,7 +279,10 @@ export default function FoodsPage() {
           <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground"><Apple className="h-6 w-6" /></span>
             <h3 className="mt-4 text-sm font-semibold text-foreground">Không tìm thấy món nào</h3>
-            <p className="mt-1 text-xs text-muted-foreground">Thử từ khoá khác hoặc thêm món mới ở biểu mẫu phía trên.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Thử từ khoá khác, hoặc thêm món này vào thư viện.</p>
+            <button onClick={() => openAddWith(debouncedQ)} className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground active:scale-[0.98]">
+              <Plus className="h-4 w-4" /> {prefillFoodName(debouncedQ) ? `Thêm món "${prefillFoodName(debouncedQ)}"` : "Thêm món mới"}
+            </button>
           </div>
         ) : (
           <>

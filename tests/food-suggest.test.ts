@@ -22,3 +22,15 @@ describe("rankFoodMatches", () => {
     expect(rankFoodMatches(foods, "", 8)).toEqual([]);
   });
 });
+
+import { prefillFoodName } from "@/lib/food-suggest";
+
+describe("prefillFoodName", () => {
+  it("trims and caps long queries", () => {
+    expect(prefillFoodName("  bún chả  ")).toBe("bún chả");
+    expect(prefillFoodName("a".repeat(100)).length).toBe(60);
+  });
+  it("falls back for blank queries", () => {
+    expect(prefillFoodName("   ")).toBe("");
+  });
+});
