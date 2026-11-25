@@ -5,6 +5,8 @@ import { Calculator, Target, Flame, Scale, User, Save, Plus, Trash2 } from "luci
 import { useT } from "@/lib/i18n";
 import { toNullableNumber, parseWeight } from "@/lib/profile-values";
 import { normalizeGoalMode, type GoalMode } from "@/lib/goal-mode";
+import { paginateLogs } from "@/lib/weight-history";
+import { pageWindow } from "@/lib/pagination";
 import { classifyBMI } from "@/lib/bmi-asian";
 import ErrorBanner from "@/components/ErrorBanner";
 import { useToast } from "@/components/ToastProvider";
@@ -36,6 +38,7 @@ export default function ProfilePage() {
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
   const [wForm, setWForm] = useState({ weight: "", date: new Date().toISOString().slice(0, 10), note: "" });
   const [wAdding, setWAdding] = useState(false);
+  const [weightPage, setWeightPage] = useState(1);
 
   const loadProfile = useCallback(async () => {
     setLoading(true); setLoadError("");
@@ -93,9 +96,12 @@ export default function ProfilePage() {
     if (res.ok) success("Đã lưu cân nặng"); else showError("Không thể lưu cân nặng");
     setWForm({ weight: "", date: new Date().toISOString().slice(0, 10), note: "" });
     setWAdding(false);
+    setWeightPage(1);
     loadWeights();
   }
-  async function deleteWeight(id: string) { const res = await fetch(`/api/weight/${id}`, { method: "DELETE" }); if (res.ok) { success("Đã xoá cân nặng"); loadWeights(); } else showError("Không thể xoá"); }
+  async function deleteWeight(id: string) { const res = await fetch(`/api/weight/${id}`, { method: "DELETE" }); if (res.ok) { success("Đã xoá cân nặng"); setWeightPage(1); loadWeights(); } else showError("Không thể xoá"); }
+
+  const weightHistory = paginateLogs(weightLogs, weightPage, 7);
 
   if (loadError) return <div className="max-w-4xl mx-auto px-4 py-8"><ErrorBanner message={loadError} onRetry={loadProfile} /></div>;
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-8"><div className="h-64 skeleton rounded-2xl" /></div>;
@@ -124,13 +130,13 @@ export default function ProfilePage() {
           <div className="text-center"><div className="text-2xl font-bold tracking-tight">{weightLogs.length}</div><div className="text-xs text-muted-foreground">Số lần ghi</div></div>
         </div>
         {weightLogs.length > 1 && (
-          <div className="flex items-end gap-1 h-32 mt-4">
-            {weightLogs.map((l) => {
-              const mn = Math.min(...weightLogs.map(x => x.weight)); const mx = Math.max(...weightLogs.map(x => x.weight));
+          <div className="flex items-end gap-1 h-32 mt-4 overflow-hidden">
+            {weightHistory.rows.map((l) => {
+              const mn = Math.min(...weightHistory.rows.map(x => x.weight)); const mx = Math.max(...weightHistory.rows.map(x => x.weight));
               const range = mx - mn || 1; const pct = ((l.weight - mn) / range) * 70 + 30;
-              return (<div key={l.id} className="flex-1 flex flex-col items-center gap-1" title={`${l.date.slice(0,10)}: ${l.weight}kg`}>
+              return (<div key={l.id} className="min-w-0 flex-1 flex flex-col items-center gap-1" title={`${l.date.slice(0,10)}: ${l.weight}kg`}>
                 <div className="w-full max-w-[20px] rounded-t-md bg-primary transition-all" style={{ height: `${pct}%` }} />
-                <span className="text-[9px] text-muted-foreground">{l.date.slice(5)}</span>
+                <span className="max-w-full truncate text-[9px] text-muted-foreground">{l.date.slice(5)}</span>
               </div>);
             })}
           </div>
@@ -146,14 +152,28 @@ export default function ProfilePage() {
         {weightLogs.length > 0 && (
           <div className="rounded-xl border border-border/60 overflow-hidden">
             <div className="border-b border-border/60 px-4 py-2 bg-muted/30"><h3 className="text-xs font-semibold text-foreground">Lịch sử</h3></div>
-            <ul className="divide-y divide-border/60 max-h-48 overflow-y-auto">
-              {[...weightLogs].reverse().map((l) => (
+            <div className="px-4 py-2 text-xs text-muted-foreground">Trang {weightHistory.page} / {weightHistory.totalPages} · {weightLogs.length} lần ghi</div>
+            <ul className="divide-y divide-border/60">
+              {weightHistory.rows.map((l) => (
                 <li key={l.id} className="flex items-center justify-between px-4 py-2">
                   <div className="text-sm">{l.weight.toFixed(1)} kg <span className="text-xs text-muted-foreground ml-2">{l.date.slice(0, 10)}{l.note ? ` · ${l.note}` : ""}</span></div>
-                  <button onClick={() => deleteWeight(l.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                  <button onClick={() => deleteWeight(l.id)} aria-label={`Xóa cân nặng ${l.date.slice(0,10)}`} className="inline-flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                 </li>
               ))}
             </ul>
+            {weightHistory.totalPages > 1 && (
+              <div className="flex flex-wrap items-center justify-center gap-1 border-t border-border/60 px-3 py-2">
+                <button onClick={() => setWeightPage(weightHistory.page - 1)} disabled={weightHistory.page <= 1}
+                  className="min-h-11 rounded-lg border border-border px-3 text-xs hover:bg-muted disabled:opacity-40">Trước</button>
+                {pageWindow(weightHistory.page, weightHistory.totalPages, 1).map((t, i) => t === "…"
+                  ? <span key={`g-${i}`} className="px-1 text-xs text-muted-foreground">…</span>
+                  : <button key={t} onClick={() => setWeightPage(Number(t))} aria-current={t === weightHistory.page ? "page" : undefined}
+                      className={`min-h-11 min-w-11 rounded-lg px-2 text-xs ${t === weightHistory.page ? "bg-primary text-primary-foreground" : "border border-border hover:bg-muted"}`}>{t}</button>
+                )}
+                <button onClick={() => setWeightPage(weightHistory.page + 1)} disabled={weightHistory.page >= weightHistory.totalPages}
+                  className="min-h-11 rounded-lg border border-border px-3 text-xs hover:bg-muted disabled:opacity-40">Tiếp</button>
+              </div>
+            )}
           </div>
         )}
         </div>
