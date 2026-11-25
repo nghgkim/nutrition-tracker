@@ -7,7 +7,7 @@ import { pageWindow, totalPages } from "@/lib/pagination";
 import { countActiveFilterValues } from "@/lib/filter-badge";
 import ErrorBanner from "@/components/ErrorBanner";
 
-interface Restaurant { id: string; name: string; address: string; rating: number; photoUrl: string | null; url: string; distanceKm?: number|null; priceMin?: number|null; priceMax?: number|null; district?: string|null; openHours?: string|null; cuisines?: string|null; }
+interface Restaurant { id: string; name: string; source?: string; address: string; rating: number; photoUrl: string | null; url: string; distanceKm?: number|null; priceMin?: number|null; priceMax?: number|null; district?: string|null; openHours?: string|null; cuisines?: string|null; }
 interface WteData { goal: number; eaten: number; remaining: number; }
 
 const PAGE_SIZE = 9;
@@ -23,6 +23,7 @@ export default function WhatToEatPage() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("rating");
+  const [source, setSource] = useState("");
   const [minRating, setMinRating] = useState("");
   const [maxDistance, setMaxDistance] = useState("");
   const [total, setTotal] = useState(0);
@@ -83,6 +84,7 @@ export default function WhatToEatPage() {
     if (minPrice) p.set("minPrice",minPrice);
     if (maxPrice) p.set("maxPrice",maxPrice);
     if (sort !== "rating") p.set("sort",sort);
+    if (source) p.set("source",source);
     if (minRating) p.set("minRating",minRating);
     if (maxDistance && geo) p.set("maxDistance",maxDistance);
     const requestKey = p.toString();
@@ -102,7 +104,7 @@ export default function WhatToEatPage() {
       // Aborted or failed request: keep the last valid list, never show stale data as new.
       if ((err as Error).name !== "AbortError") console.error("restaurant fetch failed", err);
     }
-  }, [geo, districts, minPrice, maxPrice, sort, minRating, maxDistance]);
+  }, [geo, districts, minPrice, maxPrice, sort, source, minRating, maxDistance]);
 
   useEffect(() => {
     Promise.all([
@@ -123,9 +125,9 @@ export default function WhatToEatPage() {
     );
   }
 
-  const activeFilters = countActiveFilterValues({ districts, minPrice, maxPrice, minRating, maxDistance, sort });
+  const activeFilters = countActiveFilterValues({ districts, minPrice, maxPrice, minRating, maxDistance, sort, source });
   function resetFilters() {
-    setDistricts([]); setMinPrice(""); setMaxPrice(""); setSort("rating"); setMinRating(""); setMaxDistance("");
+    setDistricts([]); setMinPrice(""); setMaxPrice(""); setSort("rating"); setSource(""); setMinRating(""); setMaxDistance("");
   }
 
   if (loading || !data) return <div className="max-w-5xl mx-auto px-4 py-6"><div className="h-96 skeleton rounded-2xl" /></div>;
@@ -187,6 +189,9 @@ export default function WhatToEatPage() {
                 <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">Khoảng cách
                   <select aria-label="Khoảng cách tối đa" value={maxDistance} onChange={e=>setMaxDistance(e.target.value)} disabled={!geo} className="min-h-11 rounded-lg border border-border bg-background px-2 text-xs text-foreground disabled:opacity-50"><option value="">{geo?"Mọi khoảng cách":"Cần vị trí"}</option><option value="1">1 km</option><option value="3">3 km</option><option value="5">5 km</option><option value="10">10 km</option></select>
                 </label>
+                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">Nguồn dữ liệu
+                  <select aria-label="Nguồn dữ liệu" value={source} onChange={e=>setSource(e.target.value)} className="min-h-11 rounded-lg border border-border bg-background px-2 text-xs text-foreground"><option value="">Mọi nguồn</option><option value="Foody">Foody</option><option value="Google">Google Maps</option></select>
+                </label>
                 <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">Sắp xếp
                   <select aria-label="Sắp xếp" value={sort} onChange={e=>setSort(e.target.value)} className="min-h-11 rounded-lg border border-border bg-background px-2 text-xs text-foreground"><option value="rating">Đánh giá: cao → thấp</option><option value="price">Giá: thấp → cao</option><option value="distance" disabled={!geo}>Khoảng cách: gần → xa</option></select>
                 </label>
@@ -195,7 +200,7 @@ export default function WhatToEatPage() {
           )}
             </div>
           </div>
-          <p className="text-[10px] text-muted-foreground">Nguồn: Foody (dữ liệu công khai, scrape 18/11/2026). Không lưu review hay dữ liệu cá nhân.</p>
+          <p className="text-[10px] text-muted-foreground">Nguồn: Foody (scrape 18/11/2026) · Google Maps (crawl 25/11/2026, chỉ lưu tên và toạ độ). Không lưu review hay dữ liệu cá nhân.</p>
           <div className="hidden max-h-[calc(100vh-400px)] min-h-[240px] overflow-auto rounded-2xl border border-border/60 bg-card elevated md:block">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
@@ -215,6 +220,7 @@ export default function WhatToEatPage() {
                       <div className="flex items-center gap-2">
                         {r.photoUrl && <span className="h-9 w-9 shrink-0 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${r.photoUrl})` }} />}
                         <span className="font-medium text-foreground line-clamp-2">{r.name}</span>
+                        <span className="shrink-0 rounded border border-border/70 bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">{r.source === "Google" ? "Google" : "Foody"}</span>
                       </div>
                     </td>
                     <td className="max-w-[240px] px-4 py-3 text-xs text-muted-foreground">
@@ -222,9 +228,9 @@ export default function WhatToEatPage() {
                       <div className="truncate" title={r.address}>{r.address}</div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">{r.priceMin&&r.priceMax?`${fmt(r.priceMin)} – ${fmt(r.priceMax)}`:"Đang cập nhật"}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground"><span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500"/> {r.rating.toFixed(1)}</span></td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground"><span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500"/> {r.rating > 0 ? r.rating.toFixed(1) : "—"}</span></td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">{r.distanceKm!=null?`${r.distanceKm} km`:"—"}</td>
-                    <td className="px-4 py-3"><a href={r.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">Xem <ExternalLink className="h-3 w-3"/></a></td>
+                    <td className="px-4 py-3"><a href={r.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">{r.source === "Google" ? "Google Maps" : "Foody"} <ExternalLink className="h-3 w-3"/></a></td>
                   </tr>
                 ))}
                 {restaurants.length===0&&<tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-muted-foreground">Không tìm thấy quán phù hợp bộ lọc.</td></tr>}
@@ -238,16 +244,17 @@ export default function WhatToEatPage() {
                 <div className="flex items-center gap-3">
                   {r.photoUrl && <span className="h-12 w-12 shrink-0 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${r.photoUrl})` }} />}
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-foreground line-clamp-2" title={r.name}>{r.name}</div>
+                    <div className="flex items-start gap-2"><div className="min-w-0 flex-1 text-sm font-semibold text-foreground line-clamp-2" title={r.name}>{r.name}</div>
+                      <span className="shrink-0 rounded border border-border/70 bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">{r.source === "Google" ? "Google" : "Foody"}</span></div>
                     <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500"/> {r.rating.toFixed(1)}</span>
+                      <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500"/> {r.rating > 0 ? r.rating.toFixed(1) : "—"}</span>
                       <span>{r.priceMin&&r.priceMax?`${fmt(r.priceMin)} – ${fmt(r.priceMax)}`:"Đang cập nhật"}</span>
                       {r.distanceKm!=null&&<span>{r.distanceKm} km</span>}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-start gap-1 text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0"/><span className="line-clamp-2">{r.district ? `${r.district} · ` : ""}{r.address}</span></div>
-                <a href={r.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline">Xem trên Foody <ExternalLink className="h-3.5 w-3.5"/></a>
+                <div className="flex items-start gap-1 text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0"/><span className="line-clamp-2">{r.district ? `${r.district} · ` : ""}{r.address || "Chưa có địa chỉ"}</span></div>
+                <a href={r.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline">Xem trên {r.source === "Google" ? "Google Maps" : "Foody"} <ExternalLink className="h-3.5 w-3.5"/></a>
               </div>
             ))}
             {restaurants.length===0&&<p className="py-10 text-center text-sm text-muted-foreground">Không tìm thấy quán phù hợp bộ lọc.</p>}

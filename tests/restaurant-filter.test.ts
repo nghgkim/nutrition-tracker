@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { filterByPrice, type PriceableRestaurant } from "@/lib/restaurant-filter";
+import { filterByPrice, sourceFilterValues, type PriceableRestaurant } from "@/lib/restaurant-filter";
 
 type Item = PriceableRestaurant & { name: string };
 const R = (name: string, priceMin: number | null, priceMax: number | null): Item =>
@@ -27,5 +27,19 @@ describe("filterByPrice", () => {
 
   it("keeps every restaurant when no price filter is active", () => {
     expect(filterByPrice(list, null, null)).toHaveLength(4);
+  });
+});
+
+
+describe("sourceFilterValues", () => {
+  it("maps Foody to both legacy Foody rows and crawler rows", () => {
+    expect(sourceFilterValues("Foody")).toEqual(["Foody", "Foody-crawler"]);
+  });
+  it("maps Google to only Google rows", () => {
+    expect(sourceFilterValues("Google")).toEqual(["Google"]);
+  });
+  it("ignores unknown or missing values", () => {
+    expect(sourceFilterValues(null)).toEqual([]);
+    expect(sourceFilterValues("evil' OR 1=1")).toEqual([]);
   });
 });

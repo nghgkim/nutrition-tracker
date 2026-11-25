@@ -8,6 +8,16 @@ export interface PriceableRestaurant {
   priceMax?: number | null;
 }
 
+/**
+ * Allowlist a source filter to real stored values. Unknown values are ignored
+ * so a crafted query can never widen or break the query.
+ */
+export function sourceFilterValues(source: string | null): string[] {
+  if (source === "Google") return ["Google"];
+  if (source === "Foody") return ["Foody", "Foody-crawler"];
+  return [];
+}
+
 /** Trim, dedupe and bound repeated district params before building an OR filter. */
 export function normalizeDistricts(values: string[]): string[] {
   const seen = new Set<string>();

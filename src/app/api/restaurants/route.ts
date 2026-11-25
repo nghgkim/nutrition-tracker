@@ -4,7 +4,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { haversine } from "@/lib/geo";
-import { clampCriteria, filterByPrice, normalizeDistricts } from "@/lib/restaurant-filter";
+import { clampCriteria, filterByPrice, normalizeDistricts, sourceFilterValues } from "@/lib/restaurant-filter";
 import { sortOrder } from "@/lib/restaurant-sort";
 import { shouldSortByDistance } from "@/lib/distance-sort";
 
@@ -24,8 +24,18 @@ export async function GET(req: Request) {
   const { minRating, maxDistance } = clampCriteria(q.get("minRating"), q.get("maxDistance"));
   const limit = Math.min(Math.max(Number(q.get("limit")) || 9, 1), 60);
   const offset = Math.max(Number(q.get("offset")) || 0, 0);
+  const sourceValues = sourceFilterValues(q.get("source"));
+
+  const grouped = await prisma.restaurant.groupBy({ by: ["source"], _count: { _all: true } });
+  const bySource = new Map(grouped.map(g => [g.source, g._count._all]));
+  const sources = {
+    all: grouped.reduce((sum, g) => sum + g._count._all, 0),
+    Foody: (bySource.get("Foody") || 0) + (bySource.get("Foody-crawler") || 0),
+    Google: bySource.get("Google") || 0,
+  };
 
   const where: Prisma.RestaurantWhereInput = {};
+  if (sourceValues.length) where.source = { in: sourceValues };
   if (districts.length) where.OR = districts.flatMap(d => [{ district: { contains: d } }, { address: { contains: d } }]);
   if (minPrice != null) where.priceMin = { gte: minPrice };
   if (maxPrice != null) where.priceMax = { lte: maxPrice };
@@ -36,6 +46,9 @@ export async function GET(req: Request) {
   const useRaw = hasGeo && (shouldSortByDistance(sort, true) || maxDistance != null);
   if (useRaw) {
     const filters: Prisma.Sql[] = [Prisma.sql`TRUE`];
+    if (sourceValues.length) {
+      filters.push(Prisma.sql`("source" IN (${Prisma.join(sourceValues.map(v => Prisma.sql`${v}`))}))`);
+    }
     if (districts.length) {
       const districtClauses = districts.map(d => Prisma.sql`("district" ILIKE ${`%${d}%`} OR "address" ILIKE ${`%${d}%`})`);
       filters.push(Prisma.sql`(${Prisma.join(districtClauses, " OR ")})`);
@@ -60,7 +73,7 @@ export async function GET(req: Request) {
     const countRows = await prisma.$queryRaw<Array<{ count: bigint }>>(
       Prisma.sql`SELECT COUNT(*) AS count FROM "Restaurant" WHERE ${whereSql} AND "lat" IS NOT NULL AND "lon" IS NOT NULL`
     );
-    return NextResponse.json({ restaurants, total: Number(countRows[0].count), source: "Foody" });
+    return NextResponse.json({ restaurants, total: Number(countRows[0].count), sources });
   }
 
   const [list, total] = await prisma.$transaction([
@@ -73,5 +86,5 @@ export async function GET(req: Request) {
     distanceKm: hasGeo && r.lat != null && r.lon != null
       ? Math.round(haversine(lat!, lon!, r.lat, r.lon) * 10) / 10 : null,
   }));
-  return NextResponse.json({ restaurants: withDist, total, source: "Foody" });
+  return NextResponse.json({ restaurants: withDist, total, sources });
 }

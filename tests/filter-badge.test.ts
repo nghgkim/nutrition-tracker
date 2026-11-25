@@ -27,4 +27,8 @@ describe("countActiveFilterValues", () => {
   it("treats empty strings as inactive", () => {
     expect(countActiveFilterValues({ ...base, districts: [], maxPrice: "", maxDistance: "" })).toBe(0);
   });
+
+  it("counts a selected source filter as one active value", () => {
+    expect(countActiveFilterValues({ ...base, source: "Google" })).toBe(1);
+  });
 });
