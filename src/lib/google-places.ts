@@ -12,6 +12,9 @@ export interface NormalizedGooglePlace extends RawGooglePlace {
 }
 
 const LOCALITY_SUFFIX = /,\s*(Vietnam|Việt Nam)\s*$/i;
+const DISTANCE_LABEL = /^\d+(?:\.\d+)?\s*(?:mi|km)\s+away$/i;
+const LODGING_TITLE = /sleeps\s+\d|\d+\s*(?:bedroom|bathroom)/i;
+const HOTEL_COMPARISON = /^Also a \d+-star hotel/i;
 const round5 = (n: number) => n.toFixed(5);
 
 /**
@@ -26,6 +29,8 @@ export function normalizeGooglePlaces(places: RawGooglePlace[]): NormalizedGoogl
     const lat = Number(place?.lat);
     const lon = Number(place?.lon);
     if (name.length < 4 || /^\d+$/.test(name.replace(/\s/g, "")) || LOCALITY_SUFFIX.test(name)) continue;
+    // Playwright captured rendered Maps text, including UI labels and lodging cards.
+    if (DISTANCE_LABEL.test(name) || LODGING_TITLE.test(name) || HOTEL_COMPARISON.test(name)) continue;
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
     const key = `${name.toLowerCase()}|${round5(lat)}|${round5(lon)}`;
     if (seen.has(key)) continue;

@@ -48,3 +48,34 @@ describe("googleMapsUrl", () => {
     );
   });
 });
+
+describe("Google Maps UI artifacts", () => {
+  it("drops distance labels and hotel comparison text", () => {
+    const rows = normalizeGooglePlaces([
+      place("0.1 mi away", 10.8, 106.7),
+      place("2.2 mi away", 10.8, 106.7),
+      place("1 km away", 10.8, 106.7),
+      place("Also a 3-star hotel, for $13 less", 10.8, 106.7),
+    ]);
+    expect(rows).toHaveLength(0);
+  });
+
+  it("drops lodging titles", () => {
+    const rows = normalizeGooglePlaces([
+      place("1 bedroom • 1 bathroom • Sleeps 2", 10.8, 106.7),
+      place("1 bathroom • Sleeps 4", 10.8, 106.7),
+      place("2 bedroom apartment", 10.8, 106.7),
+    ]);
+    expect(rows).toHaveLength(0);
+  });
+
+  it("keeps real shops whose names merely look similar", () => {
+    const rows = normalizeGooglePlaces([
+      place("007 Coffee & Tea", 10.8, 106.7),
+      place("07:31 Coffee & Matcha", 10.8, 106.7),
+      place("(Take away) H-SPACE - Coffee & More", 10.8, 106.7),
+      place("Five Star Coffee", 10.8, 106.7),
+    ]);
+    expect(rows.map(r => r.name)).toHaveLength(4);
+  });
+});
