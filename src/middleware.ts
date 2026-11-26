@@ -7,7 +7,7 @@ function jwtSecret(): Uint8Array {
   return new TextEncoder().encode(getSecret("JWT_SECRET"));
 }
 
-const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/api/reminders/tick"];
+const PUBLIC_PATHS = ["/login", "/register", "/api/auth"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

@@ -40,9 +40,7 @@ export default function Nav() {
 
   if (pathname === "/login" || pathname === "/register") return null;
 
-  // Two primary destinations; related pages live in the grouped overflow menu.
   // All destinations live in the overflow menu; header stays logo + Thêm only.
-  const primary: { href: string; label: string; icon: typeof ChefHat }[] = [];
   const moreGroups = [
     {
       label: "Ăn uống",
@@ -68,10 +66,6 @@ export default function Nav() {
       ],
     },
     {
-      label: "Giao diện",
-      items: [], // rendered as a theme toggle row below
-    },
-    {
       label: "Khác",
       items: [
         { href: "/family", label: t("family"), icon: Users },
@@ -92,19 +86,6 @@ export default function Nav() {
         <nav className="flex items-center gap-1">
           {user ? (
             <>
-              {primary.map((l) => {
-                const Icon = l.icon;
-                const active = isNavActive(pathname, l.href);
-                return (
-                  <Link key={l.href} href={l.href}
-                    className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}>
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{l.label}</span>
-                  </Link>
-                );
-              })}
               <div className="relative" ref={moreRef}>
                 <button onClick={() => setMoreOpen(!moreOpen)} aria-label={t("more")}
                   className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
@@ -132,15 +113,15 @@ export default function Nav() {
                             </Link>
                           );
                         })}
-                        {group.label === "Giao diện" && (
-                          <button onClick={toggle} aria-label={dark ? "Chế độ sáng" : "Chế độ tối"}
-                            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-[0.98]">
-                            {dark ? <SunIcon /> : <MoonIcon />}
-                            {dark ? "Chế độ sáng" : "Chế độ tối"}
-                          </button>
-                        )}
                       </div>
                     ))}
+                    <div className="border-t border-border/60 my-1 pt-1">
+                      <button onClick={toggle} aria-label={dark ? "Chế độ sáng" : "Chế độ tối"}
+                        className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-[0.98]">
+                        {dark ? <SunIcon /> : <MoonIcon />}
+                        {dark ? "Chế độ sáng" : "Chế độ tối"}
+                      </button>
+                    </div>
                     <div className="border-t border-border/60 mt-1 pt-1">
                       <span className="block px-3 py-1 text-xs text-muted-foreground truncate">{user.name || user.email}</span>
                       <button onClick={logout} className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors active:scale-[0.98]">

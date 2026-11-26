@@ -1,6 +1,6 @@
 # Feature Spec: Nutrition Tracker (Daily Calorie Intake)
 
-**Status:** Draft
+**Status:** Accepted
 **Tier:** 3 (Major feature)
 **Owner:** dev
 **Date:** 2026-11-13
@@ -105,6 +105,30 @@ AC-20: Given total >= goal, the progress bar is red; otherwise green.
 All error responses are JSON `{ error: string }` with appropriate HTTP status.
 Passwords are never returned. Sessions use httpOnly, sameSite=lax cookies.
 
+## 2b. Mental model and data flow
+```mermaid
+flowchart LR
+  UI[Client: dashboard, foods, history] --> MW[Middleware: session/JWT gate]
+  MW --> API[Route handlers under /api]
+  API --> AUTH[Session boundary: getCurrentUser]
+  API --> DB[(Prisma/PostgreSQL)]
+  DB --> FOOD[(Food: global seeded + user custom)]
+  DB --> LOG[(FoodLog: user/date/meal)]
+  DB --> GOAL[(Goal: user/dailyCalories)]
+  LOG --> TOTAL[Derived daily total: sum calories * quantity]
+  TOTAL --> UI
+  API --> ERR[RFC 7807-style problem responses]
+  ERR --> UI
+```
+Reads and writes cross the authentication boundary before touching any model.
+The daily total is derived, never stored, so there is no cache to invalidate.
+
+## 2c. Architecture boundaries and concurrency strategy
+- Bounded contexts are separated at the route layer: identity (`/api/auth`), catalog (`/api/foods`), logging (`/api/logs`), goal (`/api/goal`). Each handler resolves the current user and scopes every query by `userId`; global seeded foods are read-only (`userId: null`).
+- No long-lived transactions on the request path. `upsert` is used for Goal so concurrent first-time reads converge on one row; `FoodLog` rows are immutable facts edited/deleted only by their owner.
+- Client-side races are bounded with `createGenerationGuard` and `AbortController`: an out-of-order filter/search response is discarded instead of overwriting newer state. This is concurrency control without DB locks.
+- Unique constraints (email, externalId, per-user/date/meal where applicable) are the last line of defense against duplicate writes; handlers surface 409 on conflict.
+
 ## 3. NFRs
 - Performance: p95 < 300ms for log list (single user, <10k logs). Deferred load test.
 - Security: password hashed with scrypt (cost factor default); JWT HS256, 7-day expiry;
@@ -136,3 +160,29 @@ Entities: User, Food, FoodLog, Goal. (Defined in prisma/schema.prisma.)
 - ASSUMPTION: single-user-per-account; no email verification (UNVERIFIED: acceptable for MVP).
 - ASSUMPTION: date stored as UTC date; client sends YYYY-MM-DD (UNVERIFIED: timezone handling deferred).
 - ASSUMPTION: seeded food list of 200+ common (Vietnamese) foods covers most daily needs. Values are approximate (see README data sources).
+
+## 6b. Trade-offs and rejected alternatives
+- Rejected: storing daily totals in a table. Chosen: derive from `FoodLog` rows so corrections to a log immediately update totals; the cost is a `SUM` per read, acceptable at MVP volume.
+- Rejected: client-side-only auth state. Chosen: httpOnly session cookie verified in middleware so protected routes and APIs share one boundary.
+- Rejected: allowing arbitrary foods to be invented by name from an LLM. Chosen: real catalog rows with named provenance (`source`) for imported/internet data; unknown nutrition remains empty rather than fabricated.
+- Rejected: global mutable goal state. Chosen: one `Goal` row per user via `upsert`, so concurrent users cannot overwrite each other's targets.
+- Rejected: rendering stale responses. Chosen: generation guard plus abort on superseded requests (see 2c), trading a small amount of client code for deterministic UI.
+
+## 7. Ratification and superseded statements (2026-11-26)
+
+This document is the canonical specification for this repository. Its previous
+`Draft` status is closed by `docs/decisions/0001-canonical-spec-and-scope.md`.
+Statements below are superseded by that ADR and by the feature specs listed in
+the same decision record:
+
+- Section 1.4 out-of-scope list is superseded: weight tracking, exercise,
+  social/family sharing, finance and insights are implemented. They belong to
+  bounded contexts documented in ADR 0001, not to this root feature.
+- Section 6 timezone assumption is superseded by ADR 0002: date-only strings are
+  parsed as local calendar days and month bounds use local time.
+- UI evidence and gate contracts are governed by ADR 0003.
+
+Individual feature specs remain Draft as historical change records; they are
+not competing root specifications. New capabilities must update this document
+or ratify a new ADR before implementation.
+
