@@ -92,3 +92,4 @@ No secrets, tokens or private repo access introduced. `GITHUB_TOKEN` keeps defau
 - Rewritten workflow uses only npm commands already present in package.json: npm ci (Node 20 + cache), typecheck, lint, test, build; optional gate step emits a notice when no repository-local CLI exists
 - YAML parsed successfully with python yaml.safe_load; job name `quality`
 - Local equivalence verified: typecheck clean, 26 files / 119 tests PASS, build exit 0, lint exits 0 with 12 pre-existing warnings
+- First CI run 45954027370 failed at typecheck: generated Prisma client (`src/generated/prisma/client`) is gitignored and absent on a fresh runner, causing cascading TS2307/TS7006 errors. Added an explicit `npx prisma generate` step after `npm ci` and before typecheck
