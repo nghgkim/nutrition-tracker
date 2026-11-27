@@ -3,16 +3,16 @@ import { problemResponse } from "@/lib/http-problem";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { journalCorrelation, monthRange } from "@/lib/journal";
+import { parsePositiveNumber } from "@/lib/request-validation";
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const q = new URL(req.url).searchParams;
   const now = new Date();
-  const range = monthRange(
-    Number(q.get("year")) || now.getUTCFullYear(),
-    Number(q.get("month")) || now.getUTCMonth() + 1
-  );
+  const year = parsePositiveNumber(q.get("year"), { min: 1970, max: 2100 }) ?? now.getUTCFullYear();
+  const month = parsePositiveNumber(q.get("month"), { min: 1, max: 12 }) ?? now.getUTCMonth() + 1;
+  const range = monthRange(year, month);
   const [entries, logs] = await Promise.all([
     prisma.journalEntry.findMany({
       where: { userId: user.id, date: { gte: new Date(range.from), lte: new Date(`${range.to}T23:59:59.999Z`) } },

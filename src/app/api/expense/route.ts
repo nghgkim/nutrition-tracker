@@ -3,6 +3,7 @@ import { problemResponse } from "@/lib/http-problem";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { checkBudgetAlert } from "@/lib/budget-alert";
+import { localDayKey, parseDay, parsePositiveNumber } from "@/lib/request-validation";
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
@@ -19,7 +20,8 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json(problemResponse("Unauthorized", 401), { status: 401 });
   const { category, amount, date, note, fundSource } = await req.json();
-  if (!category || amount === undefined || Number(amount) <= 0) return NextResponse.json(problemResponse("category and positive amount required", 400), { status: 400 });
+  const parsedAmount = parsePositiveNumber(amount, { min: 0.01, max: 1_000_000_000 });
+  if (!category || parsedAmount === null) return NextResponse.json(problemResponse("category and positive amount required", 400), { status: 400 });
   const source = fundSource === "household" ? "household" : "personal";
 
   // household expenses require family membership
@@ -29,9 +31,10 @@ export async function POST(req: Request) {
     if (!membership) return NextResponse.json(problemResponse("Must be in a family to use household fund", 400), { status: 400 });
   }
 
-  const d = date ? new Date(date) : new Date();
+  const d = date ? parseDay(date) : parseDay(localDayKey(new Date()));
+  if (!d) return NextResponse.json(problemResponse("Invalid date", 400), { status: 400 });
   const log = await prisma.expense.create({
-    data: { userId: user.id, category, amount: Number(amount), fundSource: source, date: d, note: note ?? null },
+    data: { userId: user.id, category, amount: parsedAmount, fundSource: source, date: d, note: note ?? null },
   });
 
   // Recalculate and alert

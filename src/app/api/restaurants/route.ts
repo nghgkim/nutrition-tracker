@@ -7,6 +7,7 @@ import { haversine } from "@/lib/geo";
 import { clampCriteria, filterByPrice, normalizeDistricts, sourceFilterValues } from "@/lib/restaurant-filter";
 import { sortOrder } from "@/lib/restaurant-sort";
 import { shouldSortByDistance } from "@/lib/distance-sort";
+import { parsePositiveNumber } from "@/lib/request-validation";
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();
@@ -19,11 +20,11 @@ export async function GET(req: Request) {
   const lon = hasGeo ? lonRaw : null;
   const sort = q.get("sort") || "rating";
   const districts = normalizeDistricts(q.getAll("district"));
-  const minPrice = q.get("minPrice") ? Number(q.get("minPrice")) : null;
-  const maxPrice = q.get("maxPrice") ? Number(q.get("maxPrice")) : null;
+  const minPrice = parsePositiveNumber(q.get("minPrice"), { min: 0, max: 1_000_000_000 });
+  const maxPrice = parsePositiveNumber(q.get("maxPrice"), { min: 0, max: 1_000_000_000 });
   const { minRating, maxDistance } = clampCriteria(q.get("minRating"), q.get("maxDistance"));
-  const limit = Math.min(Math.max(Number(q.get("limit")) || 9, 1), 60);
-  const offset = Math.max(Number(q.get("offset")) || 0, 0);
+  const limit = Math.min(Math.max(parsePositiveNumber(q.get("limit"), { min: 1, max: 60 }) ?? 9, 1), 60);
+  const offset = Math.max(parsePositiveNumber(q.get("offset"), { min: 0, max: 1_000_000 }) ?? 0, 0);
   const sourceValues = sourceFilterValues(q.get("source"));
 
   const grouped = await prisma.restaurant.groupBy({ by: ["source"], _count: { _all: true } });

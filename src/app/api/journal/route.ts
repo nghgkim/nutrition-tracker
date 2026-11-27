@@ -4,6 +4,7 @@ import { problemResponse } from "@/lib/http-problem";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { normalizeTags } from "@/lib/journal";
+import { parseDay } from "@/lib/request-validation";
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();
@@ -13,10 +14,17 @@ export async function GET(req: Request) {
   const from = q.get("from");
   const to = q.get("to");
   const tag = q.get("tag")?.trim();
-  const where: Prisma.JournalEntryWhereInput = date
-    ? { userId: user.id, date: new Date(date) }
-    : from && to
-      ? { userId: user.id, date: { gte: new Date(from), lte: new Date(`${to}T23:59:59.999Z`) } }
+  const day = date ? parseDay(date) : null;
+  const fromDay = from ? parseDay(from) : null;
+  const toDay = to ? parseDay(to) : null;
+  if ((date && !day) || (from && !fromDay) || (to && !toDay)) {
+    return NextResponse.json(problemResponse("Invalid date", 400), { status: 400 });
+  }
+  const endOfTo = toDay ? new Date(toDay.getFullYear(), toDay.getMonth(), toDay.getDate(), 23, 59, 59, 999) : null;
+  const where: Prisma.JournalEntryWhereInput = day
+    ? { userId: user.id, date: day }
+    : fromDay && endOfTo
+      ? { userId: user.id, date: { gte: fromDay, lte: endOfTo } }
       : { userId: user.id };
   if (tag) {
     where.journalTags = { some: { tag: { equals: tag, mode: "insensitive" } } };
@@ -38,11 +46,13 @@ export async function PUT(req: Request) {
   const date = new URL(req.url).searchParams.get("date") || body.date;
   const { note, mood, energy } = body;
   if (!date) return NextResponse.json(problemResponse("date required", 400), { status: 400 });
+  const entryDay = parseDay(date);
+  if (!entryDay) return NextResponse.json(problemResponse("Invalid date", 400), { status: 400 });
   const tags = normalizeTags(body.tags);
   const entry = await prisma.journalEntry.upsert({
-    where: { userId_date: { userId: user.id, date: new Date(date) } },
+    where: { userId_date: { userId: user.id, date: entryDay } },
     update: { note: note ?? null, mood: mood ?? null, energy: energy ?? null, tags: JSON.stringify(tags) },
-    create: { userId: user.id, date: new Date(date), note: note ?? null, mood: mood ?? null, energy: energy ?? null, tags: JSON.stringify(tags) },
+    create: { userId: user.id, date: entryDay, note: note ?? null, mood: mood ?? null, energy: energy ?? null, tags: JSON.stringify(tags) },
   });
   // Dual-write to the queryable table (idempotent via @@unique).
   await prisma.$transaction([

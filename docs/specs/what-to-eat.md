@@ -52,6 +52,34 @@ Emerald primary, Nordic light/dark, 4/8/12/16/24px, `elevated`, Geist Sans. Rest
 - No fabrication: dish calories from NIN2026 DB; restaurant data from Foody API.
 - External links open in new tab with rel=noopener.
 
+## 3d. Mental model / visual data flow
+```mermaid
+flowchart LR
+  SCRAPER[scripts/scrape-foody.py] --> DB[(Restaurant: source + scrapedAt)]
+  GOAL[(Goal + FoodLog)] --> REMAIN[remaining = goal - consumed]
+  NIN[(NIN2026 foods)] --> PURE[what-to-eat.ts: eligible dishes]
+  REMAIN --> PURE
+  PURE --> API[GET /api/what-to-eat]
+  DB --> RAPI[GET /api/restaurants]
+  API --> UI[What-to-eat page: dish card + restaurant cards]
+  RAPI --> UI
+```
+
+## 3e. Failure modes & verification harness
+| Failure mode | Defense |
+|---|---|
+| Foody endpoint changes or returns 503 | Keep last successful rows in DB; scraper is a one-shot import, not a runtime dependency |
+| No eligible dish (remaining too low) | Explicit "Bạn đã vượt mục tiêu" empty state; never suggest an over-budget dish |
+| External link opens in same tab | `target=_blank` + `rel=noopener noreferrer` |
+| Out-of-order restaurant requests | Generation guard + AbortController discard stale responses (see `src/lib/request-guard.ts`) |
+
+| Area | Type | Command |
+|---|---|---|
+| Pure recommender | unit | `npm test -- tests/what-to-eat.test.ts` |
+| APIs | curl authenticated | `/api/what-to-eat`, `/api/restaurants` return 200 for session, 401 otherwise |
+| UI | Playwright 390px | dish card + restaurant card + empty state; no horizontal overflow |
+| Regression | full | build/typecheck/lint/test/smoke + verify-ui |
+
 ## 4. API Contract (REST)
 | Method | Path | Body | Response | Errors |
 |---|---|---|---|---|
@@ -66,6 +94,20 @@ All errors JSON `{ error: string }`.
 ## 6. Data sources
 - Foody API (verified): https://www.foody.vn/__get/Place/HomeListPlace?cityId=217
 - NIN 2026 dishes in DB (1590 items)
+
+## 8. Security & Authorization
+Both endpoints require the authenticated session cookie (`getCurrentUser`); unauthenticated calls return 401 via the RFC 7807-style problem response. Restaurant rows contain only public business data (name/address/rating/photo/link/coordinates) — no Foody reviews or personal data. Client-supplied filter values are allowlisted (districts, price bounds, rating, distance) and bound as Prisma/sql parameters; the raw distance query uses `${}` bindings only. External links are escaped React text with `rel=noopener noreferrer`.
+
+## 9. Performance SLA & Infrastructure Profile
+- `GET /api/what-to-eat`: p95 < 200 ms (one goal read, one food scan, one pure selection).
+- `GET /api/restaurants`: p95 < 300 ms with `source`/district index and LIMIT/OFFSET bounded to 60 rows; distance sort uses one SQL haversine expression before pagination.
+- Deployment profile: Next.js standalone in one app container (1 CPU / 512 MB), PostgreSQL 16 container, Cloudflare named tunnel for public HTTPS; no per-request external API call, so no third-party latency on the read path.
+
+## 10. Trade-offs & Rejected Alternatives
+- Rejected: call Foody live on every page load -> third-party downtime would break the page and risk rate limits. Chosen: one verified scrape stored in DB with `source` and `scrapedAt`.
+- Rejected: LLM-estimated dish calories -> fabrication. Chosen: only NIN2026 values with a real source.
+- Rejected: client-side random on every render -> flicker and unstable UI. Chosen: pure server-side selection returned once per request.
+- Rejected: storing Foody review text/users -> privacy risk and no product value. Chosen: public business fields only.
 
 ## 7. Evidence
 - Spec judge: 97/100 auto-approved

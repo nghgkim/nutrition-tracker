@@ -3,6 +3,7 @@ import { problemResponse } from "@/lib/http-problem";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { removeDiacritics } from "@/lib/normalize";
+import { parsePositiveNumber } from "@/lib/request-validation";
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();
@@ -27,13 +28,20 @@ export async function POST(req: Request) {
   if (!name || calories === undefined) {
     return NextResponse.json(problemResponse("Name and calories required", 400), { status: 400 });
   }
+  const kcal = parsePositiveNumber(calories, { min: 1, max: 100_000 });
+  const proteinValue = parsePositiveNumber(protein ?? 0, { min: 0, max: 1000 });
+  const carbsValue = parsePositiveNumber(carbs ?? 0, { min: 0, max: 1000 });
+  const fatValue = parsePositiveNumber(fat ?? 0, { min: 0, max: 1000 });
+  if (kcal === null || proteinValue === null || carbsValue === null || fatValue === null) {
+    return NextResponse.json(problemResponse("Invalid nutrition values", 400), { status: 400 });
+  }
   const food = await prisma.food.create({
     data: {
       name,
-      calories: Number(calories),
-      protein: Number(protein ?? 0),
-      carbs: Number(carbs ?? 0),
-      fat: Number(fat ?? 0),
+      calories: kcal,
+      protein: proteinValue,
+      carbs: carbsValue,
+      fat: fatValue,
       servingSize: servingSize ?? null,
       source: typeof source === "string" && source.length <= 40 ? source : null,
       isCustom: true,

@@ -1,0 +1,313 @@
+{
+  "base_url": "http://localhost:3001",
+  "target_url": "http://localhost:3001/dashboard",
+  "feature": "dashboard-auth-final",
+  "screen": "dashboard",
+  "storage_state": "/tmp/opencode/nutrition-qa-state.json",
+  "is_studio_mode": false,
+  "checks": [
+    {
+      "viewport": "375x667",
+      "passed": false,
+      "certified": false,
+      "login_redirect": false,
+      "missing_states": [
+        "error"
+      ],
+      "visual": {
+        "passed": true,
+        "anti_whiteout_passed": true,
+        "stylesheets_loaded": true,
+        "body_background": "rgb(248, 250, 252)",
+        "body_color": "rgb(15, 23, 42)",
+        "stylesheets_count": 2
+      },
+      "layout": {
+        "passed": true,
+        "is_mobile": true,
+        "studio_mode": false,
+        "meta_viewport_ok": true,
+        "horizontal_scroll_passed": true,
+        "vertical_scroll_passed": true,
+        "scroll_height": 1495,
+        "client_height": 667,
+        "scroll_width": 375,
+        "client_width": 375,
+        "button_overflows": [],
+        "touch_violations": [],
+        "hit_area_violations": [],
+        "hit_area_passed": true,
+        "table_violations": []
+      },
+      "states": {
+        "passed": false,
+        "certified": false,
+        "screen": "dashboard",
+        "states_declared": true,
+        "required_states": [
+          "empty",
+          "loading",
+          "error"
+        ],
+        "missing_states": [
+          "error"
+        ],
+        "is_black_void_regression": false,
+        "detected_empty_handler": true,
+        "detected_loading_handler": true,
+        "detected_error_handler": false
+      },
+      "failed_subresources": [],
+      "screenshot": "docs/evidence/dashboard-auth-final/visual/viewport-375x667.png"
+    },
+    {
+      "viewport": "390x844",
+      "passed": false,
+      "certified": false,
+      "login_redirect": false,
+      "missing_states": [
+        "error"
+      ],
+      "visual": {
+        "passed": true,
+        "anti_whiteout_passed": true,
+        "stylesheets_loaded": true,
+        "body_background": "rgb(248, 250, 252)",
+        "body_color": "rgb(15, 23, 42)",
+        "stylesheets_count": 2
+      },
+      "layout": {
+        "passed": true,
+        "is_mobile": true,
+        "studio_mode": false,
+        "meta_viewport_ok": true,
+        "horizontal_scroll_passed": true,
+        "vertical_scroll_passed": true,
+        "scroll_height": 1475,
+        "client_height": 844,
+        "scroll_width": 390,
+        "client_width": 390,
+        "button_overflows": [],
+        "touch_violations": [],
+        "hit_area_violations": [],
+        "hit_area_passed": true,
+        "table_violations": []
+      },
+      "states": {
+        "passed": false,
+        "certified": false,
+        "screen": "dashboard",
+        "states_declared": true,
+        "required_states": [
+          "empty",
+          "loading",
+          "error"
+        ],
+        "missing_states": [
+          "error"
+        ],
+        "is_black_void_regression": false,
+        "detected_empty_handler": true,
+        "detected_loading_handler": true,
+        "detected_error_handler": false
+      },
+      "failed_subresources": [],
+      "screenshot": "docs/evidence/dashboard-auth-final/visual/viewport-390x844.png"
+    },
+    {
+      "viewport": "768x1024",
+      "passed": false,
+      "certified": false,
+      "login_redirect": false,
+      "missing_states": [
+        "error"
+      ],
+      "visual": {
+        "passed": true,
+        "anti_whiteout_passed": true,
+        "stylesheets_loaded": true,
+        "body_background": "rgb(248, 250, 252)",
+        "body_color": "rgb(15, 23, 42)",
+        "stylesheets_count": 2
+      },
+      "layout": {
+        "passed": false,
+        "is_mobile": false,
+        "studio_mode": false,
+        "meta_viewport_ok": true,
+        "horizontal_scroll_passed": true,
+        "vertical_scroll_passed": true,
+        "scroll_height": 1365,
+        "client_height": 1024,
+        "scroll_width": 768,
+        "client_width": 768,
+        "button_overflows": [],
+        "touch_violations": [],
+        "hit_area_violations": [
+          {
+            "tag": "button",
+            "text": "Thêm",
+            "width": 82,
+            "height": 20,
+            "line_height": 20,
+            "reasons": [
+              "below_min_hit_area",
+              "text_only_height"
+            ]
+          },
+          {
+            "tag": "button",
+            "text": "",
+            "width": 32,
+            "height": 32,
+            "line_height": 24,
+            "reasons": [
+              "below_min_hit_area"
+            ]
+          },
+          {
+            "tag": "button",
+            "text": "",
+            "width": 32,
+            "height": 32,
+            "line_height": 24,
+            "reasons": [
+              "below_min_hit_area"
+            ]
+          }
+        ],
+        "hit_area_passed": false,
+        "table_violations": []
+      },
+      "states": {
+        "passed": false,
+        "certified": false,
+        "screen": "dashboard",
+        "states_declared": true,
+        "required_states": [
+          "empty",
+          "loading",
+          "error"
+        ],
+        "missing_states": [
+          "error"
+        ],
+        "is_black_void_regression": false,
+        "detected_empty_handler": true,
+        "detected_loading_handler": true,
+        "detected_error_handler": false
+      },
+      "failed_subresources": [],
+      "screenshot": "docs/evidence/dashboard-auth-final/visual/viewport-768x1024.png"
+    },
+    {
+      "viewport": "1440x900",
+      "passed": false,
+      "certified": false,
+      "login_redirect": false,
+      "missing_states": [
+        "error"
+      ],
+      "visual": {
+        "passed": true,
+        "anti_whiteout_passed": true,
+        "stylesheets_loaded": true,
+        "body_background": "rgb(248, 250, 252)",
+        "body_color": "rgb(15, 23, 42)",
+        "stylesheets_count": 2
+      },
+      "layout": {
+        "passed": false,
+        "is_mobile": false,
+        "studio_mode": false,
+        "meta_viewport_ok": true,
+        "horizontal_scroll_passed": true,
+        "vertical_scroll_passed": true,
+        "scroll_height": 933,
+        "client_height": 900,
+        "scroll_width": 1440,
+        "client_width": 1440,
+        "button_overflows": [],
+        "touch_violations": [],
+        "hit_area_violations": [
+          {
+            "tag": "button",
+            "text": "Thêm",
+            "width": 82,
+            "height": 20,
+            "line_height": 20,
+            "reasons": [
+              "below_min_hit_area",
+              "text_only_height"
+            ]
+          },
+          {
+            "tag": "button",
+            "text": "",
+            "width": 32,
+            "height": 32,
+            "line_height": 24,
+            "reasons": [
+              "below_min_hit_area"
+            ]
+          },
+          {
+            "tag": "button",
+            "text": "",
+            "width": 32,
+            "height": 32,
+            "line_height": 24,
+            "reasons": [
+              "below_min_hit_area"
+            ]
+          }
+        ],
+        "hit_area_passed": false,
+        "table_violations": []
+      },
+      "states": {
+        "passed": false,
+        "certified": false,
+        "screen": "dashboard",
+        "states_declared": true,
+        "required_states": [
+          "empty",
+          "loading",
+          "error"
+        ],
+        "missing_states": [
+          "error"
+        ],
+        "is_black_void_regression": false,
+        "detected_empty_handler": true,
+        "detected_loading_handler": true,
+        "detected_error_handler": false
+      },
+      "failed_subresources": [],
+      "screenshot": "docs/evidence/dashboard-auth-final/visual/viewport-1440x900.png"
+    }
+  ],
+  "screenshots": [
+    "docs/evidence/dashboard-auth-final/visual/viewport-375x667.png",
+    "docs/evidence/dashboard-auth-final/visual/viewport-390x844.png",
+    "docs/evidence/dashboard-auth-final/visual/viewport-768x1024.png",
+    "docs/evidence/dashboard-auth-final/visual/viewport-1440x900.png"
+  ],
+  "failed_subresources": [],
+  "page_errors": [],
+  "login_redirects": [],
+  "certification": {
+    "screen": "dashboard",
+    "target_url": "http://localhost:3001/dashboard",
+    "states_declared": true,
+    "required_states": [
+      "empty",
+      "loading",
+      "error"
+    ],
+    "allow_login_redirect": false,
+    "login_redirects": [],
+    "certified": false
+  },
+  "passed": false
+}

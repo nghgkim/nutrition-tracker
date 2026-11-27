@@ -1,0 +1,13 @@
+{
+  "ui_base_url": "http://localhost:3001",
+  "ui_path": "/dashboard",
+  "ui_feature": "nutrition-tracker",
+  "ui_states": [
+    "empty",
+    "loading",
+    "error"
+  ],
+  "ui_screen": "dashboard",
+  "allow_login_redirect": false,
+  "studio": false
+}

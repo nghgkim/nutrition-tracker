@@ -66,7 +66,9 @@ an edge case needs the rationale:
 
 | ID | Ratified decision | Mechanical invariant | Detail file |
 |---|---|---|---|
-| *(No ADRs recorded yet. Copy `docs/decisions/template.md` to `NNNN-slug.md` when Gate 1 locks an architectural decision.)* | | | |
+| ADR-0001 | Canonical spec accepted; five bounded contexts ratify the implemented scope | `docs/specs/nutrition-tracker.md` is `Accepted`; feature specs remain historical records | `docs/decisions/0001-canonical-spec-and-scope.md` |
+| ADR-0002 | Request input is parsed only by shared helpers; local calendar days | No `Number()` on request data in route handlers; invalid input returns 400 before Prisma | `docs/decisions/0002-request-boundary-validation.md` |
+| ADR-0003 | UI evidence must be certified and authenticated | `certification.certified` true, no `login_redirects`, declared states detected | `docs/decisions/0003-ui-evidence-contract.md` |
 
 ---
 
