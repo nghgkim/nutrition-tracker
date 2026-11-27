@@ -38,6 +38,7 @@ model User {
   reminderLogs   ReminderLog[]
   trainingPlan   TrainingPlan?
   journalEntries JournalEntry[]
+  refreshTokens  RefreshToken[]
 }
 
 model Food {
@@ -267,4 +268,17 @@ model JournalTag {
 
   @@unique([entryId, tag])
   @@index([tag])
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+
+  @@index([userId])
 }

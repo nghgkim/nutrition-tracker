@@ -17,10 +17,15 @@ export default function Nav() {
   const moreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((d) => setUser(d.user))
-      .catch(() => setUser(null));
+    (async () => {
+      let res = await fetch("/api/auth/me");
+      if (res.status === 401) {
+        const refreshed = await fetch("/api/auth/refresh", { method: "POST" });
+        if (refreshed.ok) res = await fetch("/api/auth/me");
+      }
+      const data = await res.json();
+      setUser(data.user);
+    })().catch(() => setUser(null));
   }, [pathname]);
 
   useEffect(() => {

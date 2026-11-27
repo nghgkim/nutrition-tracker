@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { problemResponse } from "@/lib/http-problem";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, signToken, AUTH_COOKIE } from "@/lib/auth";
+import { hashPassword } from "@/lib/auth";
+import { setSessionCookies } from "@/lib/session-cookies";
 
 export async function POST(req: Request) {
   try {
@@ -20,14 +21,8 @@ export async function POST(req: Request) {
       data: { email, name: name ?? null, password: await hashPassword(password) },
     });
     await prisma.goal.create({ data: { userId: user.id } });
-    const token = await signToken({ userId: user.id, email: user.email });
     const res = NextResponse.json({ user: { id: user.id, email: user.email, name: user.name } }, { status: 201 });
-    res.cookies.set(AUTH_COOKIE, token, {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    await setSessionCookies(res, user.id, user.email);
     return res;
   } catch (e) {
     console.error(e);

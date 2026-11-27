@@ -30,6 +30,15 @@ export async function middleware(req: NextRequest) {
     await jwtVerify(token, jwtSecret());
     return NextResponse.next();
   } catch {
+    // Expired access token with a live refresh cookie: rotate via a route
+    // handler (Edge middleware has no DB client), then resume the navigation.
+    if (!pathname.startsWith("/api/")) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/api/auth/refresh";
+      url.search = "";
+      url.searchParams.set("next", pathname + (req.nextUrl.search || ""));
+      return NextResponse.redirect(url);
+    }
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
