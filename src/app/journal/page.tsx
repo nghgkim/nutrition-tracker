@@ -35,7 +35,7 @@ export default function JournalPage() {
     const data = await res.json();
     setEntries(data.entries || []);
     setLoading(false);
-  }, [from, to, activeTag, router]);
+  }, [from, to, router]);
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {

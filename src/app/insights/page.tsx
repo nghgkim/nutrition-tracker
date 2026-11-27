@@ -5,7 +5,6 @@ import { BarChart3, Flame } from "lucide-react";
 import ErrorBanner from "@/components/ErrorBanner";
 
 interface DayPoint { date: string; intake: number; burned: number; }
-interface Entry { id: string; date: string; note: string | null; mood: string | null; energy: number | null; }
 
 export default function InsightsPage() {
   const router = useRouter();

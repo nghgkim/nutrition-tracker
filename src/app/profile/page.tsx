@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calculator, Target, Flame, Scale, User, Save, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
-import { toNullableNumber, parseWeight } from "@/lib/profile-values";
+import { parseWeight } from "@/lib/profile-values";
 import { normalizeGoalMode, type GoalMode } from "@/lib/goal-mode";
 import { paginateLogs } from "@/lib/weight-history";
 import { pageWindow } from "@/lib/pagination";

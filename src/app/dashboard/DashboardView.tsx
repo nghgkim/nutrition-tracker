@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import WeeklyChart from "@/components/WeeklyChart";
 import { removeDiacritics } from "@/lib/normalize";
-import { Plus, Trash2, Target, Beef, Wheat, Droplet, Calendar, UtensilsCrossed, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Plus, Trash2, Target, Beef, Wheat, Droplet, Calendar, UtensilsCrossed, ChevronLeft, ChevronRight } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { useToast } from "@/components/ToastProvider";
 

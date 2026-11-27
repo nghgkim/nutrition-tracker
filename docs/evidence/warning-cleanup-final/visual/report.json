@@ -1,0 +1,128 @@
+{
+  "base_url": "http://localhost:3001",
+  "target_url": "http://localhost:3001/",
+  "feature": "warning-cleanup-final",
+  "screen": "dashboard",
+  "storage_state": "/tmp/opencode/nt-logo-auth.json",
+  "is_studio_mode": false,
+  "checks": [
+    {
+      "viewport": "375x667",
+      "passed": true,
+      "certified": true,
+      "login_redirect": false,
+      "missing_states": [],
+      "visual": {
+        "passed": true,
+        "anti_whiteout_passed": true,
+        "stylesheets_loaded": true,
+        "body_background": "rgb(248, 250, 252)",
+        "body_color": "rgb(15, 23, 42)",
+        "stylesheets_count": 2
+      },
+      "layout": {
+        "passed": true,
+        "is_mobile": true,
+        "studio_mode": false,
+        "meta_viewport_ok": true,
+        "horizontal_scroll_passed": true,
+        "vertical_scroll_passed": true,
+        "scroll_height": 1495,
+        "client_height": 667,
+        "scroll_width": 375,
+        "client_width": 375,
+        "button_overflows": [],
+        "touch_violations": [],
+        "hit_area_violations": [],
+        "hit_area_passed": true,
+        "table_violations": []
+      },
+      "states": {
+        "passed": true,
+        "certified": true,
+        "screen": "dashboard",
+        "states_declared": true,
+        "required_states": [
+          "empty",
+          "loading"
+        ],
+        "missing_states": [],
+        "is_black_void_regression": false,
+        "detected_empty_handler": true,
+        "detected_loading_handler": true,
+        "detected_error_handler": false
+      },
+      "failed_subresources": [],
+      "screenshot": "docs/evidence/warning-cleanup-final/visual/viewport-375x667.png"
+    },
+    {
+      "viewport": "390x844",
+      "passed": true,
+      "certified": true,
+      "login_redirect": false,
+      "missing_states": [],
+      "visual": {
+        "passed": true,
+        "anti_whiteout_passed": true,
+        "stylesheets_loaded": true,
+        "body_background": "rgb(248, 250, 252)",
+        "body_color": "rgb(15, 23, 42)",
+        "stylesheets_count": 2
+      },
+      "layout": {
+        "passed": true,
+        "is_mobile": true,
+        "studio_mode": false,
+        "meta_viewport_ok": true,
+        "horizontal_scroll_passed": true,
+        "vertical_scroll_passed": true,
+        "scroll_height": 1475,
+        "client_height": 844,
+        "scroll_width": 390,
+        "client_width": 390,
+        "button_overflows": [],
+        "touch_violations": [],
+        "hit_area_violations": [],
+        "hit_area_passed": true,
+        "table_violations": []
+      },
+      "states": {
+        "passed": true,
+        "certified": true,
+        "screen": "dashboard",
+        "states_declared": true,
+        "required_states": [
+          "empty",
+          "loading"
+        ],
+        "missing_states": [],
+        "is_black_void_regression": false,
+        "detected_empty_handler": true,
+        "detected_loading_handler": true,
+        "detected_error_handler": false
+      },
+      "failed_subresources": [],
+      "screenshot": "docs/evidence/warning-cleanup-final/visual/viewport-390x844.png"
+    }
+  ],
+  "screenshots": [
+    "docs/evidence/warning-cleanup-final/visual/viewport-375x667.png",
+    "docs/evidence/warning-cleanup-final/visual/viewport-390x844.png"
+  ],
+  "failed_subresources": [],
+  "page_errors": [],
+  "login_redirects": [],
+  "certification": {
+    "screen": "dashboard",
+    "target_url": "http://localhost:3001/",
+    "states_declared": true,
+    "required_states": [
+      "empty",
+      "loading"
+    ],
+    "allow_login_redirect": false,
+    "login_redirects": [],
+    "certified": true
+  },
+  "passed": true
+}

@@ -1,7 +1,8 @@
 "use client";
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogIn, Mail, Lock, Sparkles, Check } from "lucide-react";
+import { LogIn, Mail, Lock, Check } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function LoginPage() {
         <div className="relative">
           <div className="flex items-center gap-2">
             <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-[#faf3e8]">
-              <img src="/logo.png" alt="thuypn by kimnh" className="h-full w-full object-contain" />
+              <Image src="/logo.png" alt="thuypn by kimnh" width={64} height={64} className="h-full w-full object-contain" />
             </span>
             <span className="text-lg font-semibold tracking-tight">thuypn by kimnh</span>
           </div>
@@ -62,7 +63,7 @@ export default function LoginPage() {
       <div className="flex items-center justify-center px-6 py-12 bg-background">
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8 text-center">
-            <span className="inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-[#faf3e8]"><img src="/logo.png" alt="thuypn by kimnh" className="h-full w-full object-contain" /></span>
+            <span className="inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-[#faf3e8]"><Image src="/logo.png" alt="thuypn by kimnh" width={64} height={64} className="h-full w-full object-contain" /></span>
             <h1 className="mt-3 text-xl font-semibold tracking-tight">thuypn by kimnh</h1>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Chào mừng trở lại</h1>
