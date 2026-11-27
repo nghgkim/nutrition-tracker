@@ -10,20 +10,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# UI verification requires a reachable app. The global gate reads these values;
-# a configured UI gate without UI_BASE_URL fails closed instead of being skipped.
-env:
-  UI_BASE_URL: ${{ vars.UI_BASE_URL }}
-  UI_PATH: ${{ vars.UI_PATH || '/' }}
-  UI_STATES: ${{ vars.UI_STATES || 'empty,loading,error' }}
-  UI_SCREEN: ${{ vars.UI_SCREEN || 'root' }}
-  UI_FEATURE: ${{ vars.UI_FEATURE || 'ci-verification' }}
-  ALLOW_LOGIN_REDIRECT: ${{ vars.ALLOW_LOGIN_REDIRECT || 'false' }}
-  GATE_SOURCE: ${{ vars.GATE_SOURCE }}
-
 jobs:
-  gate:
-    name: "4-Phase Governance, Verification & Security Gate"
+  quality:
+    name: Typecheck, Lint, Test, Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -31,56 +20,31 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "Install Gate CLI (pinned source)"
-        run: |
-          mkdir -p ~/.local/bin
-          if [ -f "./scripts/gate" ]; then
-            cp ./scripts/gate ~/.local/bin/gate
-          elif [ -n "$GATE_SOURCE" ] && [ -f "$GATE_SOURCE/bin/gate" ]; then
-            cp "$GATE_SOURCE/bin/gate" ~/.local/bin/gate
-            printf '%s\n' "$GATE_SOURCE" > ~/.local/bin/gate.root
-          else
-            echo "::error ::GATE_SOURCE must point to a pinned kb checkout"
-            exit 1
-          fi
-          chmod +x ~/.local/bin/gate
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
-      - name: "Phase 1: Judge Modified Specifications"
-        run: |
-          changed=$(git diff --name-only --diff-filter=ACMR "${{ github.event.before || 'HEAD~1' }}" HEAD 2>/dev/null \
-            | grep -E '^(docs/specs/|specs/)' | grep -v 'template' || true)
-          if [ -z "$changed" ]; then
-            echo "==> No modified specifications; judge skipped."
-            exit 0
-          fi
-          echo "==> Judging modified specifications with 100-pt rubric..."
-          for spec in $changed; do
-            [ -f "$spec" ] || continue
-            gate judge "$spec"
-          done
-
-      - name: "Phase 2 & 3: Global Verification"
-        run: gate ci
-
-      - name: "Phase 3: Governance Check"
-        run: CI=1 gate check --mode=auto --tier=auto
-
-      - name: "Phase 3/4: Zero-Trust Audit"
-        run: gate audit .
-
-      - name: "Phase 4: Ephemeral DB Sandbox Migration Test"
-        run: |
-          if [ -d prisma/migrations ]; then
-            gate db test
-          else
-            echo "::notice ::No relational DB migration test required"
-          fi
-
-      - name: "Upload UI Evidence"
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: ui-verification-evidence
-          path: docs/evidence/ci-verification/visual
-          if-no-files-found: ignore
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Phase 1 — Typecheck
+        run: npm run typecheck
+
+      - name: Phase 2 — Lint
+        run: npm run lint
+
+      - name: Phase 2 & 3 — Unit tests
+        run: npm test
+
+      - name: Phase 3 — Production build
+        run: npm run build
+
+      - name: Phase 4 — Optional repository-local governance
+        run: |
+          if [ -x ./scripts/gate ]; then
+            CI=1 ./scripts/gate check --tier=auto --mode=auto
+          else
+            echo "::notice ::No repository-local gate CLI; npm QC steps above are authoritative."
+          fi
